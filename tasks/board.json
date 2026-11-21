@@ -1,7 +1,7 @@
 [
   {
     "id": "T000",
-    "title": "T000 Workspace Cargo vérifié, gate, métriques",
+    "title": "T000 Workspace Cargo v├®rifi├®, gate, m├®triques",
     "phase": "P0 Fondations",
     "deps": [],
     "file": "tasks/T000.md",
@@ -10,7 +10,7 @@
   },
   {
     "id": "T001",
-    "title": "T001 cps-common : horloge (ticks 5,04 GHz), framebuffer, entrées, CRC, COMBINE_DATA",
+    "title": "T001 cps-common : horloge (ticks 5,04 GHz), framebuffer, entr├®es, CRC, COMBINE_DATA",
     "phase": "P0 Fondations",
     "deps": [
       "T000"
@@ -32,7 +32,7 @@
   },
   {
     "id": "T003",
-    "title": "T003 Dépendances CPU : puce-m68k et puce-z80 (git épinglé) et test de fumée",
+    "title": "T003 D├®pendances CPU : puce-m68k et puce-z80 (git ├®pingl├®) et test de fum├®e",
     "phase": "P0 Fondations",
     "deps": [
       "T002"
@@ -54,7 +54,7 @@
   },
   {
     "id": "T100",
-    "title": "T100 cps-cart : romsets générés (cps1.cpp) et sources de fichiers (zip, dossier, parent)",
+    "title": "T100 cps-cart : romsets g├®n├®r├®s (cps1.cpp) et sources de fichiers (zip, dossier, parent)",
     "phase": "P1 ROMs et bus",
     "deps": [
       "T004"
@@ -65,7 +65,7 @@
   },
   {
     "id": "T101",
-    "title": "T101 cps-cart : construction des régions, DIP par défaut, chargement d'un jeu",
+    "title": "T101 cps-cart : construction des r├®gions, DIP par d├®faut, chargement d'un jeu",
     "phase": "P1 ROMs et bus",
     "deps": [
       "T100"
@@ -76,7 +76,7 @@
   },
   {
     "id": "T102",
-    "title": "T102 cps-bus : carte mémoire 68000 et E/S (vidéo derrière le trait VideoPort)",
+    "title": "T102 cps-bus : carte m├®moire 68000 et E/S (vid├®o derri├¿re le trait VideoPort)",
     "phase": "P1 ROMs et bus",
     "deps": [
       "T101"
@@ -98,8 +98,8 @@
   },
   {
     "id": "T200",
-    "title": "T200 cps-gfx : configurations CPS-B et mappers (générés) + gfxrom_bank_mapper",
-    "phase": "P2 Vidéo CPS-A/CPS-B",
+    "title": "T200 cps-gfx : configurations CPS-B et mappers (g├®n├®r├®s) + gfxrom_bank_mapper",
+    "phase": "P2 Vid├®o CPS-A/CPS-B",
     "deps": [
       "T103"
     ],
@@ -109,8 +109,8 @@
   },
   {
     "id": "T201",
-    "title": "T201 cps-gfx : décodage des tuiles (layouts 8x8, 8x8_2, 16x16, 32x32)",
-    "phase": "P2 Vidéo CPS-A/CPS-B",
+    "title": "T201 cps-gfx : d├®codage des tuiles (layouts 8x8, 8x8_2, 16x16, 32x32)",
+    "phase": "P2 Vid├®o CPS-A/CPS-B",
     "deps": [
       "T200"
     ],
@@ -121,7 +121,7 @@
   {
     "id": "T202",
     "title": "T202 cps-gfx : palette (cps1_build_palette)",
-    "phase": "P2 Vidéo CPS-A/CPS-B",
+    "phase": "P2 Vid├®o CPS-A/CPS-B",
     "deps": [
       "T201"
     ],
@@ -131,8 +131,8 @@
   },
   {
     "id": "T203",
-    "title": "T203 cps-gfx : état vidéo, registres CPS-A/CPS-B, GFXRAM, bases vidéo, latch des sprites",
-    "phase": "P2 Vidéo CPS-A/CPS-B",
+    "title": "T203 cps-gfx : ├®tat vid├®o (Video), registres, GFXRAM, cps1_base, bases vid├®o (get_video_base)",
+    "phase": "P2 Vid├®o CPS-A/CPS-B",
     "deps": [
       "T202"
     ],
@@ -141,11 +141,22 @@
     "status": "todo"
   },
   {
-    "id": "T204",
-    "title": "T204 cps-gfx : tilemaps scroll1/2/3 (scan, tuiles, transparence par groupe, défilement, rowscroll)",
-    "phase": "P2 Vidéo CPS-A/CPS-B",
+    "id": "T203b",
+    "title": "T203b cps-gfx : ├®critures CPS-A (copie de palette), CPS-B (lecture/├®criture, multiplication), latch des sprites au VBLANK",
+    "phase": "P2 Vid├®o CPS-A/CPS-B",
     "deps": [
       "T203"
+    ],
+    "file": "tasks/T203b.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T204",
+    "title": "T204 cps-gfx : tilemaps scroll1/2/3 (scan, tuiles, transparence par groupe, d├®filement, rowscroll)",
+    "phase": "P2 Vid├®o CPS-A/CPS-B",
+    "deps": [
+      "T203b"
     ],
     "file": "tasks/T204.md",
     "assignee": "rust-dev",
@@ -153,8 +164,8 @@
   },
   {
     "id": "T205",
-    "title": "T205 cps-gfx : sprites (find_last_sprite, blocs, flips, prio_transpen)",
-    "phase": "P2 Vidéo CPS-A/CPS-B",
+    "title": "T205 cps-gfx : sprites (1/2) ÔÇö find_last_sprite et dessin prio_transpen d'une tuile 16x16",
+    "phase": "P2 Vid├®o CPS-A/CPS-B",
     "deps": [
       "T204"
     ],
@@ -163,11 +174,22 @@
     "status": "todo"
   },
   {
-    "id": "T206",
-    "title": "T206 cps-gfx : composition de trame et priorités (screen_update_cps1, render_layers)",
-    "phase": "P2 Vidéo CPS-A/CPS-B",
+    "id": "T205b",
+    "title": "T205b cps-gfx : sprites (2/2) ÔÇö render_sprites (mapper, blocs, flips, flip ├®cran, ordre)",
+    "phase": "P2 Vid├®o CPS-A/CPS-B",
     "deps": [
       "T205"
+    ],
+    "file": "tasks/T205b.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T206",
+    "title": "T206 cps-gfx : composition de trame et priorit├®s (screen_update_cps1, render_layers)",
+    "phase": "P2 Vid├®o CPS-A/CPS-B",
+    "deps": [
+      "T205b"
     ],
     "file": "tasks/T206.md",
     "assignee": "rust-dev",
@@ -175,8 +197,8 @@
   },
   {
     "id": "T207",
-    "title": "T207 cps-bus : branchement de la vidéo (VideoPort pour cps_gfx::Video)",
-    "phase": "P2 Vidéo CPS-A/CPS-B",
+    "title": "T207 cps-bus : branchement de la vid├®o (VideoPort pour cps_gfx::Video)",
+    "phase": "P2 Vid├®o CPS-A/CPS-B",
     "deps": [
       "T206"
     ],
@@ -208,7 +230,7 @@
   },
   {
     "id": "T302",
-    "title": "T302 cps-ym2151 : registres OPM (opm_registers)",
+    "title": "T302 cps-ym2151 : registres OPM (1/2) ÔÇö structure, constantes, accesseurs, reset, tables, operator_map",
     "phase": "P3 Audio",
     "deps": [
       "T301"
@@ -218,11 +240,22 @@
     "status": "todo"
   },
   {
-    "id": "T303",
-    "title": "T303 cps-ym2151 : opérateur FM (fm_operator sur registres OPM)",
+    "id": "T302b",
+    "title": "T302b cps-ym2151 : registres OPM (2/2) ÔÇö write, bruit et LFO, cache d'op├®rateur, pas de phase",
     "phase": "P3 Audio",
     "deps": [
       "T302"
+    ],
+    "file": "tasks/T302b.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T303",
+    "title": "T303 cps-ym2151 : op├®rateur FM (fm_operator sur registres OPM)",
+    "phase": "P3 Audio",
+    "deps": [
+      "T302b"
     ],
     "file": "tasks/T303.md",
     "assignee": "rust-dev",
@@ -230,7 +263,7 @@
   },
   {
     "id": "T304",
-    "title": "T304 cps-ym2151 : canal FM (fm_channel, algorithmes 4 opérateurs, bruit)",
+    "title": "T304 cps-ym2151 : canal FM (fm_channel, algorithmes 4 op├®rateurs, bruit)",
     "phase": "P3 Audio",
     "deps": [
       "T303"
@@ -252,7 +285,7 @@
   },
   {
     "id": "T306",
-    "title": "T306 cps-ym2151 : puce YM2151 et adaptateur cadencé (timers, busy, échantillons)",
+    "title": "T306 cps-ym2151 : puce YM2151 (port de la classe ym2151)",
     "phase": "P3 Audio",
     "deps": [
       "T305"
@@ -262,11 +295,22 @@
     "status": "todo"
   },
   {
+    "id": "T306b",
+    "title": "T306b cps-ym2151 : adaptateur cadenc├® ClockedYm2151 (horloge YM, timers, busy, IRQ, ├®chantillons)",
+    "phase": "P3 Audio",
+    "deps": [
+      "T306"
+    ],
+    "file": "tasks/T306b.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
     "id": "T307",
     "title": "T307 Oracle YM2151 : comparaison aux vecteurs ymfm (tests-data/ym2151)",
     "phase": "P3 Audio",
     "deps": [
-      "T306"
+      "T306b"
     ],
     "file": "tasks/T307.md",
     "assignee": "rust-dev",
@@ -274,7 +318,7 @@
   },
   {
     "id": "T310",
-    "title": "T310 cps-oki : état ADPCM OKI (okiadpcm, tables générées)",
+    "title": "T310 cps-oki : ├®tat ADPCM OKI (okiadpcm, tables g├®n├®r├®es)",
     "phase": "P3 Audio",
     "deps": [
       "T307"
@@ -307,7 +351,7 @@
   },
   {
     "id": "T313",
-    "title": "T313 cps-bus : puces son réelles (SoundChips : YM2151 cadencé + OKI) et mixage",
+    "title": "T313 cps-bus : puces son r├®elles (SoundChips : YM2151 cadenc├® + OKI) et mixage",
     "phase": "P3 Audio",
     "deps": [
       "T312"
@@ -318,8 +362,8 @@
   },
   {
     "id": "T400",
-    "title": "T400 cps-core : Machine (construction, reset, accès)",
-    "phase": "P4 Intégration",
+    "title": "T400 cps-core : Machine (construction, reset, acc├¿s)",
+    "phase": "P4 Int├®gration",
     "deps": [
       "T313"
     ],
@@ -329,8 +373,8 @@
   },
   {
     "id": "T401",
-    "title": "T401 cps-core : hôte 68000 et ordonnanceur (catch-up son, événement VBLANK)",
-    "phase": "P4 Intégration",
+    "title": "T401 cps-core : h├┤te 68000 et ordonnanceur (catch-up son, ├®v├®nement VBLANK)",
+    "phase": "P4 Int├®gration",
     "deps": [
       "T400"
     ],
@@ -340,8 +384,8 @@
   },
   {
     "id": "T402",
-    "title": "T402 cps-core : interruptions et VBLANK (IRQ2, bases vidéo, latch sprites, rendu)",
-    "phase": "P4 Intégration",
+    "title": "T402 cps-core : interruptions et VBLANK (IRQ2, bases vid├®o, latch sprites, rendu)",
+    "phase": "P4 Int├®gration",
     "deps": [
       "T401"
     ],
@@ -351,8 +395,8 @@
   },
   {
     "id": "T403",
-    "title": "T403 cps-core : boucle publique, entrées, audio par trame",
-    "phase": "P4 Intégration",
+    "title": "T403 cps-core : boucle publique, entr├®es, audio par trame",
+    "phase": "P4 Int├®gration",
     "deps": [
       "T402"
     ],
@@ -362,8 +406,8 @@
   },
   {
     "id": "T404",
-    "title": "T404 Ghouls'n Ghosts (ghouls) : démarrage et attract mode (golden MAME)",
-    "phase": "P4 Intégration",
+    "title": "T404 Ghouls'n Ghosts (ghouls) : d├®marrage et attract mode (golden MAME)",
+    "phase": "P4 Int├®gration",
     "deps": [
       "T403"
     ],
@@ -373,8 +417,8 @@
   },
   {
     "id": "T405",
-    "title": "T405 Street Fighter II (sf2, World 910522) : démarrage et attract mode",
-    "phase": "P4 Intégration",
+    "title": "T405 Street Fighter II (sf2, World 910522) : d├®marrage et attract mode",
+    "phase": "P4 Int├®gration",
     "deps": [
       "T404"
     ],
@@ -385,7 +429,7 @@
   {
     "id": "T406",
     "title": "T406 Street Fighter II' Champion Edition (sf2ceea, World 920313) : 12 MHz, CPS-B-21, multiplication",
-    "phase": "P4 Intégration",
+    "phase": "P4 Int├®gration",
     "deps": [
       "T405"
     ],
@@ -395,8 +439,8 @@
   },
   {
     "id": "T407",
-    "title": "T407 Street Fighter II' Hyper Fighting (sf2hf) : démarrage et attract mode",
-    "phase": "P4 Intégration",
+    "title": "T407 Street Fighter II' Hyper Fighting (sf2hf) : d├®marrage et attract mode",
+    "phase": "P4 Int├®gration",
     "deps": [
       "T406"
     ],
@@ -406,8 +450,8 @@
   },
   {
     "id": "T408",
-    "title": "T408 cps-core : savestates (sérialisation complète)",
-    "phase": "P4 Intégration",
+    "title": "T408 cps-core : savestates (s├®rialisation compl├¿te)",
+    "phase": "P4 Int├®gration",
     "deps": [
       "T407"
     ],
@@ -417,7 +461,7 @@
   },
   {
     "id": "T500",
-    "title": "T500 cps-gui : dépendances JAMMA épinglées et adaptateur Cps1Board (entrées, vidéo, son)",
+    "title": "T500 cps-gui : d├®pendances JAMMA ├®pingl├®es et conversion des entr├®es (JammaInputs -> IN0/IN1/IN2)",
     "phase": "P5 GUI (frontal JAMMA)",
     "deps": [
       "T408"
@@ -427,11 +471,22 @@
     "status": "todo"
   },
   {
-    "id": "T501",
-    "title": "T501 cps-gui : DIP décrits, savestates et driver (catalogue des jeux)",
+    "id": "T500b",
+    "title": "T500b cps-gui : adaptateur Cps1Board (BoardInfo, vid├®o, son, entr├®es)",
     "phase": "P5 GUI (frontal JAMMA)",
     "deps": [
       "T500"
+    ],
+    "file": "tasks/T500b.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T501",
+    "title": "T501 cps-gui : DIP d├®crits, savestates et driver (catalogue des jeux)",
+    "phase": "P5 GUI (frontal JAMMA)",
+    "deps": [
+      "T500b"
     ],
     "file": "tasks/T501.md",
     "assignee": "rust-dev",
@@ -439,7 +494,7 @@
   },
   {
     "id": "T502",
-    "title": "T502 cps-gui : point d'entrée (frontal puce-jamma-gui) et validation manuelle",
+    "title": "T502 cps-gui : point d'entr├®e (frontal puce-jamma-gui) et validation manuelle",
     "phase": "P5 GUI (frontal JAMMA)",
     "deps": [
       "T501"
@@ -450,7 +505,7 @@
   },
   {
     "id": "T503",
-    "title": "T503 cps-gui : débogage CPU (BoardDebug : 68000, Z80, mémoire, pas à pas)",
+    "title": "T503 cps-core : primitives de d├®bogage (pas ├á pas, lecture m├®moire sans effet de bord)",
     "phase": "P5 GUI (frontal JAMMA)",
     "deps": [
       "T502"
@@ -460,11 +515,22 @@
     "status": "todo"
   },
   {
-    "id": "T504",
-    "title": "T504 cps-gui : débogage vidéo et son (registres CPS-A/CPS-B, palette, tuiles, couches)",
+    "id": "T503b",
+    "title": "T503b cps-gui : BoardDebug c├┤t├® CPU (68000, Z80, m├®moire, pas ├á pas)",
     "phase": "P5 GUI (frontal JAMMA)",
     "deps": [
       "T503"
+    ],
+    "file": "tasks/T503b.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T504",
+    "title": "T504 cps-gui : d├®bogage vid├®o et son (registres CPS-A/CPS-B, palette, tuiles, couches)",
+    "phase": "P5 GUI (frontal JAMMA)",
+    "deps": [
+      "T503b"
     ],
     "file": "tasks/T504.md",
     "assignee": "rust-dev",
@@ -472,7 +538,7 @@
   },
   {
     "id": "T505",
-    "title": "T505 cps-gui : tests d'intégration par le contrat JAMMA",
+    "title": "T505 cps-gui : tests d'int├®gration par le contrat JAMMA",
     "phase": "P5 GUI (frontal JAMMA)",
     "deps": [
       "T504"
@@ -483,7 +549,7 @@
   },
   {
     "id": "T600",
-    "title": "T600 cps-gfx : étoiles (cps1_render_stars)",
+    "title": "T600 cps-gfx : ├®toiles (cps1_render_stars)",
     "phase": "P6 Autres jeux CPS1",
     "deps": [
       "T505"
@@ -494,7 +560,7 @@
   },
   {
     "id": "T601",
-    "title": "T601 cps-bus : Forgotten Worlds (forgottn) — uPD4701 (molettes) et LWIO",
+    "title": "T601 cps-bus : Forgotten Worlds (forgottn) ÔÇö uPD4701 (molettes) et LWIO",
     "phase": "P6 Autres jeux CPS1",
     "deps": [
       "T600"
@@ -505,7 +571,7 @@
   },
   {
     "id": "T602",
-    "title": "T602 cps-cart : machines supportées étendues (forgottn, sf2ee) et liste des jeux jouables",
+    "title": "T602 cps-cart : machines support├®es ├®tendues (forgottn, sf2ee) et liste des jeux jouables",
     "phase": "P6 Autres jeux CPS1",
     "deps": [
       "T601"
@@ -516,7 +582,7 @@
   },
   {
     "id": "T603",
-    "title": "T603 cps-core : intégration forgottn (étoiles + molettes) et sf2ee (CPS-B en 8001C0)",
+    "title": "T603 cps-core : int├®gration forgottn (├®toiles + molettes) et sf2ee (CPS-B en 8001C0)",
     "phase": "P6 Autres jeux CPS1",
     "deps": [
       "T602"
@@ -538,7 +604,7 @@
   },
   {
     "id": "T605",
-    "title": "T605 cps-gfx : flip écran (tilemaps + sprites)",
+    "title": "T605 cps-gfx : flip ├®cran (tilemaps + sprites)",
     "phase": "P6 Autres jeux CPS1",
     "deps": [
       "T604"
@@ -549,8 +615,8 @@
   },
   {
     "id": "T700",
-    "title": "T700 Banc de performance et mesure de référence",
-    "phase": "P7 Précision et outils",
+    "title": "T700 Banc de performance et mesure de r├®f├®rence",
+    "phase": "P7 Pr├®cision et outils",
     "deps": [
       "T605"
     ],
@@ -560,8 +626,8 @@
   },
   {
     "id": "T701",
-    "title": "T701 Précision : Q-VBL, Q-RESET68K, Q-WAIT (revue contre les golden)",
-    "phase": "P7 Précision et outils",
+    "title": "T701 Pr├®cision : Q-VBL, Q-RESET68K, Q-WAIT (revue contre les golden)",
+    "phase": "P7 Pr├®cision et outils",
     "deps": [
       "T700"
     ],
@@ -571,8 +637,8 @@
   },
   {
     "id": "T702",
-    "title": "T702 cps-gfx : compteurs raster CPS-B-21 (IRQ4) — préparation ganbare/CPS2",
-    "phase": "P7 Précision et outils",
+    "title": "T702 cps-gfx : compteurs raster CPS-B-21 (IRQ4) ÔÇö pr├®paration ganbare/CPS2",
+    "phase": "P7 Pr├®cision et outils",
     "deps": [
       "T701"
     ],
