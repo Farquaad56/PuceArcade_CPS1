@@ -1,7 +1,7 @@
 # STATE — journal de passation (garder < 150 lignes)
 
 ## Phase courante
-P1 ROMs et bus terminée. Prochaine carte : T201 (décodage des tuiles).
+P2 Vidéo CPS-A/CPS-B. Prochaine carte : T203b (écritures CPS-A, CPS-B, latch sprites).
 
 ## Fait
 - (conception) Squelette du workspace (9 crates vides qui compilent), specs digérées docs/spec/00-04, ref/ (MAME, ymfm, crates CPU, modèle Neo Geo),
@@ -20,6 +20,7 @@ P1 ROMs et bus terminée. Prochaine carte : T201 (décodage des tuiles).
 - T200 : configurations CPS-B et mappers générés (config_data.rs via tools/gen_cps_tables.py, 30 CPS-B, 58 mappers, 261 jeux) ; types CpsBConfig/GfxRange/Mapper/GameConfig dans config.rs avec find_config() (recherche par nom, fallback cps2) ; port de gfxrom_bank_mapper (mapper.rs, MAME l.2385-2430) avec décalage 1/0/1/3 selon type tuile ; 17 tests unitaires passants (configurations ghouls/sf2/sf2ce + mappers DM620/STF29). Piège : clippy unused_assignments sur `let mut shift = 0` immédiatement réassigné — corrigé par match expression directe ; collapsible_if sur les if imbriqués dans la boucle de recherche de plage.
 - T201 : décodage des tuiles CPS1 (decode.rs) avec Layout enum (L8x8, L8x8b, L16x16, L32x32), tile_pixel() implémentant les 4 layouts selon spec docs/spec/02 §Décodage ; 4 tests unitaires passants couvrant tous les layouts + modulo code. Piège : clippy let_and_return sur `let pen = ...; pen` — corrigé en retour direct de l'expression ; unnecessary_cast sur `pen as u8`.
 - T202 : palette CPS1 (palette.rs) avec color_from_word() (formule spec 02 §Palette, division entière par 0x2D) et cps1_build_palette() port 1:1 MAME l.2612-2646 ; constantes PALETTE_ENTRIES=0xC00, BACKGROUND_PEN=0xBFF ; 4 tests unitaires passants (conversion couleurs + copie pages avec sauts). Piège : clippy needless_range_loop sur les boucles de test — corrigé par iter_mut().enumerate() ; identity_op dans decode.rs hérité d'une carte précédente.
+- T203 : état vidéo CPS1 (regs.rs + video_base.rs) avec Video struct, constantes registres CPS-A/CPS-B, new/relink/reset/cps1_base/gfxram_write/set_inputs/get_video_base/vblank ; port complet de cps1_get_video_base MAME l.2246-2366 incluant les branches bootleg_kludge (0x01, 2, 3, 0x88) et logique d'activation des couches ; 12 tests unitaires passants couvrant bases vidéo, défilement, activation couches, COMBINE_DATA. Piège : type mismatch i32/u32 dans cps1_base — corrigé par cast `boundary as i32` ; gfxram_write COMBINE_DATA doit extraire les octets (data >> 8) et (data & 0xFF) pas décaler l'ensemble ; clippy if_same_then_else sur branches bootleg identiques — consolidées.
 
 ## Blocages
 (aucun)
