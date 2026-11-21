@@ -119,7 +119,7 @@ mod tests {
         assert_eq!(tile_pixel(&gfx, Layout::L32x32, 0, 31, 0), 2);
 
         // pixel (0,2) -> ligne y=2, base = 512 + 2*16 = 544
-        gfx[16 * 2 + 0] = 0x80; // plan bit0
+        gfx[16 * 2] = 0x80; // plan bit0
         assert_eq!(tile_pixel(&gfx, Layout::L32x32, 0, 0, 2), 1);
     }
 

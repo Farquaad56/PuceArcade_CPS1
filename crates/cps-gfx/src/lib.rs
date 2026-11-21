@@ -6,6 +6,7 @@ pub mod config;
 pub mod config_data;
 pub mod decode;
 pub mod mapper;
+pub mod palette;
 
 #[cfg(test)]
 mod tests;
