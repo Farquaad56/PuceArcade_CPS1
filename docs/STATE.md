@@ -1,7 +1,7 @@
 # STATE — journal de passation (garder < 150 lignes)
 
 ## Phase courante
-P0 Fondations. Prochaine carte : T000.
+P1 ROMs et bus. Prochaine carte : T102.
 
 ## Fait
 - (conception) Squelette du workspace (9 crates vides qui compilent), specs digérées docs/spec/00-04, ref/ (MAME, ymfm, crates CPU, modèle Neo Geo),
@@ -13,6 +13,7 @@ P0 Fondations. Prochaine carte : T000.
 - T004 : comparateur d'images golden cps-testkit (golden.rs adapté de Puce16 Neo Geo pour 384x224, ratio(), golden_dir()) ; 7 tests unitaires passants ; gate OK. Piège : test golden_dir doit vérifier les composants du chemin plutôt que la chaîne complète (séparateur différent sur Windows).
 - T100 : romsets CPS1 générés depuis ref/mame-cps1/cps1.cpp via tools/extract_romsets.py (229 jeux, 4 régions conservées) ; types Load/Op/RegionDef/RomSetDef/GameInfo dans romset.rs avec find_game() ; sources de fichiers DirSource (recherche insensible à la casse), ZipSource (nom puis CRC32), ChainSource et sources_for() ; 23 tests unitaires passants. Piège : zip crate v9.x exige type paramètre explicite pour start_file::<&str, ()> ; GAMES est &[GameInfo] donc .iter() donne &&GameInfo — utiliser .iter().copied() ou boucle for directe.
 
+- T101 : construction des régions (regions.rs, 7 types de chargement + Continue/Reload/Ignore/Copy/Fill/NoDump, erreurs BadCrc/BadSize/OutOfRegion), DIP par défaut et décrits (dips.rs + dips_data.rs générés), game.rs (load_game, ticks_per_68k) ; 49 tests dont chargement réel ghouls, sf2, sf2ceea ; gate OK. Terminée par Claude après blocage de l'agent : Load écrivait le fichier entier au lieu de `size` octets, Fill/Copy écrivaient dans une région écrasée ensuite, tests en `static` non compilables (RegionDef n'est pas Copy -> définitions de test construites avec Box::leak).
 - (2026-11-21) cps1.toml créé (roms_dir = roms/, MAME X:/Mame_0287) ; golden MAME générés : tests-data/golden/{ghouls,sf2,sf2ceea}/f000120..f003000.png (non versionnés).
 
 ## Blocages
