@@ -37,7 +37,7 @@
 | 33 | T403 | P4 Intégration | cps-core : boucle publique, entrées, audio par trame |
 | 34 | T404 | P4 Intégration | Ghouls'n Ghosts (ghouls) : démarrage et attract mode (golden MAME) |
 | 35 | T405 | P4 Intégration | Street Fighter II (sf2, World 910522) : démarrage et attract mode |
-| 36 | T406 | P4 Intégration | Street Fighter II' Champion Edition (sf2ce) : 12 MHz, CPS-B-21, multiplication |
+| 36 | T406 | P4 Intégration | Street Fighter II' Champion Edition (sf2ceea, World 920313) : 12 MHz, CPS-B-21, multiplication |
 | 37 | T407 | P4 Intégration | Street Fighter II' Hyper Fighting (sf2hf) : démarrage et attract mode |
 | 38 | T408 | P4 Intégration | cps-core : savestates (sérialisation complète) |
 | 39 | T500 | P5 GUI (frontal JAMMA) | cps-gui : dépendances JAMMA épinglées et adaptateur Cps1Board (entrées, vidéo, son) |
@@ -55,5 +55,3 @@
 | 51 | T700 | P7 Précision et outils | Banc de performance et mesure de référence |
 | 52 | T701 | P7 Précision et outils | Précision : Q-VBL, Q-RESET68K, Q-WAIT (revue contre les golden) |
 | 53 | T702 | P7 Précision et outils | cps-gfx : compteurs raster CPS-B-21 (IRQ4) — préparation ganbare/CPS2 |
-
-Note : la phase P5 (T500-T505) dépend de la carte J200 (tag v0.1.0) du dépôt PuceArcade_JammaGui_Crates (board Hermes « jamma »), à faire avant.

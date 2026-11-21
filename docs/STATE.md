@@ -12,5 +12,7 @@ P0 Fondations. Prochaine carte : T000.
 - T003 : dépendances CPU puce-m68k et puce-z80 épinglées (révisions identiques à Puce16 Neo Geo) ; test de fumée cpu_crates.rs avec 3 tests (reset+MOVE.W+STOP, attente wait states, Z80 step API) ; gate OK. Piège : boucle step_clock doit stepper AVANT de vérifier at_instruction_boundary() sinon elle ne progresse pas après reset.
 - T004 : comparateur d'images golden cps-testkit (golden.rs adapté de Puce16 Neo Geo pour 384x224, ratio(), golden_dir()) ; 7 tests unitaires passants ; gate OK. Piège : test golden_dir doit vérifier les composants du chemin plutôt que la chaîne complète (séparateur différent sur Windows).
 
+- (2026-11-21) cps1.toml créé (roms_dir = roms/, MAME X:/Mame_0287) ; golden MAME générés : tests-data/golden/{ghouls,sf2,sf2ceea}/f000120..f003000.png (non versionnés).
+
 ## Blocages
 (aucun)

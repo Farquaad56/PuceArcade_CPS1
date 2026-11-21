@@ -21,4 +21,11 @@ octets 6-7 de chaque entrée = 0. Scénarios : silence, voice1, two_voices, stop
 
 ## Captures MAME (golden, NON versionnées)
 `powershell tools/mame_golden.ps1 -Game <jeu> -Frames 120,600,1500,3000 -Out tests-data/golden/<jeu>` (MAME 0.287, `X:\Mame_0287\mame.exe`,
-une exécution par trame, configuration vierge, son coupé). Sortie : `f<N>.png` (384×224).
+une exécution par trame, configuration vierge, son coupé). Sortie : `f%06d.png` (ex. `f000120.png`, 384×224).
+
+PLD factices : MAME 0.287 exige les dumps des PLD (fichiers de 260-279 octets : stf29.1a, iob1.11d, c632.ic1, s9263b.1a…) qui manquent dans
+les romsets de l'utilisateur ; ils ne servent pas à l'émulation (ni MAME ni ce projet ne les lisent). Des fichiers à zéro de la bonne taille sont
+placés dans `tests-data/golden/_pld_stubs/<romset>/` (non versionné) et ajoutés automatiquement au rompath par mame_golden.ps1 : MAME signale
+un mauvais CRC mais démarre. Les zips de l'utilisateur ne sont jamais modifiés.
+
+Golden générés le 2026-11-21 : ghouls, sf2, sf2ceea (trames 120, 600, 1500, 3000). sf2ce (920513) et sf2hf : romsets 0.287 absents.
