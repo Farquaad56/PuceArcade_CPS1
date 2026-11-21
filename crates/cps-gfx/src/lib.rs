@@ -7,6 +7,7 @@ pub mod config_data;
 pub mod decode;
 pub mod mapper;
 pub mod palette;
+pub mod regs;
 
 #[cfg(test)]
 mod tests;
