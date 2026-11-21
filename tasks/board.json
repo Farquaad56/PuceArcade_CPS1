@@ -39,7 +39,7 @@
     ],
     "file": "tasks/T003.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T004",
