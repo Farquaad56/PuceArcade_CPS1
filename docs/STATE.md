@@ -15,6 +15,7 @@ P1 ROMs et bus. Prochaine carte : T102.
 
 - T101 : construction des régions (regions.rs, 7 types de chargement + Continue/Reload/Ignore/Copy/Fill/NoDump, erreurs BadCrc/BadSize/OutOfRegion), DIP par défaut et décrits (dips.rs + dips_data.rs générés), game.rs (load_game, ticks_per_68k) ; 49 tests dont chargement réel ghouls, sf2, sf2ceea ; gate OK. Terminée par Claude après blocage de l'agent : Load écrivait le fichier entier au lieu de `size` octets, Fill/Copy écrivaient dans une région écrasée ensuite, tests en `static` non compilables (RegionDef n'est pas Copy -> définitions de test construites avec Box::leak).
 - (2026-11-21) cps1.toml créé (roms_dir = roms/, MAME X:/Mame_0287) ; golden MAME générés : tests-data/golden/{ghouls,sf2,sf2ceea}/f000120..f003000.png (non versionnés).
+- T102 : carte mémoire 68000 et E/S cps-bus (map68k.rs) avec trait VideoPort, Bus68k<V: VideoPort>, décodage exact des plages d'adresse spec docs/spec/01 §68000 ; IN1 lecture, cps1_dsw_r (IN0 + DIPs), nopr, coinctrl, latches son Latch1/Latch2 avec retour SoundCmd enum ; routage vidéo CPS-A write/CPS-B read-write/GFXRAM read-write via stub TestVideo ; 21 tests unitaires passants. Piège : clippy manual_range_contains sur tous les if a >= X && a < Y — corrigé par (X..Y).contains(&a) ; clippy manual_slice_fill sur la boucle de reset RAM — corrigé par self.ram.fill(0).
 
 ## Blocages
 (aucun)

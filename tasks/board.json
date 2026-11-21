@@ -76,14 +76,14 @@
   },
   {
     "id": "T102",
-    "title": "T102 cps-bus : carte m├®moire 68000 et E/S (vid├®o derri├¿re le trait VideoPort)",
+    "title": "T102 cps-bus : carte mémoire 68000 et E/S (vidéo derrière le trait VideoPort)",
     "phase": "P1 ROMs et bus",
     "deps": [
       "T101"
     ],
     "file": "tasks/T102.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T103",
