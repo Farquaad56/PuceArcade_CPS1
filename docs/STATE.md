@@ -10,6 +10,7 @@ P0 Fondations. Prochaine carte : T000.
 - T001 : interfaces gelées cps-common (clock.rs, video.rs, input.rs, crc.rs, bits.rs) avec 19 tests unitaires ; gate OK. Piège : clippy needless_range-loop sur la table CRC — corrigé par enumerate().
 - T002 : configuration locale cps-cart (error.rs + config.rs parse/load toml::Table) avec 5 tests unitaires ; gate OK. Piège : type annotation nécessaire pour le paramètre de closure dans map_err(|e: toml::de::Error|).
 - T003 : dépendances CPU puce-m68k et puce-z80 épinglées (révisions identiques à Puce16 Neo Geo) ; test de fumée cpu_crates.rs avec 3 tests (reset+MOVE.W+STOP, attente wait states, Z80 step API) ; gate OK. Piège : boucle step_clock doit stepper AVANT de vérifier at_instruction_boundary() sinon elle ne progresse pas après reset.
+- T004 : comparateur d'images golden cps-testkit (golden.rs adapté de Puce16 Neo Geo pour 384x224, ratio(), golden_dir()) ; 7 tests unitaires passants ; gate OK. Piège : test golden_dir doit vérifier les composants du chemin plutôt que la chaîne complète (séparateur différent sur Windows).
 
 ## Blocages
 (aucun)
