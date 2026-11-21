@@ -4,6 +4,7 @@
 pub mod config;
 #[rustfmt::skip]
 pub mod config_data;
+pub mod decode;
 pub mod mapper;
 
 #[cfg(test)]
