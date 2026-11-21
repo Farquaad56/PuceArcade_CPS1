@@ -5,3 +5,9 @@
 
 pub mod map68k;
 pub use map68k::{Bus68k, SoundCmd, VideoPort};
+
+pub mod sound;
+pub use sound::SoundBoard;
+
+pub mod chips_stub;
+pub use chips_stub::NullChips;
