@@ -1,7 +1,7 @@
 # STATE — journal de passation (garder < 150 lignes)
 
 ## Phase courante
-P1 ROMs et bus. Prochaine carte : T102.
+P1 ROMs et bus terminée. Prochaine carte : T201 (décodage des tuiles).
 
 ## Fait
 - (conception) Squelette du workspace (9 crates vides qui compilent), specs digérées docs/spec/00-04, ref/ (MAME, ymfm, crates CPU, modèle Neo Geo),
@@ -17,6 +17,7 @@ P1 ROMs et bus. Prochaine carte : T102.
 - (2026-11-21) cps1.toml créé (roms_dir = roms/, MAME X:/Mame_0287) ; golden MAME générés : tests-data/golden/{ghouls,sf2,sf2ceea}/f000120..f003000.png (non versionnés).
 - T102 : carte mémoire 68000 et E/S cps-bus (map68k.rs) avec trait VideoPort, Bus68k<V: VideoPort>, décodage exact des plages d'adresse spec docs/spec/01 §68000 ; IN1 lecture, cps1_dsw_r (IN0 + DIPs), nopr, coinctrl, latches son Latch1/Latch2 avec retour SoundCmd enum ; routage vidéo CPS-A write/CPS-B read-write/GFXRAM read-write via stub TestVideo ; 21 tests unitaires passants. Piège : clippy manual_range_contains sur tous les if a >= X && a < Y — corrigé par (X..Y).contains(&a) ; clippy manual_slice_fill sur la boucle de reset RAM — corrigé par self.ram.fill(0).
 - T103 : carte son Z80 cps-bus (sound.rs + chips_stub.rs) avec trait SoundChips, SoundBoard<C: SoundChips> pin server (tick() appelle cpu.tick(pins) une fois par T-state), NullChips stub pour tests ; 9 tests unitaires passants. Piège : clippy new_without_default sur NullChips — corrigé par impl Default ; import NullChips dans sound.rs non utilisé hors tests — déplacé dans le module #[cfg(test)].
+- T200 : configurations CPS-B et mappers générés (config_data.rs via tools/gen_cps_tables.py, 30 CPS-B, 58 mappers, 261 jeux) ; types CpsBConfig/GfxRange/Mapper/GameConfig dans config.rs avec find_config() (recherche par nom, fallback cps2) ; port de gfxrom_bank_mapper (mapper.rs, MAME l.2385-2430) avec décalage 1/0/1/3 selon type tuile ; 17 tests unitaires passants (configurations ghouls/sf2/sf2ce + mappers DM620/STF29). Piège : clippy unused_assignments sur `let mut shift = 0` immédiatement réassigné — corrigé par match expression directe ; collapsible_if sur les if imbriqués dans la boucle de recherche de plage.
 
 ## Blocages
 (aucun)
