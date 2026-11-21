@@ -78,7 +78,11 @@ fn m68k_reset_move_stop() {
         }
     }
     assert_eq!(machine.ticks, 40, "reset doit prendre exactement 40 ticks");
-    assert_eq!(cpu.state().pc, 0x104, "PC après reset doit être 0x104 (après fetch du vecteur PC)");
+    assert_eq!(
+        cpu.state().pc,
+        0x104,
+        "PC après reset doit être 0x104 (après fetch du vecteur PC)"
+    );
     assert_eq!(cpu.state().ssp, 0x1000, "SSP doit être initialisé à 0x1000");
 
     // Exécuter MOVE.W #$1234,D0 : 8 ticks supplémentaires (total 48)
@@ -88,8 +92,15 @@ fn m68k_reset_move_stop() {
             break;
         }
     }
-    assert_eq!(machine.ticks, 48, "MOVE.W #$1234,D0 doit prendre 8 ticks (total 48)");
-    assert_eq!(cpu.state().d[0], 0x1234, "D0 doit contenir 0x1234 après MOVE.W");
+    assert_eq!(
+        machine.ticks, 48,
+        "MOVE.W #$1234,D0 doit prendre 8 ticks (total 48)"
+    );
+    assert_eq!(
+        cpu.state().d[0],
+        0x1234,
+        "D0 doit contenir 0x1234 après MOVE.W"
+    );
 
     // Exécuter STOP #$2700 : atteint la frontière suivante puis is_stopped()
     loop {
@@ -108,7 +119,11 @@ fn m68k_reset_move_stop() {
             break;
         }
     }
-    assert_eq!(machine.ticks - ticks_before, 4, "cycle après STOP doit prendre 4 ticks");
+    assert_eq!(
+        machine.ticks - ticks_before,
+        4,
+        "cycle après STOP doit prendre 4 ticks"
+    );
 }
 
 // ──────────────────────────── Test 2 : attente (wait states) ─────────────────
@@ -202,7 +217,10 @@ fn m68k_wait_states() {
             break;
         }
     }
-    assert_eq!(machine.ticks, 56, "MOVE.W sans attente : +16 ticks (total 56)");
+    assert_eq!(
+        machine.ticks, 56,
+        "MOVE.W sans attente : +16 ticks (total 56)"
+    );
 
     // Avec attente de 2 horloges sur l'adresse 0x200 : +2 ticks exactement
     let mut machine_wait = WaitMachine::new();
@@ -226,7 +244,10 @@ fn m68k_wait_states() {
             break;
         }
     }
-    assert_eq!(machine_wait.ticks, 58, "MOVE.W avec attente de 2 : +18 ticks (total 58)");
+    assert_eq!(
+        machine_wait.ticks, 58,
+        "MOVE.W avec attente de 2 : +18 ticks (total 58)"
+    );
 }
 
 // ──────────────────────────── Test 3 : Z80 step API ──────────────────────────
@@ -237,9 +258,7 @@ struct Z80Machine {
 
 impl Z80Machine {
     fn new() -> Self {
-        let mut m = Self {
-            ram: [0; 65536],
-        };
+        let mut m = Self { ram: [0; 65536] };
         // Programme : LD A,1 ; ADD A,A ; HALT
         let prog: [u8; 4] = [0x3E, 0x01, 0x87, 0x76];
         m.ram[..4].copy_from_slice(&prog);
