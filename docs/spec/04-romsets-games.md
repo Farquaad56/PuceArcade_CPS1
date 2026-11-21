@@ -31,7 +31,7 @@ nom (insensible à la casse) puis par CRC.
 |---|---|---|---|---|---|---|
 | 1 | ghouls | — | cps1_10MHz | 10 MHz | CPS-B-01 / DM620 | ROM 68k : 4 × LOAD16_BYTE + 1 LOAD16_WORD ; gfx 0x300000 ; pas d'échantillons OKI (région 0xFF) |
 | 2 | sf2 | — | cps1_10MHz | 10 MHz | CPS-B-11 / STF29 | 6 boutons (IN2 via CPS-B 0x36) ; gfx 0x600000 ; OKI 0x40000 |
-| 3 | sf2ce | — | cps1_12MHz | 12 MHz | CPS-B-21 (défaut) / S9263B | ROM 68k LOAD16_WORD_SWAP ; multiplication CPS-B ; exécute du code en GFXRAM |
+| 3 | sf2ceea (romset présent ; sf2ce 920513 si fourni) | sf2ce | cps1_12MHz | 12 MHz | CPS-B-21 (défaut) / S9263B | ROM 68k LOAD16_WORD_SWAP ; multiplication CPS-B ; exécute du code en GFXRAM |
 | 4 | sf2hf | — | cps1_12MHz | 12 MHz | CPS-B-21 (défaut) / S9263B | idem sf2ce |
 Ensuite (phase P6) : tous les autres jeux `cps1_10MHz` / `cps1_12MHz` à `empty_init` sans bootleg ; puis forgottn (étoiles + uPD4701),
 ganbare (rasters), sf2ee (CPS-B en 8001C0, `init_sf2ee` l.14594-14601). Hors périmètre : `qsound` (Kabuki + QSound), bootlegs (cps1bl_*.cpp), CPS Changer.

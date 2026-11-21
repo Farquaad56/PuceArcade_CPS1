@@ -14,3 +14,5 @@
 - [RÉSOLU] Q-PAR : rapport fourni au frontal JAMMA (BoardInfo.video.aspect = 4:3, 3:4 pour les jeux ROT270) ; choix carré/TV dans le frontal.
 - [OUVERT] Q-FRAMENO : numéro de trame passé au rendu des étoiles (`screen.frame_number()` de MAME = trames terminées avant la mise à jour ?) : retenu `frame` avant incrément (T603), à vérifier sur forgottn.
 - [OUVERT] Q-4P : joueurs 3-4 (captcomm, mercs 3 joueurs…) : in2/in3 de la carte C non câblés à JammaInputs.players[2..4] (carte à planifier en P6).
+- [OUVERT] Q-ROMSETS : `roms/` (137 zips, anciens noms) : ghouls et sf2 complets ; sf2ce.zip contient sf2ceea (920313), utilisé comme cible Champion Edition (T406) ;
+  sf2hf.zip est un ancien clone sans graphismes (T407 bloquée tant qu'un romset 0.287 n'est pas fourni). 76 romsets CPS1 complets au total (vérification CRC du 2026-11-21).

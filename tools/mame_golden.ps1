@@ -6,6 +6,7 @@ param(
   [Parameter(Mandatory=$true)][string]$Out,
   [string]$Mame = "X:\Mame_0287\mame.exe",
   [string]$RomPath = "",          # dossier des ROMs ; par défaut : celui de cps1.toml (paths.roms_dir)
+  [string]$PldStubs = "tests-data/golden/_pld_stubs",  # PLD factices (voir tools/README-golden.md), ajoutés au rompath s'ils existent
   [switch]$Show                   # retire -video none si les captures sortent vides
 )
 $ErrorActionPreference = "Stop"
@@ -15,6 +16,7 @@ if ($RomPath -eq "" -and (Test-Path "cps1.toml")) {
   if ($m) { $RomPath = $m.Matches[0].Groups[1].Value }
 }
 if ($RomPath -eq "") { throw "Indiquer -RomPath ou renseigner paths.roms_dir dans cps1.toml" }
+if ((Test-Path $PldStubs) -and ($RomPath -notlike "*;*")) { $RomPath = $RomPath + ";" + (Resolve-Path $PldStubs).Path }
 New-Item -ItemType Directory -Force -Path $Out | Out-Null
 $outAbs = (Resolve-Path $Out).Path
 $env:CPS_PREFIX = "f"
