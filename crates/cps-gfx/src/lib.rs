@@ -8,6 +8,7 @@ pub mod decode;
 pub mod mapper;
 pub mod palette;
 pub mod regs;
+pub mod video_base;
 
 #[cfg(test)]
 mod tests;
