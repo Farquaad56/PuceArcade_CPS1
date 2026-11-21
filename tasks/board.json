@@ -417,8 +417,8 @@
   },
   {
     "id": "T500",
-    "title": "T500 cps-gui : application eframe, thread d'émulation, affichage de la trame",
-    "phase": "P5 GUI egui",
+    "title": "T500 cps-gui : dépendances JAMMA épinglées et adaptateur Cps1Board (entrées, vidéo, son)",
+    "phase": "P5 GUI (frontal JAMMA)",
     "deps": [
       "T408"
     ],
@@ -428,8 +428,8 @@
   },
   {
     "id": "T501",
-    "title": "T501 cps-gui : menu Fichier (jeux), pause/reset, capture d'écran",
-    "phase": "P5 GUI egui",
+    "title": "T501 cps-gui : DIP décrits, savestates et driver (catalogue des jeux)",
+    "phase": "P5 GUI (frontal JAMMA)",
     "deps": [
       "T500"
     ],
@@ -439,8 +439,8 @@
   },
   {
     "id": "T502",
-    "title": "T502 cps-gui : sortie audio cpal (tampon circulaire, rééchantillonnage, dérive)",
-    "phase": "P5 GUI egui",
+    "title": "T502 cps-gui : point d'entrée (frontal puce-jamma-gui) et validation manuelle",
+    "phase": "P5 GUI (frontal JAMMA)",
     "deps": [
       "T501"
     ],
@@ -450,8 +450,8 @@
   },
   {
     "id": "T503",
-    "title": "T503 cps-gui : entrées clavier/manettes (6 boutons) et DIP switches",
-    "phase": "P5 GUI egui",
+    "title": "T503 cps-gui : débogage CPU (BoardDebug : 68000, Z80, mémoire, pas à pas)",
+    "phase": "P5 GUI (frontal JAMMA)",
     "deps": [
       "T502"
     ],
@@ -461,8 +461,8 @@
   },
   {
     "id": "T504",
-    "title": "T504 cps-gui : débogueur (registres 68000/Z80, mémoire, pas à pas)",
-    "phase": "P5 GUI egui",
+    "title": "T504 cps-gui : débogage vidéo et son (registres CPS-A/CPS-B, palette, tuiles, couches)",
+    "phase": "P5 GUI (frontal JAMMA)",
     "deps": [
       "T503"
     ],
@@ -472,8 +472,8 @@
   },
   {
     "id": "T505",
-    "title": "T505 cps-gui : débogueur vidéo (CPS-A/B, palette, tuiles, sprites, couches)",
-    "phase": "P5 GUI egui",
+    "title": "T505 cps-gui : tests d'intégration par le contrat JAMMA",
+    "phase": "P5 GUI (frontal JAMMA)",
     "deps": [
       "T504"
     ],

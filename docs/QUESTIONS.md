@@ -10,6 +10,7 @@
   callbacks puis frame_update). À confirmer par les golden (T404). Si les sprites sont décalés d'une trame : inverser latch et rendu (ADR).
 - [OUVERT] Q-WAIT : wait states ROM/RAM/GFXRAM non émulés par MAME (« TODO: verify wait cycle »). 0 partout ; à revoir si un golden dérive (T701).
 - [OUVERT] Q-RESET68K : la séquence de reset de puce-m68k (40 horloges) diffère peut-être de celle de MAME : décalage de quelques horloges au démarrage.
-- [OUVERT] Q-AUDIOCLK : l'audio n'est pas l'horloge maître de l'émulation (cadence pilotée par la vidéo, 59,637 Hz) : gestion de dérive dans la GUI (T502).
-- [OUVERT] Q-PAR : rapport d'aspect à l'affichage (384×224 pixels, écran 4:3) : défaut 4:3 dans la GUI (T500).
+- [OUVERT] Q-AUDIOCLK : l'audio n'est pas l'horloge maître de l'émulation (cadence pilotée par la vidéo, 59,637 Hz) : gestion de dérive dans le frontal JAMMA (carte J106 de PuceArcade_JammaGui_Crates).
+- [RÉSOLU] Q-PAR : rapport fourni au frontal JAMMA (BoardInfo.video.aspect = 4:3, 3:4 pour les jeux ROT270) ; choix carré/TV dans le frontal.
 - [OUVERT] Q-FRAMENO : numéro de trame passé au rendu des étoiles (`screen.frame_number()` de MAME = trames terminées avant la mise à jour ?) : retenu `frame` avant incrément (T603), à vérifier sur forgottn.
+- [OUVERT] Q-4P : joueurs 3-4 (captcomm, mercs 3 joueurs…) : in2/in3 de la carte C non câblés à JammaInputs.players[2..4] (carte à planifier en P6).

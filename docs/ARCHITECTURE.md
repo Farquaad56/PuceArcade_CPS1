@@ -16,7 +16,7 @@ PuceArcade_CPS1/
     cps-bus      carte mémoire 68000, E/S, latches, ports CPS-A/CPS-B ; carte son Z80 (SoundBoard : Z80 + YM + OKI)
     cps-core     Machine, ordonnanceur (68000 maître), interruptions, trame, audio, savestates, débogage
     cps-testkit  comparateur d'images golden (PNG MAME) et utilitaires d'oracle
-    cps-gui      application egui/eframe (seule à dépendre de eframe, cpal, gilrs, rfd)
+    cps-gui      adaptateur JAMMA (Cps1Board, Cps1Driver) + binaire qui lance le frontal puce-jamma-gui (ADR-002)
   tools/        générateurs (tables CPS-B/mappers, romsets, ADPCM), oracles C++ (ymfm, OKI), scripts MAME golden
   ref/          sources de référence EN LECTURE SEULE (MAME capcom, MAME sound, MAME emu tilemap/drawgfx, ymfm, crates CPU, modèle Puce16 Neo Geo)
   docs/ spec/ adr/
@@ -42,10 +42,10 @@ Les accès bus 68000 vers les latches son se font donc avec la carte son à l'he
 Composition de trame complète au début du VBLANK, à l'image de MAME (`screen_update_cps1`). Le framebuffer 384×224 (0x00RRGGBB) est la référence
 comparée aux PNG MAME. Pas de rendu par ligne tant qu'aucun jeu cible n'utilise d'IRQ raster (ADR à écrire si besoin : ganbare, P6).
 
-## GUI
-Le cœur ne connaît ni egui ni les threads. `cps-gui` lance l'émulation dans un thread, échange via canal (commandes -> état, trames -> UI).
-Vidéo : framebuffer -> texture egui (rapport 4:3 par défaut). Audio : ring buffer SPSC -> cpal. Entrées : trait `InputProvider` (6 boutons + système).
-Modèle de code : `ref/puce16-neogeo/ng-gui/` (même auteur, même architecture).
+## GUI (ADR-002)
+Le GUI est le frontal réutilisable `puce-jamma-gui` (dépôt PuceArcade_JammaGui_Crates). `cps-gui` implémente le contrat `JammaBoard`
+(`ref/puce-jamma/00-contrat-jamma.md`) : entrées JAMMA actives hautes -> IN0/IN1/IN2 actifs bas, image 384×224 (rotation ROT0/ROT270 du jeu),
+son mono 55 930 Hz, DIP décrits, savestates, débogage (68000, Z80, CPS-A/B, palette, tuiles, couches). Le cœur ne connaît ni egui ni threads.
 
 ## Dépendances autorisées
-`eframe/egui`, `cpal`, `gilrs`, `rfd`, `crossbeam-channel` (GUI) ; `serde` + `bincode`, `toml`, `zip`, `png`, `tempfile` (dev). Tout autre ajout = ADR.
+`puce-jamma`, `puce-jamma-gui` (git épinglé, cps-gui uniquement) ; `serde` + `bincode`, `toml`, `zip`, `png`, `tempfile` (dev). Tout autre ajout = ADR.

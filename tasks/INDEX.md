@@ -40,12 +40,12 @@
 | 36 | T406 | P4 Intégration | Street Fighter II' Champion Edition (sf2ce) : 12 MHz, CPS-B-21, multiplication |
 | 37 | T407 | P4 Intégration | Street Fighter II' Hyper Fighting (sf2hf) : démarrage et attract mode |
 | 38 | T408 | P4 Intégration | cps-core : savestates (sérialisation complète) |
-| 39 | T500 | P5 GUI egui | cps-gui : application eframe, thread d'émulation, affichage de la trame |
-| 40 | T501 | P5 GUI egui | cps-gui : menu Fichier (jeux), pause/reset, capture d'écran |
-| 41 | T502 | P5 GUI egui | cps-gui : sortie audio cpal (tampon circulaire, rééchantillonnage, dérive) |
-| 42 | T503 | P5 GUI egui | cps-gui : entrées clavier/manettes (6 boutons) et DIP switches |
-| 43 | T504 | P5 GUI egui | cps-gui : débogueur (registres 68000/Z80, mémoire, pas à pas) |
-| 44 | T505 | P5 GUI egui | cps-gui : débogueur vidéo (CPS-A/B, palette, tuiles, sprites, couches) |
+| 39 | T500 | P5 GUI (frontal JAMMA) | cps-gui : dépendances JAMMA épinglées et adaptateur Cps1Board (entrées, vidéo, son) |
+| 40 | T501 | P5 GUI (frontal JAMMA) | cps-gui : DIP décrits, savestates et driver (catalogue des jeux) |
+| 41 | T502 | P5 GUI (frontal JAMMA) | cps-gui : point d'entrée (frontal puce-jamma-gui) et validation manuelle |
+| 42 | T503 | P5 GUI (frontal JAMMA) | cps-gui : débogage CPU (BoardDebug : 68000, Z80, mémoire, pas à pas) |
+| 43 | T504 | P5 GUI (frontal JAMMA) | cps-gui : débogage vidéo et son (registres CPS-A/CPS-B, palette, tuiles, couches) |
+| 44 | T505 | P5 GUI (frontal JAMMA) | cps-gui : tests d'intégration par le contrat JAMMA |
 | 45 | T600 | P6 Autres jeux CPS1 | cps-gfx : étoiles (cps1_render_stars) |
 | 46 | T601 | P6 Autres jeux CPS1 | cps-bus : Forgotten Worlds (forgottn) — uPD4701 (molettes) et LWIO |
 | 47 | T602 | P6 Autres jeux CPS1 | cps-cart : machines supportées étendues (forgottn, sf2ee) et liste des jeux jouables |
@@ -55,3 +55,5 @@
 | 51 | T700 | P7 Précision et outils | Banc de performance et mesure de référence |
 | 52 | T701 | P7 Précision et outils | Précision : Q-VBL, Q-RESET68K, Q-WAIT (revue contre les golden) |
 | 53 | T702 | P7 Précision et outils | cps-gfx : compteurs raster CPS-B-21 (IRQ4) — préparation ganbare/CPS2 |
+
+Note : la phase P5 (T500-T505) dépend de la carte J200 (tag v0.1.0) du dépôt PuceArcade_JammaGui_Crates (board Hermes « jamma »), à faire avant.

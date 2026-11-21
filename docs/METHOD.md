@@ -24,5 +24,5 @@ Cartes « port » = traduction 1:1 d'un fichier de `ref/` (MAME cps1*.cpp, okim6
 - Déterminisme : chaque test d'intégration s'exécute deux fois et compare un hash d'état.
 
 ## Phases (chaîne linéaire, voir tasks/INDEX.md)
-P0 fondations -> P1 ROMs et bus -> P2 vidéo -> P3 audio -> P4 intégration (Ghouls puis SF2) -> P5 GUI -> P6 autres jeux CPS1 -> P7 précision et outils.
+P0 fondations -> P1 ROMs et bus -> P2 vidéo -> P3 audio -> P4 intégration (Ghouls puis SF2) -> P5 GUI (frontal JAMMA, après J200 du dépôt PuceArcade_JammaGui_Crates) -> P6 autres jeux CPS1 -> P7 précision et outils.
 Kanban Hermes : `tasks/board.json` (id, phase, deps, statut) importé par `scripts/kanban_import.ps1` (board « cps1 », profil `rust-dev`).

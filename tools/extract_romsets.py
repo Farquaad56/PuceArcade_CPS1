@@ -62,7 +62,7 @@ def parse():
             sys.exit(f"{name} : ligne non reconnue : {line}")
         sets[name] = (regions, sorted(skipped))
     games = []
-    for g in re.finditer(r"^GAME\(\s*[^,]+,\s*(\w+)\s*,\s*(\w+)\s*,\s*(\w+)\s*,\s*(\w+)\s*,\s*\w+\s*,\s*(\w+)\s*,\s*\w+\s*,\s*\"([^\"]*)\"\s*,\s*\"((?:[^\"\\\\]|\\\\.)*)\"\s*,\s*([^)]*)\)", src, flags=re.M):
+    for g in re.finditer(r"^GAME\(\s*[^,]+,\s*(\w+)\s*,\s*(\w+)\s*,\s*(\w+)\s*,\s*(\w+)\s*,\s*\w+\s*,\s*(\w+)\s*,\s*(ROT\d+)\s*,\s*\"([^\"]*)\"\s*,\s*\"((?:[^\"\\\\]|\\\\.)*)\"\s*,\s*([^)]*)\)", src, flags=re.M):
         games.append(g.groups())
     return sets, games
 
@@ -80,14 +80,14 @@ def main():
         out.append(f"/// Régions ignorées : {', '.join(skipped) or '(aucune)'}")
         out.append(f"pub const RS_{name.upper()}: RomSetDef = RomSetDef {{ name: \"{name}\", regions: &[\n" + "\n".join(regs) + "\n] };")
     out.append("")
-    out.append("/// Lignes GAME de cps1.cpp, dans l'ordre : (nom, parent, config machine, ports d'entrée, init, constructeur, titre, drapeaux).")
+    out.append("/// Lignes GAME de cps1.cpp, dans l'ordre : (nom, parent, config machine, ports d'entrée, init, rotation, constructeur, titre, drapeaux).")
     out.append("pub static GAMES: &[GameInfo] = &[")
-    for name, parent, machine, inp, init, maker, title, flags in games:
+    for name, parent, machine, inp, init, rot, maker, title, flags in games:
         if name not in sets:
             continue
         title = title.replace('\\"', "'")
         out.append(f'    GameInfo {{ name: "{name}", parent: "{"" if parent == "0" else parent}", machine: "{machine}", input: "{inp}", init: "{init}", '
-                   f'maker: "{maker}", title: "{title}", not_working: {"true" if "NOT_WORKING" in flags else "false"}, romset: &RS_{name.upper()} }},')
+                   f'rotation: {rot[3:]}, maker: "{maker}", title: "{title}", not_working: {"true" if "NOT_WORKING" in flags else "false"}, romset: &RS_{name.upper()} }},')
     out.append("];")
     text = "\n".join(out) + "\n"
     if "--check" in sys.argv:

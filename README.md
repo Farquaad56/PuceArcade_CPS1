@@ -5,6 +5,7 @@ Priorité : **Ghouls'n Ghosts** (`ghouls`), puis **Street Fighter II** (`sf2`, `
 
 - CPU : crates de l'auteur, épinglées — [puce-m68k](https://github.com/Farquaad56/CPU-Motorola_68K_Crates_Rust) (68000) et [puce-z80](https://github.com/Farquaad56/CPU-Zilog-Z80_Crates_Rust) (Z80).
 - Référence matérielle : MAME (`src/mame/capcom/cps1*.cpp`, copiés dans `ref/mame-cps1/`, BSD-3), ymfm (YM2151), MAME okim6295/okiadpcm (OKI).
+- GUI : frontal JAMMA réutilisable [PuceArcade_JammaGui_Crates](https://github.com/Farquaad56/PuceArcade_JammaGui_Crates) (filtres, overlay, manettes, DIP, débogueur).
 - Méthode : celle de Puce16 Neo Geo (`docs/METHOD.md`) — specs digérées (`docs/spec/`), cartes autoportantes (`tasks/`), gate unique, oracles.
 
 ## Démarrer
