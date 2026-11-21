@@ -170,79 +170,6 @@ impl Video {
         ((aligned & 0x3FFFF) / 2) as usize % GFXRAM_WORDS
     }
 
-    /// Écriture CPS-A avec COMBINE_DATA (l.2115-2134).
-    pub fn cps_a_write(&mut self, word: usize, data: u16, uds: bool, lds: bool) {
-        if uds && lds {
-            self.regs_a[word] = data;
-        } else if uds {
-            let old = self.regs_a[word];
-            // Write upper byte of data to high byte position
-            let upper_byte = data >> 8;
-            self.regs_a[word] = (old & 0x00FF) | (upper_byte << 8);
-        } else if lds {
-            let old = self.regs_a[word];
-            // Write lower byte of data to low byte position
-            let lower_byte = data & 0xFF;
-            self.regs_a[word] = (old & 0xFF00) | lower_byte;
-        }
-
-        // Writing PALETTE_BASE triggers immediate palette copy
-        if word == PALETTE_BASE {
-            // TODO: T203b - cps1_build_palette()
-        }
-    }
-
-    /// Lecture CPS-B (l.2136-2181).
-    pub fn cps_b_read(&self, word: usize) -> u16 {
-        let cfg = self.cfg;
-        // 1. Adresse CPS-B spécifique au jeu
-        if cfg.cpsb.cpsb_addr >= 0 && word == (cfg.cpsb.cpsb_addr / 2) as usize {
-            return cfg.cpsb.cpsb_value as u16;
-        }
-
-        // 2. Multiplication CPS-B
-        if cfg.cpsb.mult_factor1 >= 0 && cfg.cpsb.mult_factor2 >= 0 {
-            let f1 = (cfg.cpsb.mult_factor1 / 2) as usize;
-            let f2 = (cfg.cpsb.mult_factor2 / 2) as usize;
-            if word == (cfg.cpsb.mult_result_lo / 2) as usize {
-                let prod = (self.regs_b[f1] as u32) * (self.regs_b[f2] as u32);
-                return prod as u16;
-            }
-            if word == (cfg.cpsb.mult_result_hi / 2) as usize {
-                let prod = (self.regs_b[f1] as u32) * (self.regs_b[f2] as u32);
-                return ((prod >> 16) & 0xFFFF) as u16;
-            }
-        }
-
-        // 3. Entrées IN2/IN3
-        if cfg.in2_addr >= 0 && word == (cfg.in2_addr / 2) as usize {
-            return self.in2;
-        }
-        if cfg.in3_addr >= 0 && word == (cfg.in3_addr / 2) as usize {
-            return self.in3;
-        }
-
-        // 5. Sinon -> 0xFFFF
-        0xFFFF
-    }
-
-    /// Écriture CPS-B avec COMBINE_DATA (l.2183-2244).
-    pub fn cps_b_write(&mut self, word: usize, data: u16, uds: bool, lds: bool) {
-        if uds && lds {
-            self.regs_b[word] = data;
-        } else if uds {
-            let old = self.regs_b[word];
-            // Write upper byte of data to high byte position
-            let upper_byte = data >> 8;
-            self.regs_b[word] = (old & 0x00FF) | (upper_byte << 8);
-        } else if lds {
-            let old = self.regs_b[word];
-            // Write lower byte of data to low byte position
-            let lower_byte = data & 0xFF;
-            self.regs_b[word] = (old & 0xFF00) | lower_byte;
-        }
-    }
-
     /// Écriture GFXRAM avec COMBINE_DATA (l.2368-2415).
     pub fn gfxram_write(&mut self, word: usize, data: u16, uds: bool, lds: bool) {
         if uds && lds {
@@ -264,19 +191,6 @@ impl Video {
     pub fn set_inputs(&mut self, in2: u8, in3: u8) {
         self.in2 = in2 as u16;
         self.in3 = in3 as u16;
-    }
-
-    /// VBLANK : latch sprites et recalcul des bases (l.3063-3070).
-    pub fn vblank(&mut self) {
-        // Recalculer les bases vidéo
-        self.get_video_base();
-
-        // Latch de la RAM sprites dans le tampon (cps1_objram_latch, l.3063-3070)
-        let obj_base = self.bases.obj;
-        for i in 0..0x400 {
-            let src = (obj_base + i) % GFXRAM_WORDS;
-            self.buffered_obj[i] = self.gfxram[src];
-        }
     }
 }
 
