@@ -1,0 +1,12 @@
+# Copier en cps1.toml (ignoré par git) et adapter.
+[paths]
+roms_dir  = "H:/__Emulator__/PuceArcade_CPS1/roms"   # ghouls.zip sf2.zip sf2ce.zip sf2hf.zip (format MAME 0.287)
+saves_dir = "saves"
+mame      = "X:/Mame_0287/mame.exe"                  # pour tools/mame_golden.ps1
+
+[system]
+game = "ghouls"            # jeu chargé par défaut
+allow_bad_crc = false      # true : un CRC différent n'est qu'un avertissement
+
+[dips]                      # vide = valeurs par défaut de MAME (docs/spec/01 §DIP)
+# ghouls = { dswa = 0xFF, dswb = 0xFD, dswc = 0xFF }

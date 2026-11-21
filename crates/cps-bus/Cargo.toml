@@ -1,0 +1,17 @@
+[package]
+name = "cps-bus"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+cps-common = { path = "../cps-common" }
+cps-cart = { path = "../cps-cart" }
+cps-gfx = { path = "../cps-gfx" }
+cps-ym2151 = { path = "../cps-ym2151" }
+cps-oki = { path = "../cps-oki" }
+puce-z80 = { workspace = true }
+serde = { version = "1", features = ["derive"], optional = true }
+
+[features]
+serde = ["dep:serde", "cps-gfx/serde", "cps-ym2151/serde", "cps-oki/serde"]

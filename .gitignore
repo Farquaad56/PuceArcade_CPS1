@@ -1,0 +1,20 @@
+target/
+roms/
+saves/
+tests-data/golden/
+cfg/
+nvram/
+_to_delete/
+cps1.toml
+*.rom
+*.bin
+*.zip
+*.7z
+*.rar
+*.gz
+*.tgz
+*.exe
+__pycache__/
+# oracles versionnés (générés par Claude, voir tools/README-golden.md)
+!tests-data/ym2151/*.bin
+!tests-data/oki/*.bin

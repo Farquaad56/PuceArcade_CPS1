@@ -1,0 +1,20 @@
+[package]
+name = "cps-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+cps-common = { path = "../cps-common" }
+cps-cart = { path = "../cps-cart" }
+cps-gfx = { path = "../cps-gfx", features = ["serde"] }
+cps-ym2151 = { path = "../cps-ym2151", features = ["serde"] }
+cps-oki = { path = "../cps-oki", features = ["serde"] }
+cps-bus = { path = "../cps-bus", features = ["serde"] }
+puce-m68k = { workspace = true }
+puce-z80 = { workspace = true }
+serde = { version = "1", features = ["derive"] }
+bincode = "1"
+
+[dev-dependencies]
+cps-testkit = { path = "../cps-testkit" }
