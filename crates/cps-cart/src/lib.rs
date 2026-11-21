@@ -3,9 +3,11 @@
 
 pub mod config;
 pub mod error;
+#[rustfmt::skip]
+pub mod romsets_data;
+pub mod romset;
+pub mod source;
 
-#[cfg(test)]
-mod smoke {
-    #[test]
-    fn it_builds() {}
-}
+pub use config::Config;
+pub use error::CartError;
+pub use romset::{find_game, GameInfo};
