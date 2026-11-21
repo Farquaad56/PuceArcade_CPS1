@@ -9,6 +9,7 @@ pub mod mapper;
 pub mod palette;
 pub mod regs;
 pub mod sprites;
+pub mod sprites_render;
 pub mod tilemap;
 pub mod video_base;
 pub mod video_io;
