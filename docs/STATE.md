@@ -1,7 +1,7 @@
 # STATE — journal de passation (garder < 150 lignes)
 
 ## Phase courante
-P2 Vidéo CPS-A/CPS-B. Prochaine carte : T203b (écritures CPS-A, CPS-B, latch sprites).
+P2 Vidéo CPS-A/CPS-B. Prochaine carte : T204 (à déterminer).
 
 ## Fait
 - (conception) Squelette du workspace (9 crates vides qui compilent), specs digérées docs/spec/00-04, ref/ (MAME, ymfm, crates CPU, modèle Neo Geo),
@@ -21,6 +21,7 @@ P2 Vidéo CPS-A/CPS-B. Prochaine carte : T203b (écritures CPS-A, CPS-B, latch s
 - T201 : décodage des tuiles CPS1 (decode.rs) avec Layout enum (L8x8, L8x8b, L16x16, L32x32), tile_pixel() implémentant les 4 layouts selon spec docs/spec/02 §Décodage ; 4 tests unitaires passants couvrant tous les layouts + modulo code. Piège : clippy let_and_return sur `let pen = ...; pen` — corrigé en retour direct de l'expression ; unnecessary_cast sur `pen as u8`.
 - T202 : palette CPS1 (palette.rs) avec color_from_word() (formule spec 02 §Palette, division entière par 0x2D) et cps1_build_palette() port 1:1 MAME l.2612-2646 ; constantes PALETTE_ENTRIES=0xC00, BACKGROUND_PEN=0xBFF ; 4 tests unitaires passants (conversion couleurs + copie pages avec sauts). Piège : clippy needless_range_loop sur les boucles de test — corrigé par iter_mut().enumerate() ; identity_op dans decode.rs hérité d'une carte précédente.
 - T203 : état vidéo CPS1 (regs.rs + video_base.rs) avec Video struct, constantes registres CPS-A/CPS-B, new/relink/reset/cps1_base/gfxram_write/set_inputs/get_video_base/vblank ; port complet de cps1_get_video_base MAME l.2246-2366 incluant les branches bootleg_kludge (0x01, 2, 3, 0x88) et logique d'activation des couches ; 12 tests unitaires passants couvrant bases vidéo, défilement, activation couches, COMBINE_DATA. Piège : type mismatch i32/u32 dans cps1_base — corrigé par cast `boundary as i32` ; gfxram_write COMBINE_DATA doit extraire les octets (data >> 8) et (data & 0xFF) pas décaler l'ensemble ; clippy if_same_then_else sur branches bootleg identiques — consolidées.
+- T203b : écritures CPS-A/CPS-B et latch sprites dans video_io.rs (port MAME l.2115-2244, 3054-3070) ; cps_a_write avec copie palette immédiate à PALETTE_BASE via cps1_build_palette ; cps_b_read avec checks cpsb_addr/mult_result/in2/in3 dans l'ordre spec ; cps_b_write COMBINE_DATA ; vblank appelant get_video_base puis latch sprites (buffered_obj). 5 tests unitaires passants couvrant copie palette ghouls, lectures CPS-B ghouls/sf2/sf2ce, multiplication sf2ce, latch sprites. Piège : comparaison word as i32 == cfg.cpsb.cpsb_addr / 2 sans check >=0 (ghouls a cpsb_addr=-1) ; test palette doit écrire à gfxram[0xA000] pas à pal_base calculé avant l'écriture du registre.
 
 ## Blocages
 (aucun)

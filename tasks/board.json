@@ -142,14 +142,14 @@
   },
   {
     "id": "T203b",
-    "title": "T203b cps-gfx : ├®critures CPS-A (copie de palette), CPS-B (lecture/├®criture, multiplication), latch des sprites au VBLANK",
-    "phase": "P2 Vid├®o CPS-A/CPS-B",
+    "title": "T203b cps-gfx : écritures CPS-A (copie de palette), CPS-B (lecture/écriture, multiplication), latch des sprites au VBLANK",
+    "phase": "P2 Vidéo CPS-A/CPS-B",
     "deps": [
       "T203"
     ],
     "file": "tasks/T203b.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T204",
