@@ -10,8 +10,8 @@ pub mod vblank;
 pub use machine::Machine;
 
 // Re-exports for GUI convenience
-pub use cps_cart::{Config, load_game, Game};
-pub use cps_common::{Framebuffer, InputState, Dips};
+pub use cps_cart::{load_game, Config, Game};
+pub use cps_common::{Dips, Framebuffer, InputState};
 
 /// Frame rate: 59.637 Hz (derived from 5.04 GHz / TICKS_PER_FRAME)
 pub const FRAME_HZ: f64 = 5_040_000_000.0 / 84_510_720.0;
@@ -46,7 +46,11 @@ mod api_tests {
         let audio = m.take_audio();
         // Expected: ~938 samples (TICKS_PER_FRAME / TICKS_PER_YM_SAMPLE)
         // 84510720 / 90112 = 937.8 -> rounds to 938
-        assert!(audio.len() == 937 || audio.len() == 938, "got {} samples", audio.len());
+        assert!(
+            audio.len() == 937 || audio.len() == 938,
+            "got {} samples",
+            audio.len()
+        );
         // All values should be 0.0 (Z80 in HALT, YM silent)
         for sample in &audio {
             assert_eq!(sample[0], 0.0);
@@ -62,6 +66,12 @@ mod api_tests {
         m.run_frame();
         let second = m.take_audio().len();
         // Expected: ~1876 total (2 * TICKS_PER_FRAME / TICKS_PER_YM_SAMPLE)
-        assert!(first + second == 1875 || first + second == 1876, "got {}+{}={}", first, second, first + second);
+        assert!(
+            first + second == 1875 || first + second == 1876,
+            "got {}+{}={}",
+            first,
+            second,
+            first + second
+        );
     }
 }
