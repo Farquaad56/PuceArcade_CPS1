@@ -3,6 +3,7 @@
 #![forbid(unsafe_code)]
 
 pub mod common;
+pub mod fm_tables;
 
 #[cfg(feature = "serde")]
 mod serde_arr;
