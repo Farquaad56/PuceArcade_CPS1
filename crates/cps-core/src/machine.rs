@@ -153,10 +153,13 @@ pub mod testutil {
                 audiocpu,
                 oki,
                 stars: None,
+                ..Default::default()
             },
             ticks_per_68k: 504,
             dips: default_dips("ghouls"),
             cpsb_at_1c0: false,
+            audio_opcodes: None,
+            qsound_dsp: None,
         }
     }
 }

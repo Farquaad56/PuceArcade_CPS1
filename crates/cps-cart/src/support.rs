@@ -15,8 +15,15 @@ pub enum Support {
     NotWorking,
 }
 
-const MACHINES: [&str; 3] = ["cps1_10MHz", "cps1_12MHz", "forgottn"];
-const INITS: [&str; 2] = ["empty_init", "init_sf2ee"];
+const MACHINES: [&str; 4] = ["cps1_10MHz", "cps1_12MHz", "forgottn", "qsound"];
+const INITS: [&str; 6] = [
+    "empty_init",
+    "init_sf2ee",
+    "init_wof",
+    "init_dino",
+    "init_punisher",
+    "init_slammast",
+];
 
 pub fn support_of(info: &GameInfo) -> Support {
     if !MACHINES.contains(&info.machine) {
@@ -47,10 +54,12 @@ mod tests {
     fn card_values() {
         let s = |n: &str| support_of(find_game(n).unwrap());
         assert_eq!(s("ghouls"), Support::Ok);
-        assert_eq!(s("wof"), Support::UnsupportedMachine);
+        assert_eq!(s("wof"), Support::Ok);
+        assert_eq!(s("pang3"), Support::UnsupportedMachine);
         assert_eq!(s("sf2ee"), Support::Ok);
         assert_eq!(s("forgottn"), Support::Ok);
-        assert_eq!(supported_games().len(), 160);
+        // 160 CPS1 + 18 QSound (wof, dino, punisher, slammast, mbombrd et leurs clones)
+        assert_eq!(supported_games().len(), 178);
     }
 
     #[test]

@@ -108,11 +108,12 @@ mod tests {
     }
 
     #[test]
-    fn qsound_and_not_working_games_are_excluded() {
+    fn unsupported_hardware_is_excluded() {
         let names: Vec<&str> = supported_games().iter().map(|g| g.name).collect();
-        assert!(!names.contains(&"dino") && !names.contains(&"punisher"));
+        assert!(names.contains(&"dino") && names.contains(&"punisher"), "QSound pris en charge");
+        assert!(!names.contains(&"pang3"));
         assert!(names.contains(&"1941"));
-        assert_eq!(names.len(), 160);
+        assert_eq!(names.len(), 178);
     }
 
     #[test]

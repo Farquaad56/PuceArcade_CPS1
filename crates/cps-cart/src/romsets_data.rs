@@ -3117,7 +3117,7 @@ pub const RS_SF2JL: RomSetDef = RomSetDef { name: "sf2jl", regions: &[
             Op::Load { kind: Load::Byte, file: "sf2j_19.12c", offset: 0x20000, size: 0x20000, crc: 0xBEADE53F },
         ] },
 ] };
-/// Régions ignorées : user1
+/// Régions ignorées : (aucune)
 pub const RS_SF2EBBL: RomSetDef = RomSetDef { name: "sf2ebbl", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "12.bin", offset: 0x0, size: 0x40000, crc: 0xA258B4D5 },
@@ -3151,12 +3151,15 @@ pub const RS_SF2EBBL: RomSetDef = RomSetDef { name: "sf2ebbl", regions: &[
             Op::Load { kind: Load::Byte, file: "03.bin", offset: 0x0, size: 0x8000, crc: 0xA4823A1B },
             Op::Continue { offset: 0x10000, size: 0x8000 },
         ] },
+        RegionDef { name: "user1", size: 0x20000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "04.bin", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
+        ] },
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "02.bin", offset: 0x0, size: 0x20000, crc: 0x7F162009 },
             Op::Load { kind: Load::Byte, file: "01.bin", offset: 0x20000, size: 0x20000, crc: 0xBEADE53F },
         ] },
 ] };
-/// Régions ignorées : user1
+/// Régions ignorées : (aucune)
 pub const RS_SF2EBBL2: RomSetDef = RomSetDef { name: "sf2ebbl2", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "27c020.7", offset: 0x0, size: 0x40000, crc: 0xA258B4D5 },
@@ -3186,12 +3189,15 @@ pub const RS_SF2EBBL2: RomSetDef = RomSetDef { name: "sf2ebbl2", regions: &[
             Op::Load { kind: Load::Byte, file: "27c512.3", offset: 0x0, size: 0x8000, crc: 0xA4823A1B },
             Op::Continue { offset: 0x10000, size: 0x8000 },
         ] },
+        RegionDef { name: "user1", size: 0x20000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "27c512.8", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
+        ] },
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "27c010.2", offset: 0x0, size: 0x20000, crc: 0x7F162009 },
             Op::Load { kind: Load::Byte, file: "27c010.1", offset: 0x20000, size: 0x20000, crc: 0xBEADE53F },
         ] },
 ] };
-/// Régions ignorées : user1
+/// Régions ignorées : (aucune)
 pub const RS_SF2EBBL3: RomSetDef = RomSetDef { name: "sf2ebbl3", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "ce91e-b.bin", offset: 0x0, size: 0x80000, crc: 0x963200D2 },
@@ -3227,12 +3233,15 @@ pub const RS_SF2EBBL3: RomSetDef = RomSetDef { name: "sf2ebbl3", regions: &[
             Op::Load { kind: Load::Byte, file: "27512.3", offset: 0x0, size: 0x8000, crc: 0xA4823A1B },
             Op::Continue { offset: 0x10000, size: 0x8000 },
         ] },
+        RegionDef { name: "user1", size: 0x20000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "27512.8", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
+        ] },
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "27010.2", offset: 0x0, size: 0x20000, crc: 0x7F162009 },
             Op::Load { kind: Load::Byte, file: "27010.1", offset: 0x20000, size: 0x20000, crc: 0xBEADE53F },
         ] },
 ] };
-/// Régions ignorées : user1
+/// Régions ignorées : (aucune)
 pub const RS_SF2STT: RomSetDef = RomSetDef { name: "sf2stt", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::NoDump,
@@ -3265,6 +3274,9 @@ pub const RS_SF2STT: RomSetDef = RomSetDef { name: "sf2stt", regions: &[
         RegionDef { name: "audiocpu", size: 0x18000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "3.stt", offset: 0x0, size: 0x8000, crc: 0xA4823A1B },
             Op::Continue { offset: 0x10000, size: 0x8000 },
+        ] },
+        RegionDef { name: "user1", size: 0x20000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "4.stt", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
         ] },
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "2.stt", offset: 0x0, size: 0x20000, crc: 0x7F162009 },
@@ -3309,7 +3321,7 @@ pub const RS_SF2RE: RomSetDef = RomSetDef { name: "sf2re", regions: &[
             Op::Load { kind: Load::Byte, file: "27c020.u210", offset: 0x0, size: 0x40000, crc: 0x6CFFFB11 },
         ] },
 ] };
-/// Régions ignorées : plds, user1
+/// Régions ignorées : plds
 pub const RS_SF2MKOT: RomSetDef = RomSetDef { name: "sf2mkot", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "u222.bin", offset: 0x0, size: 0x80000, crc: 0xB01A94B6 },
@@ -3339,11 +3351,14 @@ pub const RS_SF2MKOT: RomSetDef = RomSetDef { name: "sf2mkot", regions: &[
             Op::Load { kind: Load::Byte, file: "conv2.u191", offset: 0x0, size: 0x8000, crc: 0x08F6B60E },
             Op::Continue { offset: 0x10000, size: 0x8000 },
         ] },
+        RegionDef { name: "user1", size: 0x20000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "u133.bin", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
+        ] },
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "voice.u210", offset: 0x0, size: 0x40000, crc: 0x6CFFFB11 },
         ] },
 ] };
-/// Régions ignorées : user1
+/// Régions ignorées : (aucune)
 pub const RS_SF2RK: RomSetDef = RomSetDef { name: "sf2rk", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "w6.u222", offset: 0x0, size: 0x80000, crc: 0x49422B6F },
@@ -3374,6 +3389,9 @@ pub const RS_SF2RK: RomSetDef = RomSetDef { name: "sf2rk", regions: &[
         RegionDef { name: "audiocpu", size: 0x18000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "1.rk", offset: 0x0, size: 0x8000, crc: 0xA4823A1B },
             Op::Continue { offset: 0x10000, size: 0x8000 },
+        ] },
+        RegionDef { name: "user1", size: 0x20000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "2.rk", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
         ] },
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "w7.u210", offset: 0x0, size: 0x40000, crc: 0x6CFFFB11 },
@@ -5011,7 +5029,7 @@ pub const RS_SF2CEBLTW: RomSetDef = RomSetDef { name: "sf2cebltw", regions: &[
             Op::Load { kind: Load::Byte, file: "s92_19.bin", offset: 0x20000, size: 0x20000, crc: 0xBEADE53F },
         ] },
 ] };
-/// Régions ignorées : user1
+/// Régions ignorées : (aucune)
 pub const RS_SF2AMF: RomSetDef = RomSetDef { name: "sf2amf", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "5.amf", offset: 0x0, size: 0x80000, crc: 0x03991FBA },
@@ -5045,12 +5063,15 @@ pub const RS_SF2AMF: RomSetDef = RomSetDef { name: "sf2amf", regions: &[
             Op::Load { kind: Load::Byte, file: "3.amf", offset: 0x0, size: 0x8000, crc: 0xA4823A1B },
             Op::Continue { offset: 0x10000, size: 0x8000 },
         ] },
+        RegionDef { name: "user1", size: 0x20000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "7.amf", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
+        ] },
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "2.amf", offset: 0x0, size: 0x20000, crc: 0x7F162009 },
             Op::Load { kind: Load::Byte, file: "1.amf", offset: 0x20000, size: 0x20000, crc: 0xBEADE53F },
         ] },
 ] };
-/// Régions ignorées : user1
+/// Régions ignorées : (aucune)
 pub const RS_SF2AMF2: RomSetDef = RomSetDef { name: "sf2amf2", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "m5m27c401.u222", offset: 0x0, size: 0x80000, crc: 0x03991FBA },
@@ -5084,11 +5105,14 @@ pub const RS_SF2AMF2: RomSetDef = RomSetDef { name: "sf2amf2", regions: &[
             Op::Load { kind: Load::Byte, file: "27512.u191", offset: 0x0, size: 0x8000, crc: 0xA4823A1B },
             Op::Continue { offset: 0x10000, size: 0x8000 },
         ] },
+        RegionDef { name: "user1", size: 0x20000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "27512.u133", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
+        ] },
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "fun-u210.bin", offset: 0x0, size: 0x40000, crc: 0x6CFFFB11 },
         ] },
 ] };
-/// Régions ignorées : user1
+/// Régions ignorées : (aucune)
 pub const RS_SF2AMF3: RomSetDef = RomSetDef { name: "sf2amf3", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "u222.bin", offset: 0x0, size: 0x80000, crc: 0x0D305E8B },
@@ -5122,11 +5146,14 @@ pub const RS_SF2AMF3: RomSetDef = RomSetDef { name: "sf2amf3", regions: &[
             Op::Load { kind: Load::Byte, file: "27512.u191", offset: 0x0, size: 0x8000, crc: 0xA4823A1B },
             Op::Continue { offset: 0x10000, size: 0x8000 },
         ] },
+        RegionDef { name: "user1", size: 0x20000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "27512.u133", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
+        ] },
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "fun-u210.bin", offset: 0x0, size: 0x40000, crc: 0x6CFFFB11 },
         ] },
 ] };
-/// Régions ignorées : user1
+/// Régions ignorées : (aucune)
 pub const RS_SF2RULES: RomSetDef = RomSetDef { name: "sf2rules", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "prh2.u222", offset: 0x0, size: 0x80000, crc: 0xFFF85F9B },
@@ -5157,6 +5184,9 @@ pub const RS_SF2RULES: RomSetDef = RomSetDef { name: "sf2rules", regions: &[
         RegionDef { name: "audiocpu", size: 0x18000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "sound.u191", offset: 0x0, size: 0x8000, crc: 0xA4823A1B },
             Op::Continue { offset: 0x10000, size: 0x8000 },
+        ] },
+        RegionDef { name: "user1", size: 0x20000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "conv.u133", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
         ] },
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "voice.u210", offset: 0x0, size: 0x40000, crc: 0x6CFFFB11 },
@@ -5314,7 +5344,7 @@ pub const RS_SF2M5: RomSetDef = RomSetDef { name: "sf2m5", regions: &[
             Op::Load { kind: Load::Byte, file: "s92_19.bin", offset: 0x20000, size: 0x20000, crc: 0xBEADE53F },
         ] },
 ] };
-/// Régions ignorées : user1
+/// Régions ignorées : (aucune)
 pub const RS_SF2M6: RomSetDef = RomSetDef { name: "sf2m6", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "27c040.u222", offset: 0x0, size: 0x80000, crc: 0x0A3692BE },
@@ -5343,6 +5373,9 @@ pub const RS_SF2M6: RomSetDef = RomSetDef { name: "sf2m6", regions: &[
             Op::Continue { offset: 0x400001, size: 0x10000 },
             Op::Load { kind: Load::Byte64, file: "grp4.u28", offset: 0x400007, size: 0x10000, crc: 0x76F9F91F },
             Op::Continue { offset: 0x400003, size: 0x10000 },
+        ] },
+        RegionDef { name: "user1", size: 0x20000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "conv.u133", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
         ] },
         RegionDef { name: "audiocpu", size: 0x18000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "sound.u191", offset: 0x0, size: 0x8000, crc: 0xA4823A1B },
@@ -5384,7 +5417,7 @@ pub const RS_SF2M7: RomSetDef = RomSetDef { name: "sf2m7", regions: &[
             Op::Load { kind: Load::Byte, file: "s92_19.bin", offset: 0x20000, size: 0x20000, crc: 0xBEADE53F },
         ] },
 ] };
-/// Régions ignorées : user1, user2
+/// Régions ignorées : user2
 pub const RS_SF2M8: RomSetDef = RomSetDef { name: "sf2m8", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "yyc-2.2", offset: 0x0, size: 0x80000, crc: 0xDB567B66 },
@@ -5422,11 +5455,14 @@ pub const RS_SF2M8: RomSetDef = RomSetDef { name: "sf2m8", regions: &[
             Op::Load { kind: Load::Byte, file: "a-15.5", offset: 0x0, size: 0x8000, crc: 0x6F07D2CB },
             Op::Continue { offset: 0x10000, size: 0x8000 },
         ] },
+        RegionDef { name: "user1", size: 0x10000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "c-27.7", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
+        ] },
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "b-16.6", offset: 0x0, size: 0x40000, crc: 0x6CFFFB11 },
         ] },
 ] };
-/// Régions ignorées : user1
+/// Régions ignorées : (aucune)
 pub const RS_SF2M10: RomSetDef = RomSetDef { name: "sf2m10", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "sf2h14.7", offset: 0x0, size: 0x80000, crc: 0x74803532 },
@@ -5455,6 +5491,9 @@ pub const RS_SF2M10: RomSetDef = RomSetDef { name: "sf2m10", regions: &[
         RegionDef { name: "audiocpu", size: 0x18000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "27c512.3", offset: 0x0, size: 0x8000, crc: 0xA4823A1B },
             Op::Continue { offset: 0x10000, size: 0x8000 },
+        ] },
+        RegionDef { name: "user1", size: 0x20000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "27c512.8", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
         ] },
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "27c010.2", offset: 0x0, size: 0x20000, crc: 0x7F162009 },
@@ -5586,7 +5625,7 @@ pub const RS_SF2DONGB: RomSetDef = RomSetDef { name: "sf2dongb", regions: &[
             Op::Load { kind: Load::Byte, file: "s92_19.12c", offset: 0x20000, size: 0x20000, crc: 0xBEADE53F },
         ] },
 ] };
-/// Régions ignorées : user1
+/// Régions ignorées : (aucune)
 pub const RS_SF2LEVEL: RomSetDef = RomSetDef { name: "sf2level", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "rj313.u196.800", offset: 0x0, size: 0x100000, crc: 0x435153D5 },
@@ -5606,6 +5645,9 @@ pub const RS_SF2LEVEL: RomSetDef = RomSetDef { name: "sf2level", regions: &[
             Op::Load { kind: Load::Word64, file: "s92_12.5c", offset: 0x400004, size: 0x80000, crc: 0xD6EC9A0A },
             Op::Load { kind: Load::Word64, file: "s92_13.6c", offset: 0x400006, size: 0x80000, crc: 0xED2C67F6 },
         ] },
+        RegionDef { name: "user1", size: 0x20000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "km6264-10.u133", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
+        ] },
         RegionDef { name: "audiocpu", size: 0x18000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "km6264b-10.u191", offset: 0x0, size: 0x8000, crc: 0x6F07D2CB },
             Op::Continue { offset: 0x10000, size: 0x8000 },
@@ -5614,7 +5656,7 @@ pub const RS_SF2LEVEL: RomSetDef = RomSetDef { name: "sf2level", regions: &[
             Op::Load { kind: Load::Byte, file: "km418c256z-80.u210", offset: 0x0, size: 0x40000, crc: 0x6CFFFB11 },
         ] },
 ] };
-/// Régions ignorées : plds, user1
+/// Régions ignorées : plds
 pub const RS_SF2CEMS6A: RomSetDef = RomSetDef { name: "sf2cems6a", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "ms6.u196", offset: 0x0, size: 0x100000, crc: 0x596609D4 },
@@ -5645,8 +5687,11 @@ pub const RS_SF2CEMS6A: RomSetDef = RomSetDef { name: "sf2cems6a", regions: &[
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "ms6.u210", offset: 0x0, size: 0x40000, crc: 0x6CFFFB11 },
         ] },
+        RegionDef { name: "user1", size: 0x10000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "ms6.u133", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
+        ] },
 ] };
-/// Régions ignorées : patch, patchpld, plds, user1
+/// Régions ignorées : patch, patchpld, plds
 pub const RS_SF2CEMS6B: RomSetDef = RomSetDef { name: "sf2cems6b", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "ms6b.u196", offset: 0x0, size: 0x100000, crc: 0x435153D5 },
@@ -5680,8 +5725,11 @@ pub const RS_SF2CEMS6B: RomSetDef = RomSetDef { name: "sf2cems6b", regions: &[
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "ms6.u210", offset: 0x0, size: 0x40000, crc: 0x6CFFFB11 },
         ] },
+        RegionDef { name: "user1", size: 0x10000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "ms6.u133", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
+        ] },
 ] };
-/// Régions ignorées : patch, patchpld, plds, user1
+/// Régions ignorées : patch, patchpld, plds
 pub const RS_SF2CEMS6C: RomSetDef = RomSetDef { name: "sf2cems6c", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "ms6b.u196", offset: 0x0, size: 0x100000, crc: 0x435153D5 },
@@ -5715,8 +5763,11 @@ pub const RS_SF2CEMS6C: RomSetDef = RomSetDef { name: "sf2cems6c", regions: &[
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "ms6.u210", offset: 0x0, size: 0x40000, crc: 0x6CFFFB11 },
         ] },
+        RegionDef { name: "user1", size: 0x10000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "ms6.u133", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
+        ] },
 ] };
-/// Régions ignorées : patch, patchpld, plds, user1
+/// Régions ignorées : patch, patchpld, plds
 pub const RS_SF2CEDS6: RomSetDef = RomSetDef { name: "sf2ceds6", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "6st-u196.2m1", offset: 0x0, size: 0x100000, crc: 0x596609D4 },
@@ -5750,6 +5801,9 @@ pub const RS_SF2CEDS6: RomSetDef = RomSetDef { name: "sf2ceds6", regions: &[
         ] },
         RegionDef { name: "oki", size: 0x40000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "fun-s3-j1.u210", offset: 0x0, size: 0x40000, crc: 0x6CFFFB11 },
+        ] },
+        RegionDef { name: "user1", size: 0x10000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "ms6.u133", offset: 0x0, size: 0x10000, crc: 0x13EA1C44 },
         ] },
 ] };
 /// Régions ignorées : aboardplds, bboardplds, cboardplds
@@ -6063,7 +6117,7 @@ pub const RS_QADJR: RomSetDef = RomSetDef { name: "qadjr", regions: &[
             Op::Load { kind: Load::Byte, file: "qad_19.12c", offset: 0x20000, size: 0x20000, crc: 0x13D3236B },
         ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_WOF: RomSetDef = RomSetDef { name: "wof", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "tk2e_23c.8f", offset: 0x0, size: 0x80000, crc: 0x0D708505 },
@@ -6083,8 +6137,14 @@ pub const RS_WOF: RomSetDef = RomSetDef { name: "wof", regions: &[
             Op::Load { kind: Load::Byte, file: "tk2_qa.5k", offset: 0x0, size: 0x8000, crc: 0xC9183A0D },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "qsound", size: 0x200000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "tk2-q1.1k", offset: 0x0, size: 0x80000, crc: 0x611268CF },
+            Op::Load { kind: Load::Byte, file: "tk2-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x20F55CA9 },
+            Op::Load { kind: Load::Byte, file: "tk2-q3.3k", offset: 0x100000, size: 0x80000, crc: 0xBFCF6F52 },
+            Op::Load { kind: Load::Byte, file: "tk2-q4.4k", offset: 0x180000, size: 0x80000, crc: 0x36642E88 },
+        ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_WOFR1: RomSetDef = RomSetDef { name: "wofr1", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "tk2e_23b.8f", offset: 0x0, size: 0x80000, crc: 0x11FB2ED1 },
@@ -6104,8 +6164,14 @@ pub const RS_WOFR1: RomSetDef = RomSetDef { name: "wofr1", regions: &[
             Op::Load { kind: Load::Byte, file: "tk2_qa.5k", offset: 0x0, size: 0x8000, crc: 0xC9183A0D },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "qsound", size: 0x200000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "tk2-q1.1k", offset: 0x0, size: 0x80000, crc: 0x611268CF },
+            Op::Load { kind: Load::Byte, file: "tk2-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x20F55CA9 },
+            Op::Load { kind: Load::Byte, file: "tk2-q3.3k", offset: 0x100000, size: 0x80000, crc: 0xBFCF6F52 },
+            Op::Load { kind: Load::Byte, file: "tk2-q4.4k", offset: 0x180000, size: 0x80000, crc: 0x36642E88 },
+        ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_WOFU: RomSetDef = RomSetDef { name: "wofu", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "tk2u_23c.8f", offset: 0x0, size: 0x80000, crc: 0x29B89C12 },
@@ -6125,8 +6191,14 @@ pub const RS_WOFU: RomSetDef = RomSetDef { name: "wofu", regions: &[
             Op::Load { kind: Load::Byte, file: "tk2_qa.5k", offset: 0x0, size: 0x8000, crc: 0xC9183A0D },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "qsound", size: 0x200000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "tk2-q1.1k", offset: 0x0, size: 0x80000, crc: 0x611268CF },
+            Op::Load { kind: Load::Byte, file: "tk2-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x20F55CA9 },
+            Op::Load { kind: Load::Byte, file: "tk2-q3.3k", offset: 0x100000, size: 0x80000, crc: 0xBFCF6F52 },
+            Op::Load { kind: Load::Byte, file: "tk2-q4.4k", offset: 0x180000, size: 0x80000, crc: 0x36642E88 },
+        ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_WOFA: RomSetDef = RomSetDef { name: "wofa", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "tk2a_23c.8f", offset: 0x0, size: 0x80000, crc: 0x2E024628 },
@@ -6146,8 +6218,14 @@ pub const RS_WOFA: RomSetDef = RomSetDef { name: "wofa", regions: &[
             Op::Load { kind: Load::Byte, file: "tk2_qa.5k", offset: 0x0, size: 0x8000, crc: 0xC9183A0D },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "qsound", size: 0x200000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "tk2-q1.1k", offset: 0x0, size: 0x80000, crc: 0x611268CF },
+            Op::Load { kind: Load::Byte, file: "tk2-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x20F55CA9 },
+            Op::Load { kind: Load::Byte, file: "tk2-q3.3k", offset: 0x100000, size: 0x80000, crc: 0xBFCF6F52 },
+            Op::Load { kind: Load::Byte, file: "tk2-q4.4k", offset: 0x180000, size: 0x80000, crc: 0x36642E88 },
+        ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_WOFJ: RomSetDef = RomSetDef { name: "wofj", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "tk2j_23c.8f", offset: 0x0, size: 0x80000, crc: 0x9B215A68 },
@@ -6166,6 +6244,12 @@ pub const RS_WOFJ: RomSetDef = RomSetDef { name: "wofj", regions: &[
         RegionDef { name: "audiocpu", size: 0x28000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "tk2_qa.5k", offset: 0x0, size: 0x8000, crc: 0xC9183A0D },
             Op::Continue { offset: 0x10000, size: 0x18000 },
+        ] },
+        RegionDef { name: "qsound", size: 0x200000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "tk2-q1.1k", offset: 0x0, size: 0x80000, crc: 0x611268CF },
+            Op::Load { kind: Load::Byte, file: "tk2-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x20F55CA9 },
+            Op::Load { kind: Load::Byte, file: "tk2-q3.3k", offset: 0x100000, size: 0x80000, crc: 0xBFCF6F52 },
+            Op::Load { kind: Load::Byte, file: "tk2-q4.4k", offset: 0x180000, size: 0x80000, crc: 0x36642E88 },
         ] },
 ] };
 /// Régions ignorées : (aucune)
@@ -6283,7 +6367,7 @@ pub const RS_SF2HFJ: RomSetDef = RomSetDef { name: "sf2hfj", regions: &[
             Op::Load { kind: Load::Byte, file: "s92_19.12c", offset: 0x20000, size: 0x20000, crc: 0xBEADE53F },
         ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_DINO: RomSetDef = RomSetDef { name: "dino", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "cde_23a.8f", offset: 0x0, size: 0x80000, crc: 0x8F4E585E },
@@ -6304,8 +6388,14 @@ pub const RS_DINO: RomSetDef = RomSetDef { name: "dino", regions: &[
             Op::Load { kind: Load::Byte, file: "cd_q.5k", offset: 0x0, size: 0x8000, crc: 0x605FDB0B },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "qsound", size: 0x200000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "cd-q1.1k", offset: 0x0, size: 0x80000, crc: 0x60927775 },
+            Op::Load { kind: Load::Byte, file: "cd-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x770F4C47 },
+            Op::Load { kind: Load::Byte, file: "cd-q3.3k", offset: 0x100000, size: 0x80000, crc: 0x2F273FFC },
+            Op::Load { kind: Load::Byte, file: "cd-q4.4k", offset: 0x180000, size: 0x80000, crc: 0x2C67821D },
+        ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_DINOU: RomSetDef = RomSetDef { name: "dinou", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "cdu_23a.8f", offset: 0x0, size: 0x80000, crc: 0x7C2543CD },
@@ -6326,8 +6416,14 @@ pub const RS_DINOU: RomSetDef = RomSetDef { name: "dinou", regions: &[
             Op::Load { kind: Load::Byte, file: "cd_q.5k", offset: 0x0, size: 0x8000, crc: 0x605FDB0B },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "qsound", size: 0x200000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "cd-q1.1k", offset: 0x0, size: 0x80000, crc: 0x60927775 },
+            Op::Load { kind: Load::Byte, file: "cd-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x770F4C47 },
+            Op::Load { kind: Load::Byte, file: "cd-q3.3k", offset: 0x100000, size: 0x80000, crc: 0x2F273FFC },
+            Op::Load { kind: Load::Byte, file: "cd-q4.4k", offset: 0x180000, size: 0x80000, crc: 0x2C67821D },
+        ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_DINOA: RomSetDef = RomSetDef { name: "dinoa", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "cdt_23.8f", offset: 0x0, size: 0x80000, crc: 0xF477F7A0 },
@@ -6348,8 +6444,14 @@ pub const RS_DINOA: RomSetDef = RomSetDef { name: "dinoa", regions: &[
             Op::Load { kind: Load::Byte, file: "cd_q.5k", offset: 0x0, size: 0x8000, crc: 0x605FDB0B },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "qsound", size: 0x200000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "cd-q1.1k", offset: 0x0, size: 0x80000, crc: 0x60927775 },
+            Op::Load { kind: Load::Byte, file: "cd-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x770F4C47 },
+            Op::Load { kind: Load::Byte, file: "cd-q3.3k", offset: 0x100000, size: 0x80000, crc: 0x2F273FFC },
+            Op::Load { kind: Load::Byte, file: "cd-q4.4k", offset: 0x180000, size: 0x80000, crc: 0x2C67821D },
+        ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_DINOJ: RomSetDef = RomSetDef { name: "dinoj", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "cdj_23a.8f", offset: 0x0, size: 0x80000, crc: 0x5F3ECE96 },
@@ -6369,6 +6471,12 @@ pub const RS_DINOJ: RomSetDef = RomSetDef { name: "dinoj", regions: &[
         RegionDef { name: "audiocpu", size: 0x28000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "cd_q.5k", offset: 0x0, size: 0x8000, crc: 0x605FDB0B },
             Op::Continue { offset: 0x10000, size: 0x18000 },
+        ] },
+        RegionDef { name: "qsound", size: 0x200000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "cd-q1.1k", offset: 0x0, size: 0x80000, crc: 0x60927775 },
+            Op::Load { kind: Load::Byte, file: "cd-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x770F4C47 },
+            Op::Load { kind: Load::Byte, file: "cd-q3.3k", offset: 0x100000, size: 0x80000, crc: 0x2F273FFC },
+            Op::Load { kind: Load::Byte, file: "cd-q4.4k", offset: 0x180000, size: 0x80000, crc: 0x2C67821D },
         ] },
 ] };
 /// Régions ignorées : (aucune)
@@ -6398,7 +6506,7 @@ pub const RS_DINOHUNT: RomSetDef = RomSetDef { name: "dinohunt", regions: &[
             Op::Load { kind: Load::Byte, file: "u19", offset: 0x20000, size: 0x20000, crc: 0xB34A4B42 },
         ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_PUNISHER: RomSetDef = RomSetDef { name: "punisher", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "pse_26.11e", offset: 0x0, size: 0x20000, crc: 0x389A99D2 },
@@ -6425,8 +6533,14 @@ pub const RS_PUNISHER: RomSetDef = RomSetDef { name: "punisher", regions: &[
             Op::Load { kind: Load::Byte, file: "ps_q.5k", offset: 0x0, size: 0x8000, crc: 0x49FF4446 },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "qsound", size: 0x200000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "ps-q1.1k", offset: 0x0, size: 0x80000, crc: 0x31FD8726 },
+            Op::Load { kind: Load::Byte, file: "ps-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x980A9EEF },
+            Op::Load { kind: Load::Byte, file: "ps-q3.3k", offset: 0x100000, size: 0x80000, crc: 0x0DD44491 },
+            Op::Load { kind: Load::Byte, file: "ps-q4.4k", offset: 0x180000, size: 0x80000, crc: 0xBED42F03 },
+        ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_PUNISHERU: RomSetDef = RomSetDef { name: "punisheru", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "psu_26.11e", offset: 0x0, size: 0x20000, crc: 0x9236D121 },
@@ -6453,8 +6567,14 @@ pub const RS_PUNISHERU: RomSetDef = RomSetDef { name: "punisheru", regions: &[
             Op::Load { kind: Load::Byte, file: "ps_q.5k", offset: 0x0, size: 0x8000, crc: 0x49FF4446 },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "qsound", size: 0x200000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "ps-q1.1k", offset: 0x0, size: 0x80000, crc: 0x31FD8726 },
+            Op::Load { kind: Load::Byte, file: "ps-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x980A9EEF },
+            Op::Load { kind: Load::Byte, file: "ps-q3.3k", offset: 0x100000, size: 0x80000, crc: 0x0DD44491 },
+            Op::Load { kind: Load::Byte, file: "ps-q4.4k", offset: 0x180000, size: 0x80000, crc: 0xBED42F03 },
+        ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_PUNISHERH: RomSetDef = RomSetDef { name: "punisherh", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "psh_26.11e", offset: 0x0, size: 0x20000, crc: 0x6AD2BB83 },
@@ -6481,8 +6601,14 @@ pub const RS_PUNISHERH: RomSetDef = RomSetDef { name: "punisherh", regions: &[
             Op::Load { kind: Load::Byte, file: "ps_q.5k", offset: 0x0, size: 0x8000, crc: 0x49FF4446 },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "qsound", size: 0x200000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "ps-q1.1k", offset: 0x0, size: 0x80000, crc: 0x31FD8726 },
+            Op::Load { kind: Load::Byte, file: "ps-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x980A9EEF },
+            Op::Load { kind: Load::Byte, file: "ps-q3.3k", offset: 0x100000, size: 0x80000, crc: 0x0DD44491 },
+            Op::Load { kind: Load::Byte, file: "ps-q4.4k", offset: 0x180000, size: 0x80000, crc: 0xBED42F03 },
+        ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_PUNISHERJ: RomSetDef = RomSetDef { name: "punisherj", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "psj_23.8f", offset: 0x0, size: 0x80000, crc: 0x6B2FDA52 },
@@ -6502,6 +6628,12 @@ pub const RS_PUNISHERJ: RomSetDef = RomSetDef { name: "punisherj", regions: &[
         RegionDef { name: "audiocpu", size: 0x28000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "ps_q.5k", offset: 0x0, size: 0x8000, crc: 0x49FF4446 },
             Op::Continue { offset: 0x10000, size: 0x18000 },
+        ] },
+        RegionDef { name: "qsound", size: 0x200000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "ps-q1.1k", offset: 0x0, size: 0x80000, crc: 0x31FD8726 },
+            Op::Load { kind: Load::Byte, file: "ps-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x980A9EEF },
+            Op::Load { kind: Load::Byte, file: "ps-q3.3k", offset: 0x100000, size: 0x80000, crc: 0x0DD44491 },
+            Op::Load { kind: Load::Byte, file: "ps-q4.4k", offset: 0x180000, size: 0x80000, crc: 0xBED42F03 },
         ] },
 ] };
 /// Régions ignorées : (aucune)
@@ -6531,7 +6663,7 @@ pub const RS_PUNISHERBZ: RomSetDef = RomSetDef { name: "punisherbz", regions: &[
             Op::Load { kind: Load::Byte, file: "19.010", offset: 0x20000, size: 0x20000, crc: 0xEB5CA884 },
         ] },
 ] };
-/// Régions ignorées : aboardplds, audiorom_raw, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, audiorom_raw, bboardplds, cboardplds, dboardplds
 pub const RS_SLAMMAST: RomSetDef = RomSetDef { name: "slammast", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "mbe_23e.8f", offset: 0x0, size: 0x80000, crc: 0x5394057A },
@@ -6560,8 +6692,18 @@ pub const RS_SLAMMAST: RomSetDef = RomSetDef { name: "slammast", regions: &[
             Op::Load { kind: Load::Byte, file: "mb_qa.5k", offset: 0x0, size: 0x8000, crc: 0xE21A03C4 },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "qsound", size: 0x400000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "mb-q1.1k", offset: 0x0, size: 0x80000, crc: 0x0630C3CE },
+            Op::Load { kind: Load::Byte, file: "mb-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x354F9C21 },
+            Op::Load { kind: Load::Byte, file: "mb-q3.3k", offset: 0x100000, size: 0x80000, crc: 0x7838487C },
+            Op::Load { kind: Load::Byte, file: "mb-q4.4k", offset: 0x180000, size: 0x80000, crc: 0xAB66E087 },
+            Op::Load { kind: Load::Byte, file: "mb-q5.1m", offset: 0x200000, size: 0x80000, crc: 0xC789FEF2 },
+            Op::Load { kind: Load::Byte, file: "mb-q6.2m", offset: 0x280000, size: 0x80000, crc: 0xECB81B61 },
+            Op::Load { kind: Load::Byte, file: "mb-q7.3m", offset: 0x300000, size: 0x80000, crc: 0x041E49BA },
+            Op::Load { kind: Load::Byte, file: "mb-q8.4m", offset: 0x380000, size: 0x80000, crc: 0x59FE702A },
+        ] },
 ] };
-/// Régions ignorées : aboardplds, audiorom_raw, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, audiorom_raw, bboardplds, cboardplds, dboardplds
 pub const RS_SLAMMASTU: RomSetDef = RomSetDef { name: "slammastu", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "mbu_23e.8f", offset: 0x0, size: 0x80000, crc: 0x224F0062 },
@@ -6590,8 +6732,18 @@ pub const RS_SLAMMASTU: RomSetDef = RomSetDef { name: "slammastu", regions: &[
             Op::Load { kind: Load::Byte, file: "mb_qa.5k", offset: 0x0, size: 0x8000, crc: 0xE21A03C4 },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "qsound", size: 0x400000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "mb-q1.1k", offset: 0x0, size: 0x80000, crc: 0x0630C3CE },
+            Op::Load { kind: Load::Byte, file: "mb-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x354F9C21 },
+            Op::Load { kind: Load::Byte, file: "mb-q3.3k", offset: 0x100000, size: 0x80000, crc: 0x7838487C },
+            Op::Load { kind: Load::Byte, file: "mb-q4.4k", offset: 0x180000, size: 0x80000, crc: 0xAB66E087 },
+            Op::Load { kind: Load::Byte, file: "mb-q5.1m", offset: 0x200000, size: 0x80000, crc: 0xC789FEF2 },
+            Op::Load { kind: Load::Byte, file: "mb-q6.2m", offset: 0x280000, size: 0x80000, crc: 0xECB81B61 },
+            Op::Load { kind: Load::Byte, file: "mb-q7.3m", offset: 0x300000, size: 0x80000, crc: 0x041E49BA },
+            Op::Load { kind: Load::Byte, file: "mb-q8.4m", offset: 0x380000, size: 0x80000, crc: 0x59FE702A },
+        ] },
 ] };
-/// Régions ignorées : aboardplds, audiorom_raw, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, audiorom_raw, bboardplds, cboardplds, dboardplds
 pub const RS_MBOMBERJ: RomSetDef = RomSetDef { name: "mbomberj", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "mbj_23e.8f", offset: 0x0, size: 0x80000, crc: 0x0D06036A },
@@ -6617,8 +6769,18 @@ pub const RS_MBOMBERJ: RomSetDef = RomSetDef { name: "mbomberj", regions: &[
             Op::Load { kind: Load::Byte, file: "mb_qa.5k", offset: 0x0, size: 0x8000, crc: 0xE21A03C4 },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "qsound", size: 0x400000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "mb-q1.1k", offset: 0x0, size: 0x80000, crc: 0x0630C3CE },
+            Op::Load { kind: Load::Byte, file: "mb-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x354F9C21 },
+            Op::Load { kind: Load::Byte, file: "mb-q3.3k", offset: 0x100000, size: 0x80000, crc: 0x7838487C },
+            Op::Load { kind: Load::Byte, file: "mb-q4.4k", offset: 0x180000, size: 0x80000, crc: 0xAB66E087 },
+            Op::Load { kind: Load::Byte, file: "mb-q5.1m", offset: 0x200000, size: 0x80000, crc: 0xC789FEF2 },
+            Op::Load { kind: Load::Byte, file: "mb-q6.2m", offset: 0x280000, size: 0x80000, crc: 0xECB81B61 },
+            Op::Load { kind: Load::Byte, file: "mb-q7.3m", offset: 0x300000, size: 0x80000, crc: 0x041E49BA },
+            Op::Load { kind: Load::Byte, file: "mb-q8.4m", offset: 0x380000, size: 0x80000, crc: 0x59FE702A },
+        ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_MBOMBRD: RomSetDef = RomSetDef { name: "mbombrd", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "mbde_26.11e", offset: 0x0, size: 0x20000, crc: 0x72B7451C },
@@ -6650,8 +6812,18 @@ pub const RS_MBOMBRD: RomSetDef = RomSetDef { name: "mbombrd", regions: &[
             Op::Load { kind: Load::Byte, file: "mb_q.5k", offset: 0x0, size: 0x8000, crc: 0xD6FA76D1 },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "qsound", size: 0x400000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "mb-q1.1k", offset: 0x0, size: 0x80000, crc: 0x0630C3CE },
+            Op::Load { kind: Load::Byte, file: "mb-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x354F9C21 },
+            Op::Load { kind: Load::Byte, file: "mb-q3.3k", offset: 0x100000, size: 0x80000, crc: 0x7838487C },
+            Op::Load { kind: Load::Byte, file: "mb-q4.4k", offset: 0x180000, size: 0x80000, crc: 0xAB66E087 },
+            Op::Load { kind: Load::Byte, file: "mb-q5.1m", offset: 0x200000, size: 0x80000, crc: 0xC789FEF2 },
+            Op::Load { kind: Load::Byte, file: "mb-q6.2m", offset: 0x280000, size: 0x80000, crc: 0xECB81B61 },
+            Op::Load { kind: Load::Byte, file: "mb-q7.3m", offset: 0x300000, size: 0x80000, crc: 0x041E49BA },
+            Op::Load { kind: Load::Byte, file: "mb-q8.4m", offset: 0x380000, size: 0x80000, crc: 0x59FE702A },
+        ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_MBOMBRDJ: RomSetDef = RomSetDef { name: "mbombrdj", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte16, file: "mbdj_26.11e", offset: 0x0, size: 0x20000, crc: 0x72B7451C },
@@ -6682,6 +6854,16 @@ pub const RS_MBOMBRDJ: RomSetDef = RomSetDef { name: "mbombrdj", regions: &[
         RegionDef { name: "audiocpu", size: 0x28000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "mb_qa.5k", offset: 0x0, size: 0x8000, crc: 0xE21A03C4 },
             Op::Continue { offset: 0x10000, size: 0x18000 },
+        ] },
+        RegionDef { name: "qsound", size: 0x400000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "mb-q1.1k", offset: 0x0, size: 0x80000, crc: 0x0630C3CE },
+            Op::Load { kind: Load::Byte, file: "mb-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x354F9C21 },
+            Op::Load { kind: Load::Byte, file: "mb-q3.3k", offset: 0x100000, size: 0x80000, crc: 0x7838487C },
+            Op::Load { kind: Load::Byte, file: "mb-q4.4k", offset: 0x180000, size: 0x80000, crc: 0xAB66E087 },
+            Op::Load { kind: Load::Byte, file: "mb-q5.1m", offset: 0x200000, size: 0x80000, crc: 0xC789FEF2 },
+            Op::Load { kind: Load::Byte, file: "mb-q6.2m", offset: 0x280000, size: 0x80000, crc: 0xECB81B61 },
+            Op::Load { kind: Load::Byte, file: "mb-q7.3m", offset: 0x300000, size: 0x80000, crc: 0x041E49BA },
+            Op::Load { kind: Load::Byte, file: "mb-q8.4m", offset: 0x380000, size: 0x80000, crc: 0x59FE702A },
         ] },
 ] };
 /// Régions ignorées : aboardplds, bboardplds, cboardplds
@@ -7178,7 +7360,7 @@ pub const RS_GULUNPA: RomSetDef = RomSetDef { name: "gulunpa", regions: &[
             Op::Load { kind: Load::Byte, file: "19", offset: 0x20000, size: 0x20000, crc: 0xE95270AC },
         ] },
 ] };
-/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds, qsound
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_WOFCH: RomSetDef = RomSetDef { name: "wofch", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "tk2=ch=_23.8f", offset: 0x0, size: 0x80000, crc: 0x4E0B8DEE },
@@ -7197,6 +7379,12 @@ pub const RS_WOFCH: RomSetDef = RomSetDef { name: "wofch", regions: &[
         RegionDef { name: "audiocpu", size: 0x28000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "tk2_qa.5k", offset: 0x0, size: 0x8000, crc: 0xC9183A0D },
             Op::Continue { offset: 0x10000, size: 0x18000 },
+        ] },
+        RegionDef { name: "qsound", size: 0x200000, fill: 0x0, ops: &[
+            Op::Load { kind: Load::Byte, file: "tk2-q1.1k", offset: 0x0, size: 0x80000, crc: 0x611268CF },
+            Op::Load { kind: Load::Byte, file: "tk2-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x20F55CA9 },
+            Op::Load { kind: Load::Byte, file: "tk2-q3.3k", offset: 0x100000, size: 0x80000, crc: 0xBFCF6F52 },
+            Op::Load { kind: Load::Byte, file: "tk2-q4.4k", offset: 0x180000, size: 0x80000, crc: 0x36642E88 },
         ] },
 ] };
 /// Régions ignorées : bboardplds

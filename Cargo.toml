@@ -5,6 +5,7 @@ members = [
     "crates/cps-gfx",
     "crates/cps-ym2151",
     "crates/cps-oki",
+    "crates/cps-qsound",
     "crates/cps-cart",
     "crates/cps-bus",
     "crates/cps-core",

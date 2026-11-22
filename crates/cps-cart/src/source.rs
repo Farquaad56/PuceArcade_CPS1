@@ -166,6 +166,18 @@ pub fn sources_for(cfg: &Config, info: &GameInfo) -> ChainSource {
         }
     }
 
+    // Puce QSound : ROM interne du DSP dans qsound.zip ou qsound/ (comme la ROM de périphérique de MAME).
+    if info.machine == "qsound" {
+        let z = cfg.roms_dir.join("qsound.zip");
+        if z.exists() {
+            sources.push(Box::new(ZipSource { path: z }));
+        }
+        let d = cfg.roms_dir.join("qsound");
+        if d.is_dir() {
+            sources.push(Box::new(DirSource { dir: d }));
+        }
+    }
+
     ChainSource { sources }
 }
 

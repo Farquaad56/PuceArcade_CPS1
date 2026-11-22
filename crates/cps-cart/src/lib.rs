@@ -7,6 +7,7 @@ pub mod dips;
 pub mod dips_data;
 pub mod error;
 pub mod game;
+pub mod kabuki;
 pub mod regions;
 #[rustfmt::skip]
 pub mod romsets_data;

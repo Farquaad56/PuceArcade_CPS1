@@ -17,7 +17,15 @@ pub struct Game {
     pub dips: cps_common::Dips,
     /// init_sf2ee (cps1.cpp l.14594-14601) : CPS-B en 8001C0 au lieu de 800140.
     pub cpsb_at_1c0: bool,
+    /// QSound : opcodes Z80 déchiffrés (Kabuki, 0x8000 octets) ; la région audiocpu contient
+    /// alors les données déchiffrées.
+    pub audio_opcodes: Option<Vec<u8>>,
+    /// QSound : ROM interne du DSP (`dl-1425.bin`, cherchée aussi dans `qsound.zip`).
+    pub qsound_dsp: Option<Vec<u8>>,
 }
+
+/// CRC de `dl-1425.bin` (qsoundhle.cpp, ROM_START( qsound_hle )).
+pub const DL1425_CRC: u32 = 0xD6CF_5EF5;
 
 /// Nombre de ticks (5,04 GHz) par cycle 68000 selon la machine.
 pub fn ticks_per_68k(machine: &str) -> Result<u64, CartError> {
@@ -26,6 +34,8 @@ pub fn ticks_per_68k(machine: &str) -> Result<u64, CartError> {
         "cps1_12MHz" => Ok(420),
         // forgottn = cps1_10MHz + uPD4701 (cps1.cpp l.3949-3957)
         "forgottn" => Ok(504),
+        // qsound = cps1_12MHz + Z80 8 MHz et DSP QSound (cps1.cpp l.4013-4044)
+        "qsound" => Ok(420),
         other => Err(CartError::UnsupportedMachine(other.to_string())),
     }
 }
@@ -54,7 +64,13 @@ pub fn load_game_from(
     let ticks = ticks_per_68k(info.machine)?;
 
     // Construit les régions.
-    let regions = build_regions(info.romset, src, allow_bad_crc)?;
+    let mut regions = build_regions(info.romset, src, allow_bad_crc)?;
+    let audio_opcodes = crate::kabuki::decode(info.init, &mut regions.audiocpu);
+    let qsound_dsp = if info.machine == "qsound" {
+        Some(src.fetch("dl-1425.bin", DL1425_CRC)?)
+    } else {
+        None
+    };
 
     Ok(Game {
         info,
@@ -62,6 +78,8 @@ pub fn load_game_from(
         ticks_per_68k: ticks,
         dips: dips.unwrap_or_else(|| dips_default(info.input)),
         cpsb_at_1c0: info.init == "init_sf2ee",
+        audio_opcodes,
+        qsound_dsp,
     })
 }
 
@@ -73,6 +91,10 @@ pub struct Regions {
     pub audiocpu: Vec<u8>,
     pub oki: Vec<u8>,
     pub stars: Option<Vec<u8>>,
+    /// Échantillons QSound (vide hors QSound).
+    pub qsound: Vec<u8>,
+    /// Données lues par le 68000 en F00000 (protection de Slam Masters ; qsound_rom_r).
+    pub user1: Option<Vec<u8>>,
 }
 
 #[cfg(test)]
@@ -92,7 +114,7 @@ mod tests {
 
     #[test]
     fn ticks_per_68k_unknown() {
-        let result = ticks_per_68k("qsound");
+        let result = ticks_per_68k("pang3");
         assert!(matches!(result, Err(CartError::UnsupportedMachine(_))));
     }
 

@@ -6,7 +6,7 @@ import re, sys, pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / "ref/mame-cps1/cps1.cpp"
 OUT = ROOT / "crates/cps-cart/src/romsets_data.rs"
-KEEP = {"maincpu", "gfx", "audiocpu", "oki", "stars"}
+KEEP = {"maincpu", "gfx", "audiocpu", "oki", "stars", "qsound", "user1"}
 LOADS = {"ROM_LOAD": "Load::Byte", "ROM_LOAD16_BYTE": "Load::Byte16", "ROM_LOAD16_WORD": "Load::Word16",
          "ROM_LOAD16_WORD_SWAP": "Load::Word16Swap", "ROM_LOAD64_WORD": "Load::Word64", "ROM_LOAD64_BYTE": "Load::Byte64",
          "ROM_LOAD32_BYTE": "Load::Byte32"}

@@ -30,6 +30,8 @@ pub fn build_regions(
             "audiocpu" => regions.audiocpu = data,
             "oki" => regions.oki = data,
             "stars" => regions.stars = Some(data),
+            "qsound" => regions.qsound = data,
+            "user1" => regions.user1 = Some(data),
             _ => {}
         }
     }
