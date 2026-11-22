@@ -1,10 +1,4 @@
-//! cps-gui — application egui (voir docs/ARCHITECTURE.md §GUI)
+//! cps-gui — PuceArcade CPS1 (frontal JAMMA ; T502).
 #![forbid(unsafe_code)]
 
 fn main() {}
-
-#[cfg(test)]
-mod smoke {
-    #[test]
-    fn it_builds() {}
-}

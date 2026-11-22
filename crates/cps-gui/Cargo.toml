@@ -4,14 +4,20 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "cps-gui"
+path = "src/main.rs"
+
 [dependencies]
 cps-common = { path = "../cps-common" }
 cps-cart = { path = "../cps-cart" }
 cps-core = { path = "../cps-core" }
 cps-gfx = { path = "../cps-gfx" }
+cps-bus = { path = "../cps-bus" }
 puce-m68k = { workspace = true }
-eframe = "0.37.0"
-cpal = "0.18.2"
-gilrs = "0.11.2"
-crossbeam-channel = "0.5.17"
-rfd = "0.18.0"
+puce-z80 = { workspace = true }
+puce-jamma = { workspace = true }
+puce-jamma-gui = { workspace = true }
