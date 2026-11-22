@@ -1,8 +1,8 @@
-//! cps-oki — voir docs/ARCHITECTURE.md
+//! cps-oki — OKI MSM6295 ADPCM emulation (4 voices). spec: docs/spec/03 §OKI
 #![forbid(unsafe_code)]
 
-#[cfg(test)]
-mod smoke {
-    #[test]
-    fn it_builds() {}
-}
+#[rustfmt::skip]
+pub mod tables;
+pub mod adpcm;
+
+pub use adpcm::OkiAdpcmState;
