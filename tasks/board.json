@@ -204,7 +204,7 @@
     ],
     "file": "tasks/T207.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T300",
