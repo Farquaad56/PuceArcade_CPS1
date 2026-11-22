@@ -20,9 +20,10 @@ impl Cps1Board {
         registers.push(("SR".into(), u32::from(s.sr)));
         registers.push(("SSP".into(), s.ssp));
         registers.push(("USP".into(), s.usp));
+        // state().pc pointe après les deux mots prélus (IR, IRC) : l'instruction suivante est à pc - 4
         CpuView {
             name: "68000".into(),
-            pc: s.pc,
+            pc: s.pc.wrapping_sub(4) & 0xFF_FFFF,
             registers,
             address_bits: 24,
         }
@@ -133,9 +134,9 @@ mod tests {
         b.step_instruction(0);
         let pc = b.cpus()[0].pc;
         b.step_instruction(0);
-        // BRA.S * : le PC (prélecture comprise) reste identique d'un pas à l'autre
+        // BRA.S * en 0x400 : le PC affiché (sans la prélecture) reste 0x400
         assert_eq!(b.cpus()[0].pc, pc);
-        assert!((0x400..=0x404).contains(&pc), "{pc:X}");
+        assert_eq!(pc, 0x400, "{pc:X}");
         b.step_instruction(1);
         b.debug().unwrap();
     }
