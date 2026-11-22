@@ -8,6 +8,7 @@ use crate::tables::{DIFF_LOOKUP, INDEX_SHIFT};
 
 /// Internal ADPCM state for OKI MSM6295-compatible chips.
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OkiAdpcmState {
     pub signal: i32,
     pub step: i32,

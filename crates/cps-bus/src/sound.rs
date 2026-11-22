@@ -31,6 +31,18 @@ pub struct SoundBoard<C: SoundChips> {
 }
 
 impl<C: SoundChips> SoundBoard<C> {
+    /// État interne du serveur de broches (dernières broches, donnée lue, écriture faite), pour les savestates.
+    pub fn port_state(&self) -> (u64, Option<u8>, bool) {
+        (self.last_pins.0, self.read_data, self.write_done)
+    }
+
+    /// Restaure l'état produit par `port_state`.
+    pub fn set_port_state(&mut self, st: (u64, Option<u8>, bool)) {
+        self.last_pins = Pins(st.0);
+        self.read_data = st.1;
+        self.write_done = st.2;
+    }
+
     pub fn new(rom: Vec<u8>, chips: C) -> Self {
         Self {
             rom,

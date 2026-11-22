@@ -16,6 +16,7 @@ const SAMPLE_PERIOD: u64 = 64;
 
 /// État de l'interface hôte de la puce.
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 struct YmIntf {
     /// Temps courant en horloges YM.
     time: u64,
@@ -56,6 +57,7 @@ impl YmfmInterface for YmIntf {
 }
 
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ClockedYm2151 {
     chip: Ym2151,
     intf: YmIntf,

@@ -14,4 +14,4 @@ puce-z80 = { workspace = true }
 serde = { version = "1", features = ["derive"], optional = true }
 
 [features]
-serde = ["dep:serde", "cps-gfx/serde", "cps-ym2151/serde", "cps-oki/serde"]
+serde = ["dep:serde", "cps-common/serde", "cps-gfx/serde", "cps-ym2151/serde", "cps-oki/serde"]

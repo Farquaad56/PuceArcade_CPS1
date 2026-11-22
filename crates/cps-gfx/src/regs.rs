@@ -55,6 +55,7 @@ pub const GFXRAM_WORDS: usize = 0x18000;
 
 /// Bases vidéo calculées par get_video_base()
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct VideoBases {
     pub scroll: [usize; 3],
     pub obj: usize,
@@ -69,9 +70,10 @@ pub struct VideoBases {
 
 /// État vidéo complet CPS1 (regs, GFXRAM, palette, bases)
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Video {
-    /// Configuration du jeu courant (reliée via relink())
-    // NOTE: serde(skip) will be added in T408 when serialization is implemented
+    /// Configuration du jeu courant (reliée via relink()) ; non sérialisée : load_state appelle relink().
+    #[cfg_attr(feature = "serde", serde(skip, default = "crate::regs::unlinked_cfg"))]
     pub cfg: &'static GameConfig,
     /// Nom du jeu (pour relink())
     pub game: String,
@@ -95,6 +97,12 @@ pub struct Video {
     pub last_sprite: i32,
     /// Masque de débogage des couches (bit0 sprites, bit1-3 scroll1-3, bit4 étoiles)
     pub debug_layer_mask: u32,
+}
+
+/// Configuration provisoire d'un état vidéo désérialisé, remplacée par `relink()`.
+#[cfg(feature = "serde")]
+fn unlinked_cfg() -> &'static GameConfig {
+    find_config("")
 }
 
 impl Video {

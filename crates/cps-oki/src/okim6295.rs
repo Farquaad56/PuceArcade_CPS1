@@ -16,6 +16,7 @@ pub const VOLUME_NUM: [i32; 16] = [
 
 /// A single voice channel on the MSM6295.
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OkiVoice {
     pub playing: bool,
     pub base_offset: u32,
@@ -40,10 +41,13 @@ impl OkiVoice {
 
 /// OKI MSM6295 ADPCM sound chip.
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Okim6295 {
     pub voices: [OkiVoice; 4],
     pub command: i32,
     pub pin7: bool,
+    /// ROM ADPCM : non sérialisée (load_state la conserve).
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub rom: Vec<u8>,
 }
 

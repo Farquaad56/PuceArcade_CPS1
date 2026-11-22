@@ -7,6 +7,7 @@ use cps_ym2151::clocked::ClockedYm2151;
 
 /// Combined YM2151 + OKI MSM6295 sound chips with mixing.
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Chips {
     pub ym: ClockedYm2151,
     pub oki: Okim6295,

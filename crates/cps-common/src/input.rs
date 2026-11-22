@@ -2,6 +2,7 @@
 //! spec: docs/spec/01 §Entrées
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct InputState {
     pub in0: u8,
     pub in1: u16,
@@ -22,6 +23,7 @@ impl Default for InputState {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Dips {
     pub dswa: u8,
     pub dswb: u8,

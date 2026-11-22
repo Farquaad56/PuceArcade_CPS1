@@ -790,6 +790,9 @@ dependencies = [
 [[package]]
 name = "cps-common"
 version = "0.1.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "cps-core"
