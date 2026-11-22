@@ -645,5 +645,16 @@
     "file": "tasks/T702.md",
     "assignee": "rust-dev",
     "status": "done"
+  },
+  {
+    "id": "T703",
+    "title": "T703 cps-gfx : tilemaps décodées une fois par tuile (optimisation sans changement de résultat)",
+    "phase": "P7 Précision et outils",
+    "deps": [
+      "T700"
+    ],
+    "file": "tasks/T703.md",
+    "assignee": "rust-dev",
+    "status": "todo"
   }
 ]
