@@ -296,14 +296,14 @@
   },
   {
     "id": "T306b",
-    "title": "T306b cps-ym2151 : adaptateur cadenc├® ClockedYm2151 (horloge YM, timers, busy, IRQ, ├®chantillons)",
+    "title": "T306b cps-ym2151 : adaptateur cadencé ClockedYm2151 (horloge YM, timers, busy, IRQ, échantillons)",
     "phase": "P3 Audio",
     "deps": [
       "T306"
     ],
     "file": "tasks/T306b.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T307",
