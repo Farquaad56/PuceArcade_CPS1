@@ -24,3 +24,4 @@
 - T505 (même cause que T500b) : 60 trames donnent 60 × 84 510 720 / 90 112 = 56 268-56 269 échantillons, pas 56 191-56 192. Test aligné sur le cœur.
 - T603 (résolu par l'orchestrateur) : la carte lisait l'id CPS-B de sf2ee en 0x8001F2 (offset 0x32 des CPS-B-21). sf2ee utilise CPS-B-18, id en offset 0x10 (cps1_v.cpp, CPS_B_18) : test en 0x8001D0 == 0x0408 et 0x800150 == 0.
 - T604 (résolu par l'orchestrateur) : libtest n'accepte pas `-- --list-games` ; la liste est écrite par le test ignoré `list_games` (`cargo test -p cps-core --release --test catalogue -- --ignored list_games`).
+- QSound (résolu par l'orchestrateur, ADR-005) : la référence ref/mame-cps1/cps1.cpp nomme `audiorom_raw` la région que MAME 0.287 nomme `user1` (ROM Z80 chiffrée, ROM_COPY avant kabuki_setup) ; les deux noms sont acceptés. La ROM interne du DSP (dl-1425.bin) est fournie par l'utilisateur dans qsound.zip, jamais dans le dépôt.
