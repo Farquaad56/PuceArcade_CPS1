@@ -194,6 +194,12 @@ impl QSound {
         self.sample_rom = sample_rom;
     }
 
+    /// Reprend les ROM d'une autre instance (chargement d'état : les ROM ne sont pas sérialisées).
+    pub fn take_roms_from(&mut self, other: &mut QSound) {
+        self.dsp_rom = std::mem::take(&mut other.dsp_rom);
+        self.sample_rom = std::mem::take(&mut other.sample_rom);
+    }
+
     /// device_reset
     pub fn reset(&mut self) {
         self.ready_flag = 0;

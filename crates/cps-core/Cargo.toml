@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+cps-qsound = { path = "../cps-qsound", features = ["serde"] }
 cps-common = { path = "../cps-common", features = ["serde"] }
 cps-cart = { path = "../cps-cart" }
 cps-gfx = { path = "../cps-gfx", features = ["serde"] }

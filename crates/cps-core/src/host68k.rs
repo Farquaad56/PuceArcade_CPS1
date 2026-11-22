@@ -1,7 +1,7 @@
 //! Hôte du 68000 : bus cadencé à l'horloge et rattrapage (catch-up) de la carte son.
 //! spec: docs/ARCHITECTURE.md §Ordonnanceur, docs/spec/00-clock-timing.md §Trame
 
-use cps_common::clock::{Tick, TICKS_PER_Z80};
+use cps_common::clock::Tick;
 use cps_common::video::Framebuffer;
 use puce_m68k::bus::Bus;
 use puce_m68k::cpu::Cpu as Cpu68k;
@@ -53,18 +53,75 @@ impl super::machine::Machine {
 impl Host68k<'_> {
     /// Fait tourner le Z80 T-state par T-state jusqu'à `t` (jamais au-delà).
     fn z80_run_until(&mut self, t: Tick) {
-        while self.sound.time + TICKS_PER_Z80 <= t {
+        while self.sound.time + self.sound.z80_ticks <= t {
             self.sound.tick(self.z80);
+        }
+    }
+
+    /// qsound_main_map : RAM partagées (F18000-F19FFF -> Z80 C000, F1E000-F1FFFF -> Z80 F000)
+    /// et port EEPROMIN (F1C006). Lecture : octet | 0xFF00. None hors de ces plages.
+    fn qsound_read(&mut self, a: u32) -> Option<u16> {
+        let q = self.sound.qsound.as_ref()?;
+        let a = a as usize;
+        match a {
+            0xF18000..=0xF19FFF => Some(0xff00 | u16::from(self.sound.ram[(a - 0xF18000) / 2])),
+            0xF1E000..=0xF1FFFF => Some(0xff00 | u16::from(q.ram2[(a - 0xF1E000) / 2])),
+            0xF1C006 | 0xF1C007 => {
+                let e = self.bus.eeprom.as_ref()?;
+                Some(u16::from(e.do_read(*self.now)))
+            }
+            _ => None,
+        }
+    }
+
+    /// Écritures QSound (octet bas seulement, ACCESSING_BITS_0_7). true si l'adresse est servie.
+    fn qsound_write(&mut self, a: u32, lds: bool, data: u16) -> bool {
+        if self.sound.qsound.is_none() {
+            return false;
+        }
+        let a = a as usize;
+        let v = data as u8;
+        match a {
+            0xF18000..=0xF19FFF => {
+                if lds {
+                    self.sound.ram[(a - 0xF18000) / 2] = v;
+                }
+                true
+            }
+            0xF1E000..=0xF1FFFF => {
+                if lds {
+                    if let Some(q) = self.sound.qsound.as_mut() {
+                        q.ram2[(a - 0xF1E000) / 2] = v;
+                    }
+                }
+                true
+            }
+            0xF1C006 | 0xF1C007 => {
+                if lds {
+                    let now = *self.now;
+                    if let Some(e) = self.bus.eeprom.as_mut() {
+                        e.write_port(v, now);
+                    }
+                }
+                true
+            }
+            _ => false,
         }
     }
 }
 
 impl Bus for Host68k<'_> {
     fn read(&mut self, addr: u32, _fc: u8, uds: bool, lds: bool) -> u16 {
+        if let Some(v) = self.qsound_read(addr & 0xFF_FFFE) {
+            return v;
+        }
         self.bus.read16(addr, uds, lds)
     }
 
     fn write(&mut self, addr: u32, _fc: u8, uds: bool, lds: bool, data: u16) {
+        if self.qsound_write(addr & 0xFF_FFFE, lds, data) {
+            return;
+        }
         // Écriture bus normale - capture le SoundCmd si latch écrit
         let cmd = self.bus.write16(addr, uds, lds, data);
 

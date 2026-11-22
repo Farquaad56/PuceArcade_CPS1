@@ -3,7 +3,8 @@
 //!
 //! Format : magic `CPS1`, version u32 (little-endian), puis une suite de blocs bincode :
 //! nom du jeu, 68000, Z80, port de broches de la carte son, Bus68k (ram, entrées, DIP, coinctrl,
-//! uPD4701 optionnel — version 2, T603),
+//! uPD4701 optionnel — version 2, T603 ; coinctrl2 et EEPROM — version 3, QSound), carte QSound
+//! optionnelle (RAM 2, DSP sans ses ROM, IRQ, échéances) — version 3,
 //! Video (sans `cfg`, relié par `relink()`), SoundBoard (ram, banque, latches, temps), Chips
 //! (YM2151 cadencé, OKI sans sa ROM, échéance et dernier échantillon OKI, échantillons en attente),
 //! puis l'horloge de la machine et le framebuffer.
@@ -18,7 +19,7 @@ use serde::Serialize;
 use crate::machine::Machine;
 
 const MAGIC: &[u8; 4] = b"CPS1";
-const VERSION: u32 = 2;
+const VERSION: u32 = 3;
 
 /// Registres du 68000 : d, a, usp, ssp, sr, pc, prefetch.
 type M68 = ([u32; 8], [u32; 7], u32, u32, u16, u32, [u16; 2]);
@@ -74,6 +75,8 @@ impl Machine {
                 self.bus.dips,
                 self.bus.coinctrl,
                 &self.bus.dial,
+                self.bus.coinctrl2,
+                &self.bus.eeprom,
             ),
         );
         put(&mut buf, &self.bus.video);
@@ -83,6 +86,7 @@ impl Machine {
         put(&mut buf, &snd.ram[..]);
         put(&mut buf, &(snd.bank, snd.latch, snd.time, snd.port_state()));
         put(&mut buf, &snd.chips);
+        put(&mut buf, &snd.qsound);
 
         put(
             &mut buf,
@@ -126,12 +130,21 @@ impl Machine {
         let z80: puce_z80::CpuState = get(&mut rd)?;
 
         let ram: Vec<u8> = get(&mut rd)?;
-        let (inputs, dips, coinctrl, dial): (_, _, _, Option<cps_bus::Upd4701>) = get(&mut rd)?;
+        #[allow(clippy::type_complexity)]
+        let (inputs, dips, coinctrl, dial, coinctrl2, eeprom): (
+            _,
+            _,
+            _,
+            Option<cps_bus::Upd4701>,
+            u16,
+            Option<cps_bus::Eeprom93c46>,
+        ) = get(&mut rd)?;
         let mut video: cps_gfx::regs::Video = get(&mut rd)?;
 
         let sound_ram: Vec<u8> = get(&mut rd)?;
         let (bank, latch, time, port) = get(&mut rd)?;
         let mut chips: cps_bus::Chips = get(&mut rd)?;
+        let mut qsound: Option<Box<cps_bus::QSoundSide>> = get(&mut rd)?;
 
         let timing: (u64, u64, u64, bool, bool, bool, u64) = get(&mut rd)?;
         let pixels: Vec<u32> = get(&mut rd)?;
@@ -142,6 +155,11 @@ impl Machine {
         // Tout est lu et valide : application.
         if video.game != self.game {
             return Err("savestate : état vidéo d'un autre jeu".to_string());
+        }
+        if qsound.is_some() != self.sound.qsound.is_some()
+            || eeprom.is_some() != self.bus.eeprom.is_some()
+        {
+            return Err("savestate : carte son incohérente avec le jeu".to_string());
         }
         if dial.is_some() != self.bus.dial.is_some() {
             return Err("savestate : molettes incohérentes avec le jeu".to_string());
@@ -163,6 +181,8 @@ impl Machine {
         self.bus.dips = dips;
         self.bus.coinctrl = coinctrl;
         self.bus.dial = dial;
+        self.bus.coinctrl2 = coinctrl2;
+        self.bus.eeprom = eeprom;
         video.relink();
         self.bus.video = video;
 
@@ -172,6 +192,11 @@ impl Machine {
         self.sound.set_port_state(port);
         chips.oki.rom = std::mem::take(&mut self.sound.chips.oki.rom);
         self.sound.chips = chips;
+        if let (Some(new), Some(old)) = (qsound.as_mut(), self.sound.qsound.as_mut()) {
+            new.opcodes = std::mem::take(&mut old.opcodes);
+            new.dsp.take_roms_from(&mut old.dsp);
+        }
+        self.sound.qsound = qsound;
 
         (
             self.now,

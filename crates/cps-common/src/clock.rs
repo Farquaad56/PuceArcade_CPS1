@@ -12,6 +12,12 @@ pub const TICKS_PER_68K_12MHZ: u64 = 420;
 
 // spec: docs/spec/00 §Horloge du projet (table) — Z80 et YM2151 même quartz
 pub const TICKS_PER_Z80: u64 = 1408;
+/// Z80 des cartes QSound : 8 MHz (cps1.cpp l.4020).
+pub const TICKS_PER_Z80_QSOUND: u64 = 630;
+/// DSP QSound : 60 MHz / 2 / 1248 = 24 038,46 Hz -> 209 664 ticks par échantillon.
+pub const TICKS_PER_QSOUND_SAMPLE: u64 = 209_664;
+/// IRQ du Z80 QSound : XTAL(8 MHz) / 32000 = 250 Hz (cps1.cpp l.4024).
+pub const TICKS_PER_QSOUND_IRQ: u64 = 20_160_000;
 pub const TICKS_PER_YM: u64 = 1408;
 
 // spec: docs/spec/00 §Horloge du projet (table) — prescale YM2151

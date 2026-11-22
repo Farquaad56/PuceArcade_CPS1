@@ -11,7 +11,7 @@ use puce_jamma::dips::{DipBank, DipSetting, DipSwitch};
 use puce_jamma::inputs::JammaInputs;
 use puce_jamma::video::{Rotation, VideoInfo, VideoOut};
 
-use crate::inputs::to_cps_inputs;
+use crate::inputs::to_cps_inputs_for;
 
 /// Image visible du CPS1. spec: docs/spec/02 §Écran — 384 × 224 (x 64..447, y 16..239)
 pub const SCREEN_W: u32 = 384;
@@ -54,9 +54,17 @@ pub fn board_info(info: &GameInfo, dips: Dips) -> BoardInfo {
             aspect,
             rotation,
         },
-        audio: AudioInfo {
-            sample_rate: cps_core::AUDIO_HZ,
-            channels: 1,
+        // QSound : stéréo à 24 038 Hz ; CPS1 : haut-parleur mono à 55 930 Hz
+        audio: if info.machine == "qsound" {
+            AudioInfo {
+                sample_rate: cps_core::QSOUND_HZ,
+                channels: 2,
+            }
+        } else {
+            AudioInfo {
+                sample_rate: cps_core::AUDIO_HZ,
+                channels: 1,
+            }
         },
         dip_banks: banks
             .iter()
@@ -124,16 +132,22 @@ impl JammaBoard for Cps1Board {
         }
     }
 
-    /// Haut-parleur mono : voie gauche du mélange (les deux voies sont identiques).
+    /// CPS1 : haut-parleur mono (voie gauche du mélange, les deux voies sont identiques) ;
+    /// QSound : stéréo entrelacé gauche, droite.
     fn take_audio(&mut self, out: &mut Vec<f32>) {
+        let samples = self.machine.take_audio();
+        if self.info.audio.channels == 2 {
+            out.extend(samples.iter().flatten());
+            return;
+        }
         self.audio_mono.clear();
-        self.audio_mono
-            .extend(self.machine.take_audio().iter().map(|s| s[0]));
+        self.audio_mono.extend(samples.iter().map(|s| s[0]));
         out.extend_from_slice(&self.audio_mono);
     }
 
     fn set_inputs(&mut self, inputs: &JammaInputs) {
-        self.machine.set_inputs(to_cps_inputs(inputs));
+        self.machine
+            .set_inputs(to_cps_inputs_for(inputs, self.info.players));
     }
 
     fn dips(&self) -> Vec<u8> {

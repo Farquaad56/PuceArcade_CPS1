@@ -42,6 +42,40 @@ pub fn to_cps_inputs(j: &JammaInputs) -> InputState {
     }
 }
 
+/// Octet d'un joueur 3 ou 4 (ports IN2 / IN3 de cps1_3players / cps1_4players) : direction,
+/// boutons 1-2, pièce, start.
+fn extra_player_byte(p: &PlayerControls, coin: bool) -> u8 {
+    active_low(p.right, 0x01)
+        | active_low(p.left, 0x02)
+        | active_low(p.down, 0x04)
+        | active_low(p.up, 0x08)
+        | active_low(p.buttons[0], 0x10)
+        | active_low(p.buttons[1], 0x20)
+        | active_low(coin, 0x40)
+        | active_low(p.start, 0x80)
+}
+
+/// Entrées selon le nombre de joueurs de la borne : à partir de 3 joueurs, IN2 (F1C000) est le
+/// joueur 3 et IN3 (F1C002) le joueur 4 ; avec 4 joueurs, le bouton 3 des joueurs 3 et 4 est en
+/// IN1 bit 7 et bit 15 (slammast). spec: cps1.cpp INPUT_PORTS cps1_3players / cps1_4players / slammast
+pub fn to_cps_inputs_for(j: &JammaInputs, players: u8) -> InputState {
+    let mut s = to_cps_inputs(j);
+    if players >= 3 {
+        s.in2 = extra_player_byte(&j.players[2], j.coins[2]);
+        s.in3 = if players >= 4 {
+            extra_player_byte(&j.players[3], j.coins[3])
+        } else {
+            0xFF
+        };
+    }
+    if players >= 4 {
+        s.in1 = (s.in1 & 0x7F7F)
+            | u16::from(active_low(j.players[2].buttons[2], 0x80))
+            | u16::from(active_low(j.players[3].buttons[2], 0x80)) << 8;
+    }
+    s
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -73,6 +107,25 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(to_cps_inputs(&j).in0, 0xBF);
+    }
+
+    #[test]
+    fn three_and_four_players() {
+        let mut j = JammaInputs::default();
+        j.players[2].up = true;
+        j.players[2].start = true;
+        j.coins[3] = true;
+        let s = to_cps_inputs_for(&j, 3);
+        assert_eq!((s.in2, s.in3), (0x77, 0xFF));
+        let s = to_cps_inputs_for(&j, 4);
+        assert_eq!((s.in2, s.in3), (0x77, 0xBF));
+        j.players[3].buttons[2] = true;
+        assert_eq!(to_cps_inputs_for(&j, 4).in1, 0x7FFF);
+        assert_eq!(
+            to_cps_inputs_for(&j, 2),
+            to_cps_inputs(&j),
+            "2 joueurs : inchangé"
+        );
     }
 
     #[test]

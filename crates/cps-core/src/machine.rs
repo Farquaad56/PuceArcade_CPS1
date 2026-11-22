@@ -38,6 +38,17 @@ impl Machine {
         );
         let gfx = game.regions.gfx;
         let mut bus = bus;
+        // Carte QSound (cps1.cpp qsound, l.4013-4044) : Z80 8 MHz chiffré, DSP, EEPROM 93C46
+        let sound = match (&game.qsound_dsp, game.audio_opcodes) {
+            (Some(dsp), Some(ops)) => {
+                bus.qsound = true;
+                bus.user1 = game.regions.user1.clone();
+                bus.eeprom = Some(cps_bus::Eeprom93c46::new());
+                let dsp = cps_qsound::QSound::new(dsp, game.regions.qsound);
+                sound.with_qsound(cps_bus::QSoundSide::new(ops, dsp))
+            }
+            _ => sound,
+        };
         // forgottn : uPD4701 (cps1.cpp l.3949-3957) ; sf2ee : CPS-B en 8001C0 (l.14594-14601)
         if game.info.machine == "forgottn" {
             bus.dial = Some(cps_bus::Upd4701::new());
@@ -113,7 +124,25 @@ impl Machine {
     }
 
     /// Take mixed audio samples (duplicated to stereo).
+    /// Fréquence des échantillons de `take_audio` : AUDIO_HZ (CPS1, mono dupliqué) ou
+    /// cps_qsound::SAMPLE_HZ (QSound, stéréo).
+    pub fn audio_rate(&self) -> f64 {
+        if self.sound.qsound.is_some() {
+            cps_qsound::SAMPLE_HZ
+        } else {
+            crate::AUDIO_HZ
+        }
+    }
+
+    /// Son stéréo (QSound) ?
+    pub fn audio_stereo(&self) -> bool {
+        self.sound.qsound.is_some()
+    }
+
     pub fn take_audio(&mut self) -> Vec<[f32; 2]> {
+        if self.sound.qsound.is_some() {
+            return self.sound.take_qsound_samples();
+        }
         let mono = self.sound.chips.take_samples();
         mono.into_iter().map(|m| [m, m]).collect()
     }

@@ -1,7 +1,66 @@
 //! CPS1 Z80 SoundBoard: memory map, banking, ports, latches, pin server.
 //! spec: docs/spec/01 §Z80
 
+use cps_common::clock::{Tick, TICKS_PER_QSOUND_IRQ, TICKS_PER_QSOUND_SAMPLE};
 use puce_z80::{Cpu, Pins};
+
+/// Partie propre aux cartes QSound (cps1.cpp qsound_sub_map, l.683-697) : opcodes déchiffrés,
+/// seconde RAM partagée, DSP, IRQ périodique à 250 Hz maintenue jusqu'à l'acquittement.
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct QSoundSide {
+    /// Opcodes Z80 déchiffrés (Kabuki), lus aux cycles M1 en 0000-7FFF ; non sérialisés.
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub opcodes: Vec<u8>,
+    /// RAM partagée n° 2 (Z80 F000-FFFF, 68000 F1E000-F1FFFF) ; la n° 1 est `SoundBoard::ram`.
+    pub ram2: Vec<u8>,
+    pub dsp: cps_qsound::QSound,
+    /// irq0_line_hold : ligne INT maintenue jusqu'à l'acquittement.
+    pub irq: bool,
+    pub next_irq: Tick,
+    pub next_sample: Tick,
+    /// Échantillons stéréo produits depuis le dernier `take_audio`.
+    pub out: Vec<[f32; 2]>,
+}
+
+impl QSoundSide {
+    pub fn new(opcodes: Vec<u8>, dsp: cps_qsound::QSound) -> Self {
+        QSoundSide {
+            opcodes,
+            ram2: vec![0; 0x1000],
+            dsp,
+            irq: false,
+            next_irq: TICKS_PER_QSOUND_IRQ,
+            next_sample: 0,
+            out: Vec::new(),
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.ram2.fill(0);
+        self.dsp.reset();
+        self.irq = false;
+        self.next_irq = TICKS_PER_QSOUND_IRQ;
+        self.next_sample = 0;
+        self.out.clear();
+    }
+
+    /// IRQ périodique et échantillons du DSP jusqu'à `t` (exclu), avant tout accès du Z80 à
+    /// l'instant `t` (qsound_w / qsound_r font stream->update() d'abord).
+    pub fn advance(&mut self, t: Tick) {
+        while self.next_irq <= t {
+            self.irq = true;
+            self.next_irq += TICKS_PER_QSOUND_IRQ;
+        }
+        while self.next_sample < t {
+            self.dsp.update_sample();
+            let [l, r] = self.dsp.output();
+            self.out
+                .push([f32::from(l) / 32768.0, f32::from(r) / 32768.0]);
+            self.next_sample += TICKS_PER_QSOUND_SAMPLE;
+        }
+    }
+}
 
 /// Sound chips interface (YM2151 + OKI MSM6295).
 pub trait SoundChips {
@@ -24,6 +83,10 @@ pub struct SoundBoard<C: SoundChips> {
     pub latch: [u8; 2],
     pub chips: C,
     pub time: cps_common::clock::Tick,
+    /// Ticks par T-state du Z80 (3,58 MHz sur CPS1, 8 MHz sur QSound).
+    pub z80_ticks: Tick,
+    /// Carte QSound (None : carte CPS1 YM2151 + OKI).
+    pub qsound: Option<Box<QSoundSide>>,
     /// Pin-server state (last pins, read data, write done).
     last_pins: Pins,
     read_data: Option<u8>,
@@ -51,6 +114,8 @@ impl<C: SoundChips> SoundBoard<C> {
             latch: [0; 2],
             chips,
             time: 0,
+            z80_ticks: cps_common::clock::TICKS_PER_Z80,
+            qsound: None,
             last_pins: Pins(0),
             read_data: None,
             write_done: false,
@@ -66,6 +131,63 @@ impl<C: SoundChips> SoundBoard<C> {
         self.last_pins = Pins(0);
         self.read_data = None;
         self.write_done = false;
+        if let Some(q) = self.qsound.as_mut() {
+            q.reset();
+        }
+    }
+
+    /// Carte QSound : Z80 à 8 MHz, 4 Kio de RAM partagée en C000, opcodes déchiffrés.
+    pub fn with_qsound(mut self, side: QSoundSide) -> Self {
+        self.ram = vec![0; 0x1000];
+        self.z80_ticks = cps_common::clock::TICKS_PER_Z80_QSOUND;
+        self.qsound = Some(Box::new(side));
+        self
+    }
+
+    /// Échantillons stéréo QSound produits depuis le dernier appel (vide sur CPS1).
+    pub fn take_qsound_samples(&mut self) -> Vec<[f32; 2]> {
+        self.qsound
+            .as_mut()
+            .map_or_else(Vec::new, |q| std::mem::take(&mut q.out))
+    }
+
+    /// qsound_sub_map, lecture (`m1` : cycle de lecture d'opcode).
+    fn qsound_read(&mut self, addr: u16, m1: bool) -> u8 {
+        let q = self.qsound.as_ref().expect("carte QSound");
+        match addr {
+            0x0000..=0x7FFF => {
+                let src = if m1 { &q.opcodes } else { &self.rom };
+                src.get(usize::from(addr)).copied().unwrap_or(0xFF)
+            }
+            0x8000..=0xBFFF => {
+                let off = 0x10000 + usize::from(self.bank) * 0x4000 + usize::from(addr - 0x8000);
+                self.rom.get(off).copied().unwrap_or(0xFF)
+            }
+            0xC000..=0xCFFF => self.ram[usize::from(addr - 0xC000)],
+            0xD007 => q.dsp.read(),
+            0xF000..=0xFFFF => q.ram2[usize::from(addr - 0xF000)],
+            _ => 0x00,
+        }
+    }
+
+    /// qsound_sub_map, écriture.
+    fn qsound_write(&mut self, addr: u16, v: u8) {
+        let rom_len = self.rom.len();
+        let q = self.qsound.as_mut().expect("carte QSound");
+        match addr {
+            0xC000..=0xCFFF => self.ram[usize::from(addr - 0xC000)] = v,
+            0xD000..=0xD002 => q.dsp.write((addr - 0xD000) as u8, v),
+            0xD003 => {
+                // qsound_banksw_w (l.466-476)
+                let mut bank = v & 0x0f;
+                if 0x10000 + usize::from(bank) * 0x4000 >= rom_len {
+                    bank = 0;
+                }
+                self.bank = bank;
+            }
+            0xF000..=0xFFFF => q.ram2[usize::from(addr - 0xF000)] = v,
+            _ => {}
+        }
     }
 
     pub fn set_latch(&mut self, n: usize, v: u8) {
@@ -76,6 +198,9 @@ impl<C: SoundChips> SoundBoard<C> {
 
     /// Read a byte from the Z80 memory map.
     pub fn read(&mut self, addr: u16) -> u8 {
+        if self.qsound.is_some() {
+            return self.qsound_read(addr, false);
+        }
         match addr {
             0x0000..=0x7FFF => {
                 if (addr as usize) < self.rom.len() {
@@ -103,6 +228,9 @@ impl<C: SoundChips> SoundBoard<C> {
 
     /// Write a byte to the Z80 memory map.
     pub fn write(&mut self, addr: u16, v: u8) {
+        if self.qsound.is_some() {
+            return self.qsound_write(addr, v);
+        }
         match addr {
             0xD000..=0xD7FF => self.ram[(addr - 0xD000) as usize] = v,
             0xF000 | 0xF001 => self.chips.ym_write((addr & 1) as u8, v),
@@ -127,11 +255,19 @@ impl<C: SoundChips> SoundBoard<C> {
 
     /// IRQ level: from YM2151.
     pub fn irq_level(&self) -> bool {
-        self.chips.irq()
+        match self.qsound.as_ref() {
+            Some(q) => q.irq,
+            None => self.chips.irq(),
+        }
     }
 
     /// Serve one T-state of the Z80 CPU via pin-level interaction.
     pub fn tick(&mut self, cpu: &mut Cpu) {
+        // QSound : DSP et IRQ à jour avant tout accès de cet instant
+        if let Some(q) = self.qsound.as_mut() {
+            q.advance(self.time);
+        }
+
         // Build input pins for this tick based on previous outputs
         let mut pins_in = Pins(0);
 
@@ -146,7 +282,9 @@ impl<C: SoundChips> SoundBoard<C> {
             let data = match self.read_data.take() {
                 Some(d) => d,
                 None => {
-                    let d = if mem_rd {
+                    let d = if mem_rd && self.qsound.is_some() {
+                        self.qsound_read(last.addr(), last.has(Pins::M1))
+                    } else if mem_rd {
                         self.read(last.addr())
                     } else if io_rd {
                         self.input(last.addr())
@@ -179,7 +317,12 @@ impl<C: SoundChips> SoundBoard<C> {
         }
 
         // Advance chips to current time before sampling INT
-        self.chips.advance(self.time);
+        match self.qsound.as_mut() {
+            // irq0_line_hold : acquittement = ligne relâchée
+            Some(q) if ack => q.irq = false,
+            Some(_) => {}
+            None => self.chips.advance(self.time),
+        }
 
         // Forward interrupt lines (no WAIT, no BUSRQ on CPS1)
         if self.irq_level() {
@@ -189,7 +332,7 @@ impl<C: SoundChips> SoundBoard<C> {
         // Execute one T-state
         let out = cpu.tick(pins_in);
         self.last_pins = out;
-        self.time += cps_common::clock::TICKS_PER_Z80;
+        self.time += self.z80_ticks;
     }
 }
 

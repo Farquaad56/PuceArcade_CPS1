@@ -34,6 +34,15 @@ pub struct Bus68k<V: VideoPort> {
     pub dial: Option<crate::Upd4701>,
     /// Adresse du CPS-B : 0x800140, ou 0x8001C0 pour init_sf2ee (cps1.cpp l.14594-14601).
     pub cpsb_base: u32,
+    /// Carte QSound (qsound_main_map) : ports F1C000-F1C007, lecture F00000. La RAM partagée
+    /// et l'EEPROM (F1C006) sont servies par l'hôte, qui a la carte son et l'heure.
+    pub qsound: bool,
+    /// Région « user1 » lue en F00000-F0FFFF (qsound_rom_r).
+    pub user1: Option<Vec<u8>>,
+    /// cpsq_coinctrl2_w (F1C004) : compteurs et verrous des pièces 3 et 4.
+    pub coinctrl2: u16,
+    /// EEPROM 93C46 (cartes QSound).
+    pub eeprom: Option<crate::Eeprom93c46>,
 }
 
 impl<V: VideoPort> Bus68k<V> {
@@ -49,6 +58,10 @@ impl<V: VideoPort> Bus68k<V> {
             coinctrl: 0,
             dial: None,
             cpsb_base: 0x800140,
+            qsound: false,
+            user1: None,
+            coinctrl2: 0,
+            eeprom: None,
         }
     }
 
@@ -84,6 +97,24 @@ impl<V: VideoPort> Bus68k<V> {
         // spec: docs/spec/01 §68000 — IN1 800000-800007 (4 mots identiques)
         if (0x800000..0x800008).contains(&a) {
             return self.inputs.in1;
+        }
+
+        // qsound_main_map (cps1.cpp l.664-681)
+        if self.qsound {
+            match a {
+                // qsound_rom_r : protection de Slam Masters
+                0xF00000..=0xF0FFFF => {
+                    return match &self.user1 {
+                        Some(r) => {
+                            0xff00 | u16::from(r.get((a - 0xF00000) / 2).copied().unwrap_or(0))
+                        }
+                        None => 0,
+                    };
+                }
+                0xF1C000 | 0xF1C001 => return u16::from(self.inputs.in2), // IN2 : joueur 3
+                0xF1C002 | 0xF1C003 => return u16::from(self.inputs.in3), // IN3 : joueur 4
+                _ => {}
+            }
         }
 
         // forgottn_map (cps1.cpp l.605-606) : uPD4701 read_x 800052-55, read_y 80005A-5D (umask 0x00FF)
@@ -140,6 +171,14 @@ impl<V: VideoPort> Bus68k<V> {
 
         // spec: docs/spec/01 §68000 — ROM : écriture ignorée
         if a < 0x400000 {
+            return None;
+        }
+
+        // qsound_main_map : cpsq_coinctrl2_w (F1C004, octet bas)
+        if self.qsound && (a == 0xF1C004 || a == 0xF1C005) {
+            if lds {
+                self.coinctrl2 = data & 0x00FF;
+            }
             return None;
         }
 

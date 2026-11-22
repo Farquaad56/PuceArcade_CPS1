@@ -14,6 +14,8 @@ pub use machine::Machine;
 // Re-exports for GUI convenience
 pub use cps_cart::{load_game, Config, Game};
 pub use cps_common::{Dips, Framebuffer, InputState};
+/// Fréquence du son QSound (stéréo).
+pub use cps_qsound::SAMPLE_HZ as QSOUND_HZ;
 
 /// Frame rate: 59.637 Hz (derived from 5.04 GHz / TICKS_PER_FRAME)
 pub const FRAME_HZ: f64 = 5_040_000_000.0 / 84_510_720.0;
