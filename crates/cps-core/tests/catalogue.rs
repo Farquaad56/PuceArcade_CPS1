@@ -51,21 +51,37 @@ fn list_games() {
 enum Outcome {
     Ok(f64),
     Diff(u64, f64),
+    /// ROM refusées (CRC, fichier absent) : set d'une autre version de MAME.
+    BadRoms(String),
     NoGolden,
     Crash(String),
 }
 
+/// MAME capture les jeux ROT270 tournés (224 × 384) : on ramène le golden à 384 × 224.
+/// Rot270 de puce-jamma : écran (x, y) -> capture (y, 383 - x).
+fn unrotate_270(px: &[u32], w: usize, h: usize) -> (usize, usize, Vec<u32>) {
+    let (ow, oh) = (h, w);
+    let mut out = vec![0u32; ow * oh];
+    for y in 0..oh {
+        for x in 0..ow {
+            out[y * ow + x] = px[(ow - 1 - x) * w + y];
+        }
+    }
+    (ow, oh, out)
+}
+
 fn run_game(cfg: &Config, name: &str) -> Outcome {
+    let game = match load_game(cfg, name) {
+        Ok(g) => g,
+        Err(e) => return Outcome::BadRoms(e.to_string()),
+    };
     if FRAMES
         .iter()
         .any(|f| !golden_dir(name).join(format!("f{f:06}.png")).is_file())
     {
         return Outcome::NoGolden;
     }
-    let game = match load_game(cfg, name) {
-        Ok(g) => g,
-        Err(e) => return Outcome::Crash(format!("chargement : {e}")),
-    };
+    let vertical = game.info.rotation == 270;
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         let mut m = Machine::new(game);
         let mut worst = 0.0f64;
@@ -77,6 +93,7 @@ fn run_game(cfg: &Config, name: &str) -> Outcome {
             if FRAMES.contains(&frame) {
                 let path = golden_dir(name).join(format!("f{frame:06}.png"));
                 let (w, h, px) = match load_png_rgb(&path) {
+                    Ok((w, h, px)) if vertical && w < h => unrotate_270(&px, w, h),
                     Ok(g) => g,
                     Err(e) => return Outcome::Crash(format!("golden : {e}")),
                 };
@@ -108,14 +125,15 @@ fn catalogue() {
          Trames 600 et 1500 comparées aux golden MAME (seuil 2 % de pixels différents).\n\n\
          | Jeu | Titre | Résultat |\n|---|---|---|\n",
     );
-    let (mut ok, mut failed) = (0, Vec::new());
+    let (mut ok, mut skipped, mut failed) = (0, 0, Vec::new());
     for name in &games {
         let title = cps_cart::find_game(name).map_or("", |g| g.title);
         let outcome = run_game(&cfg, name);
         let cell = match &outcome {
             Outcome::Ok(r) => format!("OK (écart max {:.3} %)", r * 100.0),
             Outcome::Diff(f, r) => format!("écart {:.2} % à la trame {f}", r * 100.0),
-            Outcome::NoGolden => "pas de golden".into(),
+            Outcome::BadRoms(e) => format!("ROM refusées ({e})"),
+            Outcome::NoGolden => "pas de golden (MAME 0.287 refuse le set)".into(),
             Outcome::Crash(e) => format!("crash : {e}"),
         };
         println!("{name}: {cell}");
@@ -125,7 +143,7 @@ fn catalogue() {
                 ok += 1;
                 common::update_game_metrics(name, true);
             }
-            Outcome::NoGolden => {}
+            Outcome::NoGolden | Outcome::BadRoms(_) => skipped += 1,
             _ => {
                 failed.push(*name);
                 common::update_game_metrics(name, false);
@@ -134,9 +152,9 @@ fn catalogue() {
     }
     let _ = writeln!(
         md,
-        "\n**{ok} OK** sur {} jeux présents ; en échec : {}.",
-        games.len(),
-        failed.len()
+        "\n**{ok} OK**, {} en échec, {skipped} non comparés (ROM ou golden indisponibles) sur {} jeux présents.",
+        failed.len(),
+        games.len()
     );
     std::fs::write(root().join("docs/CATALOGUE.md"), md).unwrap();
     for g in MUST_PASS {
