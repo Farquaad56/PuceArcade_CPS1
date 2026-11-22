@@ -424,7 +424,7 @@
     ],
     "file": "tasks/T405.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T406",
