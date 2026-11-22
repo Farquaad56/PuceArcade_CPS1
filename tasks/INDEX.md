@@ -1,5 +1,7 @@
 # Index des tâches (CHAÎNE LINÉAIRE : chaque carte dépend de la précédente ; profil rust-dev)
 
+Exception (2026-11-22) : P5 (T500-T505, GUI) attend le frontal JAMMA (board Hermes « jamma », carte J200). Pour ne pas bloquer le reste, T600 dépend de T408 au lieu de T505 : P5 et P6/P7 avancent en parallèle.
+
 | Ordre | Id | Phase | Titre |
 |---|---|---|---|
 | 1 | T000 | P0 Fondations | Workspace Cargo vérifié, gate, métriques |

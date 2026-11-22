@@ -552,7 +552,7 @@
     "title": "T600 cps-gfx : étoiles (cps1_render_stars)",
     "phase": "P6 Autres jeux CPS1",
     "deps": [
-      "T505"
+      "T408"
     ],
     "file": "tasks/T600.md",
     "assignee": "rust-dev",
