@@ -1,4 +1,4 @@
-//! VBLANK event: IRQ2 assertion, video bases update, sprite latch, frame rendering.
+//! VBLANK event: frame rendering, IRQ2 assertion, video bases update, sprite latch (MAME order).
 //! spec: docs/spec/01 §Interruptions, docs/spec/02 §Instant du rendu
 
 use crate::host68k::Host68k;
@@ -7,18 +7,24 @@ use cps_common::clock::TICKS_PER_FRAME;
 /// Execute the VBLANK event sequence (Q-VBL).
 /// Called by on_tick when now >= next_vblank.
 pub fn vblank_event(host: &mut Host68k<'_>) {
-    // 1. Assert IPL1 (IRQ2) at start of VBLANK
-    *host.ipl1 = true;
+    // Ordre de MAME (screen.cpp vblank_begin) : la mise à jour d'écran (update_if_primary) passe
+    // AVANT les callbacks de VBLANK (IRQ2 de set_vblank_int, puis screen_vblank_cps1 et
+    // cps1_objram_latch). Les sprites affichés sont donc ceux copiés au VBLANK précédent :
+    // une trame de retard sur les tilemaps, comme sur la borne (Q-VBL, ADR-004).
 
-    // 2. Update video bases and latch sprites
-    host.bus.video.vblank();
-
-    // 3. Render the frame with current state
+    // 1. Rendu de la trame (render_frame recalcule lui-même les bases, comme screen_update_cps1)
+    //    frame_number = trames déjà rendues (avant incrément)
     host.bus
         .video
-        .render_frame(host.gfx, None, *host.frame, host.fb);
+        .render_frame(host.gfx, host.stars, *host.frame, host.fb);
 
-    // 4. Advance frame counter and schedule next VBLANK
+    // 2. IRQ2 (IPL1) au début du VBLANK
+    *host.ipl1 = true;
+
+    // 3. screen_vblank_cps1 (bases vidéo) puis cps1_objram_latch (copie des sprites)
+    host.bus.video.vblank();
+
+    // 4. Compteur de trames et VBLANK suivant
     *host.frame += 1;
     *host.next_vblank += TICKS_PER_FRAME;
 }
