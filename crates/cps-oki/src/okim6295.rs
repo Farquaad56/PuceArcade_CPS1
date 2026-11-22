@@ -88,6 +88,61 @@ impl Okim6295 {
         if self.pin7 { 132 } else { 165 }
     }
 
+    /// Write to the command register. spec: docs/spec/03 §OKI l.235-313
+    pub fn write(&mut self, command: u8) {
+        // If a command is pending, process the second half
+        if self.command != -1 {
+            let mut voicemask = (command >> 4) as i32;
+
+            for voicenum in 0..OKIM6295_VOICES {
+                if (voicemask & 1) == 1 {
+                    // Read ROM data before borrowing voice mutably
+                    let base = (self.command * 8) as u32;
+
+                    let start = ((self.read_byte(base + 0) as u32) << 16)
+                        | ((self.read_byte(base + 1) as u32) << 8)
+                        | (self.read_byte(base + 2) as u32);
+                    let start = start & 0x3FFFF;
+
+                    let stop = ((self.read_byte(base + 3) as u32) << 16)
+                        | ((self.read_byte(base + 4) as u32) << 8)
+                        | (self.read_byte(base + 5) as u32);
+                    let stop = stop & 0x3FFFF;
+
+                    // Now borrow voice mutably
+                    if !self.voices[voicenum].playing {
+                        if start < stop {
+                            self.voices[voicenum].playing = true;
+                            self.voices[voicenum].base_offset = start;
+                            self.voices[voicenum].sample = 0;
+                            self.voices[voicenum].count = 2 * (stop - start + 1);
+                            self.voices[voicenum].adpcm.reset();
+                            let vol_idx = (command & 0x0F) as usize;
+                            self.voices[voicenum].volume = VOLUME_NUM[vol_idx];
+                        }
+                    }
+                }
+                voicemask >>= 1;
+            }
+
+            // Reset the command
+            self.command = -1;
+        } else if (command & 0x80) == 0x80 {
+            // Start of a command: remember sample number
+            self.command = (command & 0x7F) as i32;
+        } else {
+            // Silence command: stop voices specified in bits 3-6
+            let mut voicemask = (command >> 3) as i32;
+
+            for voicenum in 0..OKIM6295_VOICES {
+                if (voicemask & 1) == 1 {
+                    self.voices[voicenum].playing = false;
+                }
+                voicemask >>= 1;
+            }
+        }
+    }
+
     /// Read a byte from ROM with address masking. spec: docs/spec/03 §OKI l.256-264
     fn read_byte(&self, addr: u32) -> u8 {
         let masked = (addr & 0x3FFFF) as usize;
@@ -111,6 +166,111 @@ mod tests {
         for v in chip.voices.iter() {
             assert!(!v.playing);
         }
+    }
+
+    #[test]
+    fn test_write_start_voice() {
+        // ROM with sample entry at index 1 (offset 8): start=0x400, stop=0x480
+        let mut rom = vec![0u8; 0x40000];
+        rom[8] = 0x00;   // start high byte
+        rom[9] = 0x04;   // start mid byte (0x400)
+        rom[10] = 0x00;  // start low byte
+        rom[11] = 0x00;  // stop high byte
+        rom[12] = 0x04;  // stop mid byte (0x480)
+        rom[13] = 0x80;  // stop low byte
+
+        let mut chip = Okim6295::new(rom);
+
+        // Send start command: sample number 1, voice 0, volume 0
+        chip.write(0x81);  // bit7=1, sample num = 1
+        chip.write(0x10);  // voice mask = 1 (voice 0), volume = 0
+
+        assert_eq!(chip.read(), 0xF1);  // Voice 0 playing
+        assert!(chip.voices[0].playing);
+        assert_eq!(chip.voices[0].base_offset, 0x400);
+        assert_eq!(chip.voices[0].count, 2 * (0x480 - 0x400 + 1));  // 258
+    }
+
+    #[test]
+    fn test_write_volume() {
+        let mut rom = vec![0u8; 0x40000];
+        rom[8] = 0x00;
+        rom[9] = 0x04;
+        rom[10] = 0x00;
+        rom[11] = 0x00;
+        rom[12] = 0x04;
+        rom[13] = 0x80;
+
+        let mut chip = Okim6295::new(rom);
+
+        // Volume index 8 -> VOLUME_NUM[8] = 0x02
+        chip.write(0x81);
+        chip.write(0x18);  // voice 0, volume index 8
+
+        assert_eq!(chip.voices[0].volume, 0x02);
+    }
+
+    #[test]
+    fn test_write_stop_voice() {
+        let mut rom = vec![0u8; 0x40000];
+        rom[8] = 0x00;
+        rom[9] = 0x04;
+        rom[10] = 0x00;
+        rom[11] = 0x00;
+        rom[12] = 0x04;
+        rom[13] = 0x80;
+
+        let mut chip = Okim6295::new(rom);
+
+        // Start voice 0
+        chip.write(0x81);
+        chip.write(0x10);
+        assert!(chip.voices[0].playing);
+
+        // Stop voice 0 (silence command, bit 3 = voice 0)
+        chip.write(0x08);
+        assert!(!chip.voices[0].playing);
+    }
+
+    #[test]
+    fn test_write_ignored_on_busy_voice() {
+        let mut rom = vec![0u8; 0x40000];
+        rom[8] = 0x00;
+        rom[9] = 0x04;
+        rom[10] = 0x00;
+        rom[11] = 0x00;
+        rom[12] = 0x04;
+        rom[13] = 0x80;
+
+        let mut chip = Okim6295::new(rom);
+
+        // Start voice 0
+        chip.write(0x81);
+        chip.write(0x10);
+        assert!(chip.voices[0].playing);
+
+        // Try to start again - should be ignored (voice busy)
+        let original_sample = chip.voices[0].sample;
+        chip.write(0x81);
+        chip.write(0x10);
+        assert_eq!(chip.voices[0].sample, original_sample);  // Still at same position
+    }
+
+    #[test]
+    fn test_write_ignored_start_ge_stop() {
+        let mut rom = vec![0u8; 0x40000];
+        rom[8] = 0x00;
+        rom[9] = 0x05;   // start = 0x500
+        rom[10] = 0x00;
+        rom[11] = 0x00;
+        rom[12] = 0x04;  // stop = 0x480 (start > stop)
+        rom[13] = 0x80;
+
+        let mut chip = Okim6295::new(rom);
+
+        chip.write(0x81);
+        chip.write(0x10);
+        assert!(!chip.voices[0].playing);  // Ignored because start >= stop
     }
 
     #[test]
