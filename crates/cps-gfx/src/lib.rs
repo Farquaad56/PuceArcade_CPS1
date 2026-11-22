@@ -7,6 +7,7 @@ pub mod config_data;
 pub mod decode;
 pub mod mapper;
 pub mod palette;
+pub mod raster;
 pub mod regs;
 pub mod render;
 pub mod sprites;

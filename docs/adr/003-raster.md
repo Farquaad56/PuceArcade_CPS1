@@ -1,0 +1,8 @@
+# ADR 003 — Compteurs raster CPS-B-21 et rendu partiel
+- Contexte : le CPS-B-21 possède trois compteurs raster (0x0E, 0x10, 0x12) qui déclenchent l'IRQ4 (IPL2) en cours de trame. MAME ne les active que via `init_rasters` (ganbare sur CPS1, puis CPS2). Au déclenchement, `raster_irq` appelle `screen.update_partial(vpos)` : l'image est rendue jusqu'à la ligne courante avec l'état vidéo d'avant l'IRQ, puis le reste de la trame avec l'état modifié par la routine d'interruption. Aujourd'hui, `render_frame` rend toute la trame en une fois au VBLANK.
+- Décision :
+  1. T702 ajoute seulement l'état (`cps_gfx::raster::Raster`, port 1:1 de `raster_scanline` et des lectures/écritures CPS-B). Il est optionnel (`None` par défaut) et non branché : aucun jeu actuellement émulé n'appelle `init_rasters`.
+  2. L'intégration future suivra MAME : (a) `Video` reçoit `raster: Option<Raster>` ; `cps_b_read`/`cps_b_write` le consultent d'abord ; (b) l'ordonnanceur appelle `raster_scanline` à chaque début de ligne (1 ligne = 322 560 ticks) et programme l'IRQ4 `counter[2] * 2` pixels plus tard ; (c) le rendu devient partiel : `render_lines(y0, y1)` rend les lignes [y0, y1) dans un bitmap de trame conservé, appelé à l'IRQ raster (jusqu'à `vpos`) puis au VBLANK (jusqu'à 240). Sans IRQ raster, un seul appel couvre toute la trame : résultat identique, golden inchangés.
+  3. L'IRQ4 qui tombe en même temps que l'IRQ2 donne le niveau 6 (IPL1 + IPL2), comme sur le matériel.
+- Conséquences : pas de coût tant que `raster` vaut `None` ; le rendu par lignes doit être découpé en préservant le tracé MAME (priorités, sprites latchés au VBLANK précédent). Un golden ganbare sera nécessaire pour valider.
+- Cartes impactées : T702 (état), carte future « ganbare » (intégration, T606+).
