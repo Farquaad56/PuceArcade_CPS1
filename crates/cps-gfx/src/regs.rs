@@ -170,6 +170,11 @@ impl Video {
         ((aligned & 0x3FFFF) / 2) as usize % GFXRAM_WORDS
     }
 
+    /// Lecture GFXRAM directe.
+    pub fn gfxram_read(&self, word: usize) -> u16 {
+        self.gfxram[word]
+    }
+
     /// Écriture GFXRAM avec COMBINE_DATA (l.2368-2415).
     pub fn gfxram_write(&mut self, word: usize, data: u16, uds: bool, lds: bool) {
         if uds && lds {

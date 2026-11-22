@@ -6,6 +6,9 @@
 pub mod map68k;
 pub use map68k::{Bus68k, SoundCmd, VideoPort};
 
+pub mod video_port;
+pub use video_port::{new_cps_bus, CpsBus};
+
 pub mod sound;
 pub use sound::SoundBoard;
 
