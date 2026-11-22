@@ -8,6 +8,7 @@ pub mod decode;
 pub mod mapper;
 pub mod palette;
 pub mod regs;
+pub mod render;
 pub mod sprites;
 pub mod sprites_render;
 pub mod tilemap;

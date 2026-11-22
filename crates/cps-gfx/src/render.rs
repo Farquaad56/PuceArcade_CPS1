@@ -201,25 +201,25 @@ mod tests {
         v.regs_b[0x13] = 0x3842; // enable 0x02, l0=1, l1=0, l2=2, l3=3
 
         // Palette entries for the test colors
-        v.palette[0x18] = 0xAA0000; // tile color (pen 0x18)
-        v.palette[0x238] = 0x00BB00; // sprite color (pen 0x238)
+        v.palette[0x18] = 0xAA0000; // sprite (couleur 1, raw 8 -> pen 0x18)
+        v.palette[0x238] = 0x00BB00; // tuile scroll1 (couleur 3+0x20, raw 8 -> pen 0x238)
 
         let gfx = make_gfx();
         let mut fb = Framebuffer::new();
         v.render_frame(&gfx, &mut fb);
 
-        // Without priority: tile drawn first, then sprite blocked by pri=31 -> tile wins
+        // Sans priorité : tuile dessinée d'abord, sprite par-dessus -> sprite
         assert_eq!(fb.pixels[0], 0xAA0000);
 
-        // With priority (regs_b[0x14] = 0x0100): sprite should win at (0,0)
+        // Avec priorité (regs_b[0x14] = 0x0100) : la tuile haute masque le sprite en (0,0)
         v.regs_b[0x14] = 0x0100;
         let mut fb2 = Framebuffer::new();
         v.render_frame(&gfx, &mut fb2);
         assert_eq!(fb2.pixels[0], 0x00BB00);
 
-        // Pixel (1,0) should be sprite in both cases (tile doesn't cover it)
-        assert_eq!(fb.pixels[SCREEN_W + 1], 0x00BB00);
-        assert_eq!(fb2.pixels[SCREEN_W + 1], 0x00BB00);
+        // Pixel (1,0) : pas de pixel sprite, la tuile reste visible dans les deux cas
+        assert_eq!(fb.pixels[1], 0x00BB00);
+        assert_eq!(fb2.pixels[1], 0x00BB00);
     }
 
     #[test]
@@ -246,7 +246,7 @@ mod tests {
         let mut fb = Framebuffer::new();
         v.render_frame(&gfx, &mut fb);
 
-        // Sprite drawn first, then tile on top -> tile wins even without priority
+        // Sprite dessiné d'abord, tuile par-dessus -> tuile même sans priorité
         assert_eq!(fb.pixels[0], 0x00BB00);
     }
 
@@ -276,40 +276,58 @@ mod tests {
         let mut fb = Framebuffer::new();
         v.render_frame(&gfx, &mut fb);
 
-        // Sprite masked -> tile wins even without priority
+        // Sprites masqués -> tuile même sans priorité
         assert_eq!(fb.pixels[0], 0x00BB00);
     }
 
     #[test]
     fn test_rowscroll_render() {
+        use crate::mapper::{gfxrom_bank_mapper, GFXTYPE_SCROLL2};
+        use crate::regs::{OTHER_BASE, ROWSCROLL_OFFS, SCROLL2_BASE, SCROLL2_X, SCROLL2_Y};
+
         let mut v = Video::new("ghouls");
-        // Enable rowscroll (VIDEOCONTROL bit0) and scroll2 (bit2)
-        v.regs_a[VIDEOCONTROL] |= 1 | 4;
-        v.regs_a[16] = 0x0010; // ROWSCROLL_OFFS
+        v.regs_a[SCROLL2_BASE] = 0x9040; // scroll2 au mot 0x2000
+        v.regs_a[OTHER_BASE] = 0x9100; // table de rowscroll au mot 0x8000
+        v.regs_a[SCROLL2_X] = 0;
+        v.regs_a[SCROLL2_Y] = 0;
+        v.regs_a[VIDEOCONTROL] = 1 | 4; // rowscroll + scroll2 actif
+        v.regs_a[ROWSCROLL_OFFS] = 0x0010;
+        v.buffered_obj[3] = 0xFF00; // aucun sprite
+                                    // lc : enable scroll2 (0x04), l0 = 2 (scroll2), l1..l3 = 0 (sprites)
+        v.regs_b[0x13] = 0x0084;
 
-        // Set up different rowscroll values for different lines
-        let other_idx = v.cps1_base(4, crate::regs::OTHER_SIZE);
-        // Line 20: offset (20+16)&0x3FF=36 -> scroll +5
-        v.gfxram[other_idx + 36] = 5;
-        // Line 30: offset (30+16)&0x3FF=46 -> scroll -3 (stored as u16 0xFFFD)
-        v.gfxram[other_idx + 46] = 0xFFFD;
+        // Tuile 16x16 entièrement raw 0 (opaque), code 8, en col 4 row 1 :
+        // elle couvre la tilemap x 64..79, y 16..31.
+        let mut gfx = vec![0xFFu8; 0x40000];
+        let code = gfxrom_bank_mapper(&v.cfg.mapper, GFXTYPE_SCROLL2, 8);
+        assert!(code >= 0);
+        let t = code as usize * 128;
+        gfx[t..t + 128].fill(0x00);
+        let idx = crate::tilemap::tilemap1_scan(4, 1) as usize;
+        v.gfxram[0x2000 + 2 * idx] = 8;
+        v.gfxram[0x2000 + 2 * idx + 1] = 0x0003; // couleur 3 -> pen 0x430
 
-        // Base scroll2 X = 100
-        v.regs_a[8] = 0x0064;
-        v.get_video_base();
+        // Rowscroll de 5 sur la seule ligne 20
+        v.gfxram[0x8000 + 20 + 0x10] = 5;
 
-        // Verify rowscroll affects tilemap_scroll output
-        let (sx20, _) = v.tilemap_scroll(1, 20);
-        assert_eq!(sx20, 105); // 100 + 5
+        v.palette[0x430] = 0xAA0000;
+        v.palette[0xBFF] = 0x123456;
 
-        let (sx30, _) = v.tilemap_scroll(1, 30);
-        // 0xFFFD as i32 is large positive; but spec says signed byte arithmetic
-        // In our implementation it's u16->i32 cast, so 65533 + 100 = 65633
-        assert_eq!(sx30, 100 + 65533);
+        let mut fb = Framebuffer::new();
+        v.render_frame(&gfx, &mut fb);
 
-        // Without rowscroll enabled, no adjustment
-        v.regs_a[VIDEOCONTROL] &= !1;
-        let (sx20b, _) = v.tilemap_scroll(1, 20);
-        assert_eq!(sx20b, 100);
+        // Oracle : tilemap_scroll donne +5 sur la ligne 20, rien sur la 21
+        assert_eq!(v.tilemap_scroll(1, 20).0, 5);
+        assert_eq!(v.tilemap_scroll(1, 21).0, 0);
+
+        // Ligne 21 (fb y = 5) : tuile en sx 64..79 -> fb x 0..15
+        let r21 = 5 * SCREEN_W;
+        assert_eq!(fb.pixels[r21], 0xAA0000);
+        assert_eq!(fb.pixels[r21 + 15], 0xAA0000);
+        assert_eq!(fb.pixels[r21 + 16], 0x123456);
+        // Ligne 20 (fb y = 4) : tx = sx + 5 -> tuile en sx 59..74 -> fb x 0..10
+        let r20 = 4 * SCREEN_W;
+        assert_eq!(fb.pixels[r20 + 10], 0xAA0000);
+        assert_eq!(fb.pixels[r20 + 11], 0x123456);
     }
 }
