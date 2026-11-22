@@ -1,7 +1,8 @@
 //! Hôte du 68000 : bus cadencé à l'horloge et rattrapage (catch-up) de la carte son.
 //! spec: docs/ARCHITECTURE.md §Ordonnanceur, docs/spec/00-clock-timing.md §Trame
 
-use cps_common::clock::{Tick, TICKS_PER_FRAME, TICKS_PER_Z80};
+use cps_common::clock::{Tick, TICKS_PER_Z80};
+use cps_common::video::Framebuffer;
 use puce_m68k::bus::Bus;
 use puce_m68k::cpu::Cpu as Cpu68k;
 use puce_m68k::pins::Pins;
@@ -18,6 +19,9 @@ pub struct Host68k<'a> {
     pub ipl2: &'a mut bool,
     pub ticks_68k: u64,
     pub frame_done: &'a mut bool,
+    pub gfx: &'a [u8],
+    pub fb: &'a mut Framebuffer,
+    pub frame_start: Tick,
 }
 
 impl super::machine::Machine {
@@ -36,6 +40,9 @@ impl super::machine::Machine {
                 ipl2: &mut self.ipl2,
                 ticks_68k: self.ticks_68k,
                 frame_done: &mut self.frame_done,
+                gfx: &self.gfx,
+                fb: &mut self.fb,
+                frame_start: self.frame_start,
             },
         )
     }
@@ -47,13 +54,6 @@ impl Host68k<'_> {
         while self.sound.time + TICKS_PER_Z80 <= t {
             self.sound.tick(self.z80);
         }
-    }
-
-    /// Événement VBLANK : incrémenter la trame et planifier le prochain.
-    fn vblank_event(&mut self) {
-        *self.next_vblank += TICKS_PER_FRAME;
-        *self.frame += 1;
-        *self.frame_done = true;
     }
 }
 
@@ -102,9 +102,15 @@ impl Bus for Host68k<'_> {
         // Catch-up de la carte son (Z80 + YM2151 + OKI)
         self.z80_run_until(*self.now);
 
-        // Événement VBLANK si atteint
+        // Événement VBLANK si atteint (ligne 240)
         if *self.now >= *self.next_vblank {
-            self.vblank_event();
+            crate::vblank::vblank_event(self);
+        }
+
+        // Fin de trame : TICKS_PER_FRAME ticks après le début de cette trame
+        let frame_end = self.frame_start + cps_common::clock::TICKS_PER_FRAME;
+        if *self.now >= frame_end {
+            *self.frame_done = true;
         }
     }
 }

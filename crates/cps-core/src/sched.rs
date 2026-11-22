@@ -8,6 +8,7 @@ impl super::machine::Machine {
     /// Exécute une trame complète (jusqu'au prochain VBLANK).
     pub fn run_frame(&mut self) {
         self.frame_done = false;
+        self.frame_start = self.now;
 
         loop {
             let (cpu, mut host): (&mut Cpu68k, Host68k<'_>) = self.split();
@@ -51,24 +52,24 @@ mod tests {
         let mut m = nop_loop_machine();
         m.run_frame();
 
-        // Une trame complète exécutée
+        // Une trame complète exécutée (jusqu'à la fin de la frame, pas juste VBLANK)
         assert_eq!(m.frame_count(), 1);
 
-        // now >= début du VBLANK de la première trame
+        // now >= TICKS_PER_FRAME (frame complète terminée)
         assert!(
-            m.now >= TICKS_VBLANK_START,
+            m.now >= TICKS_PER_FRAME,
             "now={} < {}",
             m.now,
-            TICKS_VBLANK_START
+            TICKS_PER_FRAME
         );
 
-        // now < début du VBLANK + marge (30 cycles 68k) - pas trop au-delà
+        // now < TICKS_PER_FRAME + marge (30 cycles 68k) - pas trop au-delà
         let margin = 30 * 504;
         assert!(
-            m.now < TICKS_VBLANK_START + margin,
+            m.now < TICKS_PER_FRAME + margin,
             "now={} >= {}",
             m.now,
-            TICKS_VBLANK_START + margin
+            TICKS_PER_FRAME + margin
         );
 
         // Carte son synchronisée : sound.time dans ]now-1408, now]

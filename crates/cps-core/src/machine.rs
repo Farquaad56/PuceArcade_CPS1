@@ -23,6 +23,7 @@ pub struct Machine {
     pub ticks_68k: u64,
     pub frame_done: bool,
     pub game: String,
+    pub frame_start: Tick,
 }
 
 impl Machine {
@@ -50,6 +51,7 @@ impl Machine {
             ticks_68k: game.ticks_per_68k,
             frame_done: false,
             game: game.info.name.to_string(),
+            frame_start: 0,
         };
         machine.reset();
         machine
@@ -71,6 +73,7 @@ impl Machine {
         self.ipl1 = false;
         self.ipl2 = false;
         self.frame_done = false;
+        self.frame_start = 0;
     }
 
     /// Borrow the framebuffer.

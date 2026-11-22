@@ -5,5 +5,6 @@
 pub mod host68k;
 pub mod machine;
 pub mod sched;
+pub mod vblank;
 
 pub use machine::Machine;
