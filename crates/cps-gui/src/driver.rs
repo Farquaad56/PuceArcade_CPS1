@@ -2,8 +2,7 @@
 
 use std::path::PathBuf;
 
-use cps_cart::romsets_data::GAMES;
-use cps_cart::{load_game, ticks_per_68k, Config, GameInfo};
+use cps_cart::{load_game, Config, GameInfo};
 use puce_jamma::board::JammaBoard;
 use puce_jamma::driver::{BoardDriver, GameEntry};
 
@@ -28,15 +27,14 @@ impl Cps1Driver {
     }
 }
 
-/// Jeux émulés : machine connue (non QSound) et non marqués « ne fonctionne pas » par MAME.
+/// Jeux jouables (`cps_cart::support_of`), les jeux prioritaires en tête.
 pub fn supported_games() -> Vec<&'static GameInfo> {
-    let ok = |g: &&GameInfo| ticks_per_68k(g.machine).is_ok() && !g.not_working;
+    let all = cps_cart::supported_games();
     let mut out: Vec<&GameInfo> = FIRST
         .iter()
-        .filter_map(|n| GAMES.iter().find(|g| g.name == *n))
-        .filter(ok)
+        .filter_map(|n| all.iter().copied().find(|g| g.name == *n))
         .collect();
-    out.extend(GAMES.iter().filter(ok).filter(|g| !FIRST.contains(&g.name)));
+    out.extend(all.into_iter().filter(|g| !FIRST.contains(&g.name)));
     out
 }
 
@@ -114,6 +112,7 @@ mod tests {
         let names: Vec<&str> = supported_games().iter().map(|g| g.name).collect();
         assert!(!names.contains(&"dino") && !names.contains(&"punisher"));
         assert!(names.contains(&"1941"));
+        assert_eq!(names.len(), 160);
     }
 
     #[test]

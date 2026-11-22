@@ -15,6 +15,8 @@ pub struct Game {
     pub regions: Regions,
     pub ticks_per_68k: u64,
     pub dips: cps_common::Dips,
+    /// init_sf2ee (cps1.cpp l.14594-14601) : CPS-B en 8001C0 au lieu de 800140.
+    pub cpsb_at_1c0: bool,
 }
 
 /// Nombre de ticks (5,04 GHz) par cycle 68000 selon la machine.
@@ -22,6 +24,8 @@ pub fn ticks_per_68k(machine: &str) -> Result<u64, CartError> {
     match machine {
         "cps1_10MHz" => Ok(504),
         "cps1_12MHz" => Ok(420),
+        // forgottn = cps1_10MHz + uPD4701 (cps1.cpp l.3949-3957)
+        "forgottn" => Ok(504),
         other => Err(CartError::UnsupportedMachine(other.to_string())),
     }
 }
@@ -57,6 +61,7 @@ pub fn load_game_from(
         regions,
         ticks_per_68k: ticks,
         dips: dips.unwrap_or_else(|| dips_default(info.input)),
+        cpsb_at_1c0: info.init == "init_sf2ee",
     })
 }
 

@@ -140,6 +140,7 @@ pub mod testutil {
             },
             ticks_per_68k: 504,
             dips: default_dips("ghouls"),
+            cpsb_at_1c0: false,
         }
     }
 }

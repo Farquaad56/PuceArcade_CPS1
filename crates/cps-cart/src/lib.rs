@@ -12,6 +12,7 @@ pub mod regions;
 pub mod romsets_data;
 pub mod romset;
 pub mod source;
+pub mod support;
 
 pub use config::Config;
 pub use dips::{dip_fields, input_layout};
@@ -19,3 +20,4 @@ pub use error::CartError;
 pub use game::{load_game, load_game_from, ticks_per_68k, Game};
 pub use regions::build_regions;
 pub use romset::{find_game, GameInfo};
+pub use support::{support_of, supported_games, Support};
