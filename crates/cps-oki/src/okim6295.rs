@@ -152,6 +152,36 @@ impl Okim6295 {
             0
         }
     }
+
+    /// Generate one sample: sum of all active voices. spec: docs/spec/03 §OKI l.178-183, l.338-361
+    pub fn generate(&mut self) -> i32 {
+        let mut total = 0;
+
+        for voicenum in 0..OKIM6295_VOICES {
+            if !self.voices[voicenum].playing {
+                continue;
+            }
+
+            // Fetch the next sample byte, extract nibble (high first)
+            let addr = self.voices[voicenum].base_offset + self.voices[voicenum].sample / 2;
+            let byte = self.read_byte(addr);
+            let shift = ((self.voices[voicenum].sample & 1) << 2) ^ 4;
+            let nibble = (byte >> shift) & 0x0F;
+
+            // Decode ADPCM and scale by volume
+            let decoded = self.voices[voicenum].adpcm.clock(nibble);
+            total += decoded as i32 * self.voices[voicenum].volume;
+
+            // Advance sample counter, stop when done
+            if self.voices[voicenum].sample + 1 >= self.voices[voicenum].count {
+                self.voices[voicenum].playing = false;
+            } else {
+                self.voices[voicenum].sample += 1;
+            }
+        }
+
+        total
+    }
 }
 
 #[cfg(test)]
@@ -271,6 +301,40 @@ mod tests {
         chip.write(0x81);
         chip.write(0x10);
         assert!(!chip.voices[0].playing);  // Ignored because start >= stop
+    }
+
+    #[test]
+    fn test_generate_stops_after_count() {
+        let mut rom = vec![0u8; 0x40000];
+        rom[8] = 0x00;   // start high byte
+        rom[9] = 0x04;   // start mid byte (0x400)
+        rom[10] = 0x00;  // start low byte
+        rom[11] = 0x00;  // stop high byte
+        rom[12] = 0x04;  // stop mid byte (0x480)
+        rom[13] = 0x80;  // stop low byte
+
+        let mut chip = Okim6295::new(rom);
+
+        // Start voice 0 with count = 2 * (0x480 - 0x400 + 1) = 258
+        chip.write(0x81);
+        chip.write(0x10);
+
+        assert_eq!(chip.read(), 0xF1);  // Voice playing
+        assert_eq!(chip.voices[0].count, 258);
+
+        // Generate all samples - voice should stop after count is reached
+        for _ in 0..258 {
+            chip.generate();
+        }
+
+        assert!(!chip.voices[0].playing);
+        assert_eq!(chip.read(), 0xF0);  // Voice stopped
+    }
+
+    #[test]
+    fn test_generate_no_voices() {
+        let mut chip = Okim6295::new(vec![0u8; 0x40000]);
+        assert_eq!(chip.generate(), 0);
     }
 
     #[test]
