@@ -6,7 +6,7 @@
 - Référence vidéo : MAME 0.287 (`X:\Mame_0287`, comme Puce16 Neo Geo) ; captures par tools/mame_golden.ps1.
 
 ## Points ouverts
-- [OUVERT] Q-VBL : ordre exact au début du VBLANK (IRQ2 / recalcul des bases / latch sprites / rendu). Retenu : celui de MAME (screen.cpp vblank_begin :
+- [RÉSOLU, ADR-004] Q-VBL : MAME rend AVANT les callbacks de VBLANK (IRQ2, bases, copie des sprites) ; ordre corrigé le 2026-11-22 (ghouls identique au pixel près, catalogue 41 -> 43 OK). Texte d'origine : ordre exact au début du VBLANK (IRQ2 / recalcul des bases / latch sprites / rendu). Retenu : celui de MAME (screen.cpp vblank_begin :
   callbacks puis frame_update). À confirmer par les golden (T404). Si les sprites sont décalés d'une trame : inverser latch et rendu (ADR).
 - [OUVERT] Q-WAIT : wait states ROM/RAM/GFXRAM non émulés par MAME (« TODO: verify wait cycle »). 0 partout ; à revoir si un golden dérive (T701).
 - [OUVERT] Q-RESET68K : la séquence de reset de puce-m68k (40 horloges) diffère peut-être de celle de MAME : décalage de quelques horloges au démarrage.

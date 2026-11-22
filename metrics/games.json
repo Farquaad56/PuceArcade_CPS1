@@ -1,6 +1,6 @@
 {
-  "pass": 42,
-  "fail": 4,
+  "pass": 44,
+  "fail": 2,
   "total": 46,
   "games": {
     "3wonders": true,
@@ -19,12 +19,12 @@
     "knightsu": true,
     "mercs": true,
     "msword": true,
-    "mswordj": false,
+    "mswordj": true,
     "mswordr1": true,
     "mswordu": true,
     "nemo": true,
     "qad": true,
-    "rockmanj": false,
+    "rockmanj": true,
     "sf2": true,
     "sf2accp2": true,
     "sf2ceea": true,

@@ -7,9 +7,9 @@ Trames 600 et 1500 comparées aux golden MAME (seuil 2 % de pixels différents).
 |---|---|---|
 | forgottn | Forgotten Worlds (World, newer) | ROM refusées (fichier manquant : lw40.12f) |
 | lostwrld | Lost Worlds (Japan) | pas de golden (MAME 0.287 refuse le set) |
-| ghouls | Ghouls'n Ghosts (World) | OK (écart max 1.075 %) |
-| ghoulsu | Ghouls'n Ghosts (USA) | OK (écart max 0.658 %) |
-| daimakai | Daimakaimura (Japan) | OK (écart max 0.658 %) |
+| ghouls | Ghouls'n Ghosts (World) | OK (écart max 0.000 %) |
+| ghoulsu | Ghouls'n Ghosts (USA) | OK (écart max 0.000 %) |
+| daimakai | Daimakaimura (Japan) | OK (écart max 0.000 %) |
 | strider | Strider (USA, B-Board 89624B-2) | OK (écart max 0.000 %) |
 | striderj | Strider Hiryu (Japan) | ROM refusées (fichier manquant : sth_36.12f) |
 | dynwar | Dynasty Wars (USA, B-Board 89624B-?) | pas de golden (MAME 0.287 refuse le set) |
@@ -27,7 +27,7 @@ Trames 600 et 1500 comparées aux golden MAME (seuil 2 % de pixels différents).
 | ffightj2 | Final Fight (Japan 900305) | ROM refusées (fichier manquant : ffj_36a.12f) |
 | 1941 | 1941: Counter Attack (World 900227) | ROM refusées (fichier manquant : 41em_30.11f) |
 | 1941j | 1941: Counter Attack (Japan) | ROM refusées (fichier manquant : 41_34.10f) |
-| mercs | Mercs (World 900302) | OK (écart max 0.100 %) |
+| mercs | Mercs (World 900302) | OK (écart max 0.000 %) |
 | mercsu | Mercs (USA 900608) | ROM refusées (fichier manquant : so2_30a.11f) |
 | mercsj | Senjou no Ookami II (Japan 900302) | pas de golden (MAME 0.287 refuse le set) |
 | mtwins | Mega Twins (World 900619) | pas de golden (MAME 0.287 refuse le set) |
@@ -35,7 +35,7 @@ Trames 600 et 1500 comparées aux golden MAME (seuil 2 % de pixels différents).
 | msword | Magic Sword: Heroic Fantasy (World 900725) | OK (écart max 0.000 %) |
 | mswordr1 | Magic Sword: Heroic Fantasy (World 900623) | OK (écart max 0.000 %) |
 | mswordu | Magic Sword: Heroic Fantasy (USA 900725) | OK (écart max 0.000 %) |
-| mswordj | Magic Sword: Heroic Fantasy (Japan 900623) | écart 3.84 % à la trame 1500 |
+| mswordj | Magic Sword: Heroic Fantasy (Japan 900623) | OK (écart max 0.953 %) |
 | cawing | Carrier Air Wing (World 901012) | OK (écart max 0.000 %) |
 | cawingr1 | Carrier Air Wing (World 901009) | OK (écart max 0.000 %) |
 | cawingu | Carrier Air Wing (USA 901130) | ROM refusées (fichier manquant : cau_36.12f) |
@@ -69,7 +69,7 @@ Trames 600 et 1500 comparées aux golden MAME (seuil 2 % de pixels différents).
 | sf2ceuc | Street Fighter II': Champion Edition (USA 920803) | OK (écart max 0.000 %) |
 | sf2rb3 | Street Fighter II': Champion Edition (Rainbow, bootleg, set 3) | OK (écart max 0.000 %) |
 | sf2red | Street Fighter II': Champion Edition (Red Wave, bootleg, set 1) | écart 94.81 % à la trame 1500 |
-| sf2v004 | Street Fighter II': Champion Edition (V004, bootleg) | écart 35.41 % à la trame 600 |
+| sf2v004 | Street Fighter II': Champion Edition (V004, bootleg) | écart 38.02 % à la trame 600 |
 | sf2accp2 | Street Fighter II': Champion Edition (Accelerator Pt.II, bootleg) | OK (écart max 0.000 %) |
 | cworld2j | Adventure Quiz Capcom World 2 (Japan 920611) | pas de golden (MAME 0.287 refuse le set) |
 | varth | Varth: Operation Thunderstorm (World 920714) | pas de golden (MAME 0.287 refuse le set) |
@@ -80,6 +80,6 @@ Trames 600 et 1500 comparées aux golden MAME (seuil 2 % de pixels différents).
 | sf2hf | Street Fighter II': Hyper Fighting (World 921209) | OK (écart max 0.000 %) |
 | pnickj | Pnickies (Japan 940608) | pas de golden (MAME 0.287 refuse le set) |
 | megaman | Mega Man: The Power Battle (CPS1, USA 951006) | ROM refusées (fichier manquant : rcmu_23b.8f) |
-| rockmanj | Rockman: The Power Battle (CPS1, Japan 950922) | écart 26.78 % à la trame 1500 |
+| rockmanj | Rockman: The Power Battle (CPS1, Japan 950922) | OK (écart max 0.000 %) |
 
-**41 OK**, 4 en échec, 31 non comparés (ROM ou golden indisponibles) sur 76 jeux présents.
+**43 OK**, 2 en échec, 31 non comparés (ROM ou golden indisponibles) sur 76 jeux présents.
