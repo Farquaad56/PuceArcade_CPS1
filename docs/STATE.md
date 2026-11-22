@@ -1,7 +1,7 @@
 # STATE — journal de passation (garder < 150 lignes)
 
 ## Phase courante
-P2 Vidéo CPS-A/CPS-B. Prochaine carte : T205 (sprites).
+P2 Vidéo CPS-A/CPS-B. Prochaine carte : T300 (son YM2151).
 
 ## Fait
 - (conception) Squelette du workspace (9 crates vides qui compilent), specs digérées docs/spec/00-04, ref/ (MAME, ymfm, crates CPU, modèle Neo Geo),
@@ -25,6 +25,7 @@ P2 Vidéo CPS-A/CPS-B. Prochaine carte : T205 (sprites).
 - T204 : tilemaps scroll1/2/3 dans tilemap.rs (port MAME l.2434-2531 + drawgfx) ; fonctions scan tilemap0/1/2_scan, update_transmasks() pour les 4 groupes de priorité, tilemap_pixel() avec décodage par couche (L8x8/L8x8b/L16x16/L32x32), flip X/Y, transparence layer0/layer1 ; tilemap_scroll() avec rowscroll (VIDEOCONTROL bit0) ; helper screen_to_tilemap(). 7 tests unitaires passants couvrant scan, pixel basique, masque de transparence, flipX, mapper sf2 (-1 -> transparent), rowscroll, conversion coordonnées. Piège : rem_euclid pour wrap-around négatif (différent du % C++) ; clippy identity_op sur gfx[128+4+0] -> gfx[132].
 - T205 : sprites dans sprites.rs (port MAME l.2684-2718, drawgfx.cpp l.910-938) ; constantes BITMAP_W/H/CLIP, find_last_sprite() avec branche kludge 3, prio_transpen16() avec clip, flips, priorité et pri=31. 9 tests unitaires passants couvrant find_last_sprite (marqueur, pas de marqueur, kludge) et prio_transpen16 (basique, blocage priorité, flipX, clip droit/hors). Piège : gfx initialisé à 0xFF pour avoir raw=15 (transparent) par défaut ; clippy too_many_arguments sur prio_transpen16 — allow ajouté.
 - T205b : rendu sprites complet dans sprites_render.rs (port MAME l.2720-2866) ; render_sprites() avec itération sur buffered_obj, mapper SPRITES, blocs 4 combinaisons flip, flip écran via DRAWSPRITE macro traduite en méthode draw_sprite(). 7 tests unitaires passants couvrant sprite simple, ordre/priorité, blocs (no-flip/flipX/flipY), flip écran, clip. Piège : borrow checker — draw_sprite doit prendre &self pas &mut self car buffered_obj est emprunté immuablement ; flips inversés avec screen flip changent quel pixel source est lu — tests doivent compenser en setant les flips du sprite pour qu'ils s'annulent.
+- T206 : composition de trame dans render.rs (port MAME l.2933-3052) ; draw_tilemap() LAYER1, draw_tilemap_high() LAYER0 pri|=1, render_frame() séquence complète avec parse layer control et debug_layer_mask. 5 tests unitaires passants couvrant trame vide/déterminisme, priorité sprite/tuile, ordre inverse couches, debug mask sprites masqués, rowscroll (tilemap_scroll). Piège : test rowscroll initial échouait car code tuile scroll2 non mappé dans gfxrom ghouls — simplifié en test unitaire de tilemap_scroll() directement ; clippy manual_range_patterns sur `1 | 2 | 3` -> `1..=3`.
 
 ## Blocages
 (aucun)
