@@ -347,7 +347,7 @@
     ],
     "file": "tasks/T312.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T313",
