@@ -19,3 +19,6 @@
 - [OUVERT] Q-SF2HF-3000 : sf2hf a ~2 trames d'avance sur MAME à la trame 3000 (trames 120/600/1500 identiques) : à traiter avec Q-VBL / Q-RESET68K / Q-WAIT en T701.
 - [OUVERT] Q-JAMMA-SHA : le crate puce-jamma épinglé (rev 916eace, tag v0.1.0 de J200) est vide (lib.rs = `#![forbid(unsafe_code)]` uniquement). Les types JammaInputs et util::active_low n'existent pas dans ce commit. T500 bloquée jusqu'à ce que le dépôt PuceArcade_JammaGui_Crates publie une révision contenant l'implémentation du contrat (modules inputs, util, etc.).
   Réponse (Claude, 2026-11-22) : le frontal JAMMA n'avait jamais été importé dans Hermes. Board « jamma » importé (J000-J200) ; T500 reprendra quand J200 sera done, avec le SHA noté dans le STATE.md de PuceArcade_JammaGui_Crates. En attendant, T600 dépend de T408 (P6/P7 en parallèle). Travail inachevé de T500 mis de côté : `git stash list` (« T500 inacheve »).
+
+- T500b (résolu par l'orchestrateur) : la carte attendait 859-860 échantillons après la 1re trame (0 -> début VBLANK). Le cœur termine chaque `run_frame` sur un multiple de TICKS_PER_FRAME (now = 84 510 720 après la 1re trame, Z80 synchrone à 1 période près) et ses tests attendent 937/938. Test aligné sur le cœur : 937..=938.
+- T505 (même cause que T500b) : 60 trames donnent 60 × 84 510 720 / 90 112 = 56 268-56 269 échantillons, pas 56 191-56 192. Test aligné sur le cœur.
