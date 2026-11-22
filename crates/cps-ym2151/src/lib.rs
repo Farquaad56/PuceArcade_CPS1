@@ -4,6 +4,8 @@
 
 pub mod common;
 pub mod fm_tables;
+pub mod opm_regs;
+mod opm_regs_ops;
 
 #[cfg(feature = "serde")]
 mod serde_arr;

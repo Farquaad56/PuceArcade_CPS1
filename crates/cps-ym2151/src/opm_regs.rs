@@ -61,18 +61,18 @@ const FIXED_MAP: [u32; 8] = [
 /// Registres OPM (YM2151).
 #[derive(Clone, Debug)]
 pub struct OpmRegisters {
-    lfo_counter: u32,
-    noise_lfsr: u32,
-    noise_counter: u8,
-    noise_state: u8,
-    noise_lfo: u8,
-    lfo_am: u8,
-    regdata: [u8; OpmRegisters::REGISTERS],
+    pub(crate) lfo_counter: u32,
+    pub(crate) noise_lfsr: u32,
+    pub(crate) noise_counter: u8,
+    pub(crate) noise_state: u8,
+    pub(crate) noise_lfo: u8,
+    pub(crate) lfo_am: i16,
+    pub(crate) regdata: [u8; OpmRegisters::REGISTERS],
     /// Formes d'onde LFO : AM dans les 8 bits bas, PM dans les 8 bits hauts.
     #[allow(dead_code)]
-    lfo_waveform: [[i16; LFO_WAVEFORM_LENGTH]; 4],
+    pub(crate) lfo_waveform: [[i16; LFO_WAVEFORM_LENGTH]; 4],
     /// Table de sinus (une seule forme d'onde).
-    waveform: [u16; WAVEFORM_LENGTH],
+    pub(crate) waveform: [u16; WAVEFORM_LENGTH],
 }
 
 #[cfg(feature = "serde")]
@@ -123,7 +123,7 @@ struct OpmRegistersState {
     noise_counter: u8,
     noise_state: u8,
     noise_lfo: u8,
-    lfo_am: u8,
+    lfo_am: i16,
     #[serde(with = "crate::serde_arr")]
     regdata: [u8; OpmRegisters::REGISTERS],
 }
@@ -487,38 +487,7 @@ impl OpmRegisters {
             | self.byte(offset2, start2, count2, extra_offset)
     }
 
-    // --- Méthodes à implémenter dans T302b ---
-
-    /// Écriture dans les registres.
-    pub fn write(&mut self, _index: u16, _data: u8) -> (bool, u32, u32) {
-        todo!("T302b")
-    }
-
-    /// Horloge du bruit et du LFO.
-    pub fn clock_noise_and_lfo(&mut self) -> i32 {
-        todo!("T302b")
-    }
-
-    /// Décalage AM du LFO pour un canal donné.
-    pub fn lfo_am_offset(&self, _choffs: u32) -> u32 {
-        todo!("T302b")
-    }
-
-    /// Mise en cache des données d'opérateur.
-    pub fn cache_operator_data(&mut self, _choffs: u32, _opoffs: u32, _cache: &mut OpdataCache) {
-        todo!("T302b")
-    }
-
-    /// Calcul du pas de phase.
-    pub fn compute_phase_step(
-        &self,
-        _choffs: u32,
-        _opoffs: u32,
-        _cache: &OpdataCache,
-        _lfo_raw_pm: i32,
-    ) -> u32 {
-        todo!("T302b")
-    }
+    // --- Méthodes implémentées dans opm_regs_ops.rs ---
 
     /// État du bruit.
     pub fn noise_state_get(&self) -> u32 {
