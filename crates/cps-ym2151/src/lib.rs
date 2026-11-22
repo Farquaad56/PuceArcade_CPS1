@@ -2,6 +2,7 @@
 //! Ported from ymfm by Aaron Giles (BSD 3-Clause License).
 #![forbid(unsafe_code)]
 
+pub mod clocked;
 pub mod common;
 pub mod fm_channel;
 pub mod fm_engine;

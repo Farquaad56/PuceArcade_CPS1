@@ -14,7 +14,7 @@ pub struct Ym2151 {
     /// Registre d'adresse courant.
     address: u8,
     /// Moteur FM interne.
-    fm: FmEngine,
+    pub(crate) fm: FmEngine,
 }
 
 impl Default for Ym2151 {
