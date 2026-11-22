@@ -3,6 +3,8 @@
 #![forbid(unsafe_code)]
 
 pub mod common;
+pub mod fm_channel;
+pub mod fm_engine;
 pub mod fm_operator;
 pub mod fm_tables;
 pub mod opm_regs;
