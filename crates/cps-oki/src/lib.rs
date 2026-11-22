@@ -4,5 +4,7 @@
 #[rustfmt::skip]
 pub mod tables;
 pub mod adpcm;
+pub mod okim6295;
 
 pub use adpcm::OkiAdpcmState;
+pub use okim6295::{Okim6295, OkiVoice};
