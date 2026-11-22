@@ -6,7 +6,9 @@
 //! PORT-NOTE : `m_regs` / `m_owner` deviennent un argument `regs: &OpmRegisters` passé aux méthodes
 //! qui en ont besoin. `save_restore` n'est pas porté (savestates : T604). `compute_noise_volume`
 //! est porté mais ne sert qu'aux puces à bruit (l'OPN renvoie `noise_state() == 0`).
-//! `EG_HAS_DEPRESS` et `EG_HAS_REVERB` valent false pour l'OPN : ces branches sont omises.
+//! `EG_HAS_DEPRESS` et `EG_HAS_REVERB` valent false pour l'OPM : ces branches sont omises.
+//! PORT-NOTE: EG_HAS_SSG = false (OPM) — les branches SSG-EG sont conservées mais inactives
+//! car op_ssg_eg_enable() renvoie toujours 0 sur OpmRegisters.
 
 use crate::common::{bitfield, EG_ATTACK, EG_DECAY, EG_RELEASE, EG_SUSTAIN};
 use crate::fm_tables::{attenuation_increment, attenuation_to_volume};
