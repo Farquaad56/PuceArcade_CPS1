@@ -8,7 +8,25 @@ use crate::sprites::{BITMAP_H, BITMAP_W, CLIP};
 use crate::tilemap::{screen_to_tilemap, TILEMAP_DIM};
 use cps_common::video::{Framebuffer, SCREEN_H, SCREEN_W};
 
+/// Flip écran des tilemaps (tilemap.cpp l.27-75 et draw_common l.1008-1012) : MAME dessine la
+/// pixmap retournée décalée de `extent - largeur + scroll` (xextent = 64 + 447 + 1 = 512,
+/// yextent = 16 + 239 + 1 = 256) ; le pixel écran (sx, sy) montre donc le pixel de la tilemap
+/// non retournée en (511 - sx + scrollx, 255 - sy + scrolly), et le rowscroll de la ligne
+/// (255 - sy). spec: docs/spec/02 §Étoiles et flip écran
+fn flipped(v: u32, extent_minus_1: u32, flip: bool) -> u32 {
+    if flip {
+        extent_minus_1 - v
+    } else {
+        v
+    }
+}
+
 impl Video {
+    /// flip_screen_set(BIT(videocontrol, 15)) (cps1_v.cpp l.3005).
+    pub fn flip_screen(&self) -> bool {
+        (self.regs_a[VIDEOCONTROL] >> 15) & 1 != 0
+    }
+
     /// Dessine une couche tilemap (LAYER1 : pixels opaques -> bitmap).
     /// spec: docs/spec/02 §Composition ; MAME l.2943 + tilemap.cpp draw_common
     pub fn draw_tilemap(&self, gfx: &[u8], layer: usize, bitmap: &mut [u16], masks: &[u16; 4]) {
@@ -17,10 +35,13 @@ impl Video {
         }
 
         let dim = TILEMAP_DIM[layer];
+        let flip = self.flip_screen();
         for sy in CLIP.2..=CLIP.3 {
-            let (scrollx, scrolly) = self.tilemap_scroll(layer, sy as u32);
+            let ey = flipped(sy as u32, 255, flip);
+            let (scrollx, scrolly) = self.tilemap_scroll(layer, ey);
             for sx in CLIP.0..=CLIP.1 {
-                let (tx, ty) = screen_to_tilemap(sx as u32, sy as u32, scrollx, scrolly, dim);
+                let ex = flipped(sx as u32, 511, flip);
+                let (tx, ty) = screen_to_tilemap(ex, ey, scrollx, scrolly, dim);
                 let p = self.tilemap_pixel(gfx, layer, tx, ty, masks);
                 if p.layer1 {
                     bitmap[sy * BITMAP_W + sx] = p.pen;
@@ -37,10 +58,13 @@ impl Video {
         }
 
         let dim = TILEMAP_DIM[layer];
+        let flip = self.flip_screen();
         for sy in CLIP.2..=CLIP.3 {
-            let (scrollx, scrolly) = self.tilemap_scroll(layer, sy as u32);
+            let ey = flipped(sy as u32, 255, flip);
+            let (scrollx, scrolly) = self.tilemap_scroll(layer, ey);
             for sx in CLIP.0..=CLIP.1 {
-                let (tx, ty) = screen_to_tilemap(sx as u32, sy as u32, scrollx, scrolly, dim);
+                let ex = flipped(sx as u32, 511, flip);
+                let (tx, ty) = screen_to_tilemap(ex, ey, scrollx, scrolly, dim);
                 let p = self.tilemap_pixel(gfx, layer, tx, ty, masks);
                 if p.layer0 {
                     pri[sy * BITMAP_W + sx] |= 1;
@@ -61,8 +85,8 @@ impl Video {
         frame_number: u64,
         fb: &mut Framebuffer,
     ) {
-        // flip = VIDEOCONTROL bit15 (P2 : pas de debug_assert, on suit seulement sprites)
-        let flip = (self.regs_a[VIDEOCONTROL] >> 15) & 1 != 0;
+        // flip = VIDEOCONTROL bit15 : tilemaps (T605), sprites (T205), étoiles (T600)
+        let flip = self.flip_screen();
 
         // Get video memory base registers
         self.get_video_base();
@@ -154,6 +178,43 @@ impl Video {
 
 #[cfg(test)]
 mod tests {
+    use crate::sprites::{BITMAP_H, BITMAP_W};
+
+    /// Tuile scroll1 en (0,0) avec un seul pixel opaque en (0,0) de la tuile.
+    fn single_tile(flip: bool) -> Vec<u16> {
+        let mut v = Video::new("ghouls");
+        v.gfxram[0] = 2; // tilemap0_scan(0, 0) = 0 : code
+        v.gfxram[1] = 0x0003; // attr
+        let mut gfx = vec![0xFFu8; 0x10000];
+        gfx[128] = 0x7F;
+        gfx[129] = 0x7F;
+        gfx[130] = 0x7F;
+        v.bases.layer_enabled[0] = true;
+        v.bases.scrollx[0] = -64;
+        v.bases.scrolly[0] = -16;
+        if flip {
+            v.regs_a[VIDEOCONTROL] = 0x8000;
+        }
+        let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
+        v.draw_tilemap(&gfx, 0, &mut bitmap, &[0xFFFF; 4]);
+        bitmap
+    }
+
+    fn opaque(b: &[u16]) -> Vec<(usize, usize)> {
+        (0..b.len())
+            .filter(|&i| b[i] != 0xBFF)
+            .map(|i| (i % BITMAP_W, i / BITMAP_W))
+            .collect()
+    }
+
+    #[test]
+    fn flip_screen_tilemap() {
+        // Sans flip : tx = sx + scrollx = 0 -> sx = 64 ; ty = sy + scrolly = 0 -> sy = 16.
+        assert_eq!(opaque(&single_tile(false)), vec![(64, 16)]);
+        // Flip : 511 - sx + scrollx = 0 -> sx = 511 - 64 = 447 ; 255 - sy - 16 = 0 -> sy = 239,
+        // coin inférieur droit de la zone visible (64..447, 16..239).
+        assert_eq!(opaque(&single_tile(true)), vec![(447, 239)]);
+    }
     use super::*;
     use crate::tilemap::tilemap0_scan;
 
