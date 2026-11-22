@@ -30,11 +30,18 @@ fn present(cfg: &Config, name: &str) -> bool {
     cfg.roms_dir.join(format!("{name}.zip")).is_file() || cfg.roms_dir.join(name).is_dir()
 }
 
+/// Jeux jouables présents : zip ou dossier du jeu, ou clone entièrement chargeable depuis le zip
+/// de son parent (willowu, wofr1…).
 fn present_games(cfg: &Config) -> Vec<&'static str> {
     cps_cart::supported_games()
         .into_iter()
+        .filter(|g| {
+            present(cfg, g.name)
+                || (!g.parent.is_empty()
+                    && present(cfg, g.parent)
+                    && load_game(cfg, g.name).is_ok())
+        })
         .map(|g| g.name)
-        .filter(|n| present(cfg, n))
         .collect()
 }
 

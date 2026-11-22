@@ -21,6 +21,35 @@ pub struct Cps1Board {
     pub machine: Machine,
     info: BoardInfo,
     audio_mono: Vec<f32>,
+    /// Fichier de l'EEPROM (`<saves>/<jeu>.nv`), relu au chargement et écrit à la fermeture,
+    /// comme la nvram de MAME (cartes QSound).
+    nv_path: Option<std::path::PathBuf>,
+}
+
+impl Cps1Board {
+    /// Relie l'EEPROM à un fichier : contenu relu s'il existe (128 octets), écrit à la fermeture.
+    pub fn with_nvram(mut self, path: std::path::PathBuf) -> Self {
+        if let Some(e) = self.machine.bus.eeprom.as_mut() {
+            if let Ok(d) = std::fs::read(&path) {
+                if d.len() == e.data.len() {
+                    e.data = d;
+                }
+            }
+            self.nv_path = Some(path);
+        }
+        self
+    }
+}
+
+impl Drop for Cps1Board {
+    fn drop(&mut self) {
+        if let (Some(p), Some(e)) = (&self.nv_path, &self.machine.bus.eeprom) {
+            if let Some(dir) = p.parent() {
+                let _ = std::fs::create_dir_all(dir);
+            }
+            let _ = std::fs::write(p, &e.data);
+        }
+    }
 }
 
 /// Description du jeu pour le frontal.
@@ -101,6 +130,7 @@ impl Cps1Board {
             machine: Machine::new(game),
             info,
             audio_mono: Vec::new(),
+            nv_path: None,
         }
     }
 }
@@ -248,6 +278,27 @@ pub(crate) mod tests {
         );
         b.reset();
         assert_eq!(b.dips(), vec![0xFE, 0xFD, 0x7F], "reset conserve les DIP");
+    }
+
+    #[test]
+    fn eeprom_is_saved_and_restored() {
+        let dir = std::env::temp_dir().join(format!("cps1_nv_{}", std::process::id()));
+        let path = dir.join("jeu.nv");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(&path, [0x5Au8; 128]).unwrap();
+        let mut b = synthetic_board();
+        b.machine.bus.eeprom = Some(cps_bus::Eeprom93c46::new());
+        let mut b = b.with_nvram(path.clone());
+        assert_eq!(b.machine.bus.eeprom.as_ref().unwrap().data, vec![0x5A; 128]);
+        b.machine.bus.eeprom.as_mut().unwrap().data[3] = 0x12;
+        drop(b);
+        let d = std::fs::read(&path).unwrap();
+        assert_eq!((d.len(), d[3], d[4]), (128, 0x12, 0x5A));
+        // sans EEPROM (carte CPS1) : aucun fichier
+        let p2 = dir.join("cps1.nv");
+        drop(synthetic_board().with_nvram(p2.clone()));
+        assert!(!p2.exists());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

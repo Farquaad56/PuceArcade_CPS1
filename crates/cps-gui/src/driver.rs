@@ -62,7 +62,8 @@ impl BoardDriver for Cps1Driver {
 
     fn load(&self, name: &str) -> Result<Box<dyn JammaBoard>, String> {
         let game = load_game(&self.cfg, name).map_err(|e| format!("{name} : {e}"))?;
-        Ok(Box::new(Cps1Board::new(game)))
+        let nv = self.cfg.saves_dir.join(format!("{name}.nv"));
+        Ok(Box::new(Cps1Board::new(game).with_nvram(nv)))
     }
 
     fn saves_dir(&self) -> PathBuf {
