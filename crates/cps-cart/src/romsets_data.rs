@@ -6663,7 +6663,7 @@ pub const RS_PUNISHERBZ: RomSetDef = RomSetDef { name: "punisherbz", regions: &[
             Op::Load { kind: Load::Byte, file: "19.010", offset: 0x20000, size: 0x20000, crc: 0xEB5CA884 },
         ] },
 ] };
-/// Régions ignorées : aboardplds, audiorom_raw, bboardplds, cboardplds, dboardplds
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_SLAMMAST: RomSetDef = RomSetDef { name: "slammast", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "mbe_23e.8f", offset: 0x0, size: 0x80000, crc: 0x5394057A },
@@ -6692,6 +6692,9 @@ pub const RS_SLAMMAST: RomSetDef = RomSetDef { name: "slammast", regions: &[
             Op::Load { kind: Load::Byte, file: "mb_qa.5k", offset: 0x0, size: 0x8000, crc: 0xE21A03C4 },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "audiorom_raw", size: 0x8000, fill: 0x0, ops: &[
+            Op::Copy { src: "audiocpu", src_offset: 0x0, offset: 0x0, size: 0x8000 },
+        ] },
         RegionDef { name: "qsound", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "mb-q1.1k", offset: 0x0, size: 0x80000, crc: 0x0630C3CE },
             Op::Load { kind: Load::Byte, file: "mb-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x354F9C21 },
@@ -6703,7 +6706,7 @@ pub const RS_SLAMMAST: RomSetDef = RomSetDef { name: "slammast", regions: &[
             Op::Load { kind: Load::Byte, file: "mb-q8.4m", offset: 0x380000, size: 0x80000, crc: 0x59FE702A },
         ] },
 ] };
-/// Régions ignorées : aboardplds, audiorom_raw, bboardplds, cboardplds, dboardplds
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_SLAMMASTU: RomSetDef = RomSetDef { name: "slammastu", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "mbu_23e.8f", offset: 0x0, size: 0x80000, crc: 0x224F0062 },
@@ -6732,6 +6735,9 @@ pub const RS_SLAMMASTU: RomSetDef = RomSetDef { name: "slammastu", regions: &[
             Op::Load { kind: Load::Byte, file: "mb_qa.5k", offset: 0x0, size: 0x8000, crc: 0xE21A03C4 },
             Op::Continue { offset: 0x10000, size: 0x18000 },
         ] },
+        RegionDef { name: "audiorom_raw", size: 0x8000, fill: 0x0, ops: &[
+            Op::Copy { src: "audiocpu", src_offset: 0x0, offset: 0x0, size: 0x8000 },
+        ] },
         RegionDef { name: "qsound", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "mb-q1.1k", offset: 0x0, size: 0x80000, crc: 0x0630C3CE },
             Op::Load { kind: Load::Byte, file: "mb-q2.2k", offset: 0x80000, size: 0x80000, crc: 0x354F9C21 },
@@ -6743,7 +6749,7 @@ pub const RS_SLAMMASTU: RomSetDef = RomSetDef { name: "slammastu", regions: &[
             Op::Load { kind: Load::Byte, file: "mb-q8.4m", offset: 0x380000, size: 0x80000, crc: 0x59FE702A },
         ] },
 ] };
-/// Régions ignorées : aboardplds, audiorom_raw, bboardplds, cboardplds, dboardplds
+/// Régions ignorées : aboardplds, bboardplds, cboardplds, dboardplds
 pub const RS_MBOMBERJ: RomSetDef = RomSetDef { name: "mbomberj", regions: &[
         RegionDef { name: "maincpu", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Word16Swap, file: "mbj_23e.8f", offset: 0x0, size: 0x80000, crc: 0x0D06036A },
@@ -6768,6 +6774,9 @@ pub const RS_MBOMBERJ: RomSetDef = RomSetDef { name: "mbomberj", regions: &[
         RegionDef { name: "audiocpu", size: 0x28000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "mb_qa.5k", offset: 0x0, size: 0x8000, crc: 0xE21A03C4 },
             Op::Continue { offset: 0x10000, size: 0x18000 },
+        ] },
+        RegionDef { name: "audiorom_raw", size: 0x8000, fill: 0x0, ops: &[
+            Op::Copy { src: "audiocpu", src_offset: 0x0, offset: 0x0, size: 0x8000 },
         ] },
         RegionDef { name: "qsound", size: 0x400000, fill: 0x0, ops: &[
             Op::Load { kind: Load::Byte, file: "mb-q1.1k", offset: 0x0, size: 0x80000, crc: 0x0630C3CE },
