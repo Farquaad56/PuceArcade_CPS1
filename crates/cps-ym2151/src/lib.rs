@@ -3,6 +3,7 @@
 #![forbid(unsafe_code)]
 
 pub mod common;
+pub mod fm_operator;
 pub mod fm_tables;
 pub mod opm_regs;
 mod opm_regs_ops;
