@@ -34,7 +34,12 @@ pub fn to_cps_inputs(j: &JammaInputs) -> InputState {
     let in1 = u16::from(in1_byte(p2)) << 8 | u16::from(in1_byte(p1));
     // IN2 : boutons 4-6 du joueur 1 (bits 0-2) et du joueur 2 (bits 4-6), bits 3 et 7 à 1
     let in2 = 0x88 | kick_bits(p1) | kick_bits(p2) << 4;
-    InputState { in0, in1, in2, in3: 0xFF }
+    InputState {
+        in0,
+        in1,
+        in2,
+        in3: 0xFF,
+    }
 }
 
 #[cfg(test)]
@@ -43,7 +48,10 @@ mod tests {
 
     #[test]
     fn values_from_the_card() {
-        assert_eq!(to_cps_inputs(&JammaInputs::default()), InputState::default());
+        assert_eq!(
+            to_cps_inputs(&JammaInputs::default()),
+            InputState::default()
+        );
         let mut j = JammaInputs::default();
         j.players[0].right = true;
         j.players[0].buttons[0] = true;
@@ -60,7 +68,10 @@ mod tests {
         j.coins[0] = true;
         j.players[0].start = true;
         assert_eq!(to_cps_inputs(&j).in0, 0xEE);
-        let j = JammaInputs { test: true, ..Default::default() };
+        let j = JammaInputs {
+            test: true,
+            ..Default::default()
+        };
         assert_eq!(to_cps_inputs(&j).in0, 0xBF);
     }
 
