@@ -5,6 +5,9 @@
 param([string]$Root = "H:\__Emulator__\PuceArcade_CPS1", [string]$Assignee = "rust-dev", [string]$BoardSlug = "cps1",
       [string]$KeyPrefix = "pucearcade-cps1", [string]$From = "T102")
 $ErrorActionPreference = "Continue"
+# Windows PowerShell 5.1 n'echappe pas les guillemets doubles des arguments passes a un executable : sans ceci,
+# hermes recoit un corps de carte tronque ou sans guillemets (ex. env!("X") -> env!(X)). PowerShell 7.3+ echappe lui-meme.
+function Esc([string]$s) { if ($PSVersionTable.PSVersion.Major -lt 7) { $s -replace '(\\*)"', '$1$1\"' } else { $s } }
 & hermes kanban boards switch $BoardSlug | Out-Null
 $cards = Get-Content "$Root\tasks\board.json" -Raw -Encoding UTF8 | ConvertFrom-Json
 $ids = @{}; $active = $false
@@ -19,7 +22,7 @@ foreach ($t in $cards) {
   $ids[$t.id] = $id
   if (-not $active -or $t.status -eq "done") { continue }
   $body = Get-Content "$Root\$($t.file)" -Raw -Encoding UTF8
-  & hermes kanban edit $id --title $t.title --body $body | Out-Null
+  & hermes kanban edit $id --title (Esc $t.title) --body (Esc $body) | Out-Null
   foreach ($d in $t.deps) { if ($ids.ContainsKey($d)) { & hermes kanban link $ids[$d] $id 2>&1 | Out-Null } }
   Write-Host "$($t.id) -> $id (mis à jour)"
 }
