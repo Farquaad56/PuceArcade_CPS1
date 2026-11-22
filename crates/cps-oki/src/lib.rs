@@ -7,4 +7,4 @@ pub mod adpcm;
 pub mod okim6295;
 
 pub use adpcm::OkiAdpcmState;
-pub use okim6295::{Okim6295, OkiVoice};
+pub use okim6295::{OkiVoice, Okim6295};

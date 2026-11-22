@@ -46,16 +46,16 @@ const fn operator_list(o1: u8, o2: u8, o3: u8, o4: u8) -> u32 {
     (o1 as u32) | ((o2 as u32) << 8) | ((o3 as u32) << 16) | ((o4 as u32) << 24)
 }
 
-/// Mapping des opérateurs pour chaque canal OPM.
+/// Mapping des opérateurs pour chaque canal OPM (ymfm_opm.cpp l.126-136 : M1, M2, C1, C2 = ch, ch+16, ch+8, ch+24).
 const FIXED_MAP: [u32; 8] = [
-    operator_list(0, 1, 2, 3),
-    operator_list(4, 5, 6, 7),
-    operator_list(8, 9, 10, 11),
-    operator_list(12, 13, 14, 15),
-    operator_list(16, 17, 18, 19),
-    operator_list(20, 21, 22, 23),
-    operator_list(24, 25, 26, 27),
-    operator_list(28, 29, 30, 31),
+    operator_list(0, 16, 8, 24),
+    operator_list(1, 17, 9, 25),
+    operator_list(2, 18, 10, 26),
+    operator_list(3, 19, 11, 27),
+    operator_list(4, 20, 12, 28),
+    operator_list(5, 21, 13, 29),
+    operator_list(6, 22, 14, 30),
+    operator_list(7, 23, 15, 31),
 ];
 
 /// Registres OPM (YM2151).
@@ -65,6 +65,8 @@ pub struct OpmRegisters {
     pub(crate) noise_lfsr: u32,
     pub(crate) noise_counter: u8,
     pub(crate) noise_state: u8,
+    // PORT-NOTE : comme m_noise_lfo dans ymfm, jamais lu par l'émulation, seulement sauvegardé (savestates).
+    #[allow(dead_code)]
     pub(crate) noise_lfo: u8,
     pub(crate) lfo_am: i16,
     pub(crate) regdata: [u8; OpmRegisters::REGISTERS],
@@ -170,32 +172,34 @@ impl OpmRegisters {
         for index in 0..LFO_WAVEFORM_LENGTH {
             let index_u32 = index as u32;
 
+            // PORT-NOTE : am/pm sont des uint8_t dans ymfm (troncature à 8 bits),
+            // combinés en int16 = am | (pm << 8) (ymfm_opm.cpp l.59-78).
+            let lfo = |am: u8, pm: u8| (am as u16 | ((pm as u16) << 8)) as i16;
+            let i8b = index as u8;
+
             // Forme d'onde 0 : dent de scie
-            let am: i16 = (index ^ 0xff) as i16;
-            let pm: i16 = index as i16;
-            lfo_waveform[0][0][index] = am | (pm << 8);
+            lfo_waveform[0][0][index] = lfo(i8b ^ 0xff, i8b);
 
             // Forme d'onde 1 : carrée
-            let am2: i16 = if bitfield(index_u32, 7, 1) != 0 {
-                0
+            let am = if bitfield(index_u32, 7, 1) != 0 {
+                0u8
             } else {
                 0xff
             };
-            let pm2: i16 = am2 ^ 0x80;
-            lfo_waveform[0][1][index] = am2 | (pm2 << 8);
+            lfo_waveform[0][1][index] = lfo(am, am ^ 0x80);
 
             // Forme d'onde 2 : triangulaire
-            let am3: i16 = if bitfield(index_u32, 7, 1) != 0 {
-                ((index as u8) << 1) as i16
+            let am = if bitfield(index_u32, 7, 1) != 0 {
+                i8b << 1
             } else {
-                (((index ^ 0xff) as u8) << 1) as i16
+                (i8b ^ 0xff) << 1
             };
-            let pm3: i16 = if bitfield(index_u32, 6, 1) != 0 {
-                am3
+            let pm = if bitfield(index_u32, 6, 1) != 0 {
+                am
             } else {
-                !am3
+                !am
             };
-            lfo_waveform[0][2][index] = pm3 | (pm3 << 8);
+            lfo_waveform[0][2][index] = lfo(am, pm);
 
             // Forme d'onde 3 : bruit (remplie dynamiquement)
             lfo_waveform[0][3][index] = 0;
@@ -505,11 +509,11 @@ mod tests {
         let mut map = [0u32; 8];
         regs.operator_map(&mut map);
 
-        // Canal 0 : opérateurs 0,1,2,3 -> 0x00000000 | (1<<8) | (2<<16) | (3<<24) = 0x03020100
-        assert_eq!(map[0], 0x03020100);
+        // ymfm_opm.cpp l.128 : canal 0 = opérateurs 0, 16, 8, 24 -> 0x18081000
+        assert_eq!(map[0], 0x18081000);
 
-        // Canal 7 : opérateurs 28,29,30,31 -> 0x1F1E1D1C
-        assert_eq!(map[7], 0x1f1e1d1c);
+        // l.135 : canal 7 = opérateurs 7, 23, 15, 31 -> 0x1F0F1707
+        assert_eq!(map[7], 0x1f0f1707);
     }
 
     #[test]

@@ -51,8 +51,8 @@ impl OpmRegisters {
             // low 8 bits are the most recent 8 bits of history while bits 8-24
             // contain the 17 bit LFSR state
             self.noise_lfsr <<= 1;
-            let feedback = bitfield(self.noise_lfsr, 17, 1) ^ bitfield(self.noise_lfsr, 14, 1);
-            self.noise_lfsr |= feedback | 1;
+            self.noise_lfsr |=
+                bitfield(self.noise_lfsr, 17, 1) ^ bitfield(self.noise_lfsr, 14, 1) ^ 1;
 
             // compare against the frequency and latch when we exceed it
             if (self.noise_counter as u32) >= freq {
@@ -68,7 +68,7 @@ impl OpmRegisters {
         // manual, though it might not be implemented exactly this way on chip
         let rate = self.lfo_rate();
         let step = (0x10 | bitfield(rate, 0, 4)) << bitfield(rate, 4, 4);
-        self.lfo_counter += step;
+        self.lfo_counter = self.lfo_counter.wrapping_add(step);
 
         // bit 1 of the test register is officially undocumented but has been
         // discovered to hold the LFO in reset while active

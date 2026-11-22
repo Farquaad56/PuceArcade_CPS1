@@ -12,6 +12,12 @@ avant lui : (1) écritures planifiées « avant n » à ym_time = (n-1)×64, (2)
 (`engine_timer_expired`, ym_time = échéance), (3) ym_time = n×64 puis `generate(1)`. `set_timer(t,d)` : échéance = ym_time + d (d < 0 : arrêt).
 `set_busy_end(c)` : busy jusqu'à ym_time + c. Sorties écrêtées à [-32768, 32767].
 
+### YM2151 aléatoire — tests-data/ym2151/fuzz<g>_w.bin / fuzz<g>_o.bin (g = 1..4)
+Pilote `tools/ymfm_opm_fuzz.cpp` : 20 000 échantillons par graine, écritures pseudo-aléatoires (xorshift) dans tous les registres
+(key-on 0x08, 0x01 bit LFO-reset, bruit 0x0F, LFO 0x18/0x19/0x1B, canaux et opérateurs 0x20-0xFF ; timers exclus).
+`_w.bin` : écritures de 6 octets (échantillon u32 LE, registre, valeur), appliquées « avant l'échantillon n » ;
+`_o.bin` : sorties i32 LE [gauche, droite] de `generate`, avant écrêtage. Test : `cargo test -p cps-ym2151 --test fuzz`.
+
 ## OKI MSM6295 — tests-data/oki/*.bin
 Pilote `tools/oki_golden.cpp` : `okiadpcm.cpp` de MAME compilé tel quel (shim `tools/oki_shim/emu.h`), logique des voix recopiée de okim6295.cpp.
 Format : 2000 échantillons i32 LE (somme des 4 voix de `clock(nibble) × numérateur_volume`) + `<nom>_status.bin` (2000 octets, `read()` après chaque échantillon).
