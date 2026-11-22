@@ -318,14 +318,14 @@
   },
   {
     "id": "T310",
-    "title": "T310 cps-oki : ├®tat ADPCM OKI (okiadpcm, tables g├®n├®r├®es)",
+    "title": "T310 cps-oki : état ADPCM OKI (okiadpcm, tables générées)",
     "phase": "P3 Audio",
     "deps": [
       "T307"
     ],
     "file": "tasks/T310.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T311",
