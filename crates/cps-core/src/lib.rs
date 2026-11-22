@@ -2,6 +2,7 @@
 //! Voir docs/ARCHITECTURE.md.
 #![forbid(unsafe_code)]
 
+pub mod debug;
 pub mod host68k;
 pub mod machine;
 pub mod sched;
