@@ -47,7 +47,7 @@ impl Video {
                                     let sx = (x + nxs * 16) & 0x1FF;
                                     let sub_code =
                                         (mapped_code & !0xF) | ((mapped_code + nx - 1 - nxs) & 0xF);
-                                    let sub_code = sub_code | (0x10 * (ny - 1 - nys));
+                                    let sub_code = sub_code + (0x10 * (ny - 1 - nys));
                                     self.draw_sprite(
                                         gfx,
                                         bitmap,
@@ -70,7 +70,7 @@ impl Video {
                                     let sx = (x + nxs * 16) & 0x1FF;
                                     let sub_code =
                                         (mapped_code & !0xF) | ((mapped_code + nxs) & 0xF);
-                                    let sub_code = sub_code | (0x10 * (ny - 1 - nys));
+                                    let sub_code = sub_code + (0x10 * (ny - 1 - nys));
                                     self.draw_sprite(
                                         gfx,
                                         bitmap,
@@ -95,7 +95,7 @@ impl Video {
                                     let sx = (x + nxs * 16) & 0x1FF;
                                     let sub_code =
                                         (mapped_code & !0xF) | ((mapped_code + nx - 1 - nxs) & 0xF);
-                                    let sub_code = sub_code | (0x10 * nys);
+                                    let sub_code = sub_code + (0x10 * nys);
                                     self.draw_sprite(
                                         gfx,
                                         bitmap,
@@ -118,7 +118,7 @@ impl Video {
                                     let sx = (x + nxs * 16) & 0x1FF;
                                     let sub_code =
                                         (mapped_code & !0xF) | ((mapped_code + nxs) & 0xF);
-                                    let sub_code = sub_code | (0x10 * nys);
+                                    let sub_code = sub_code + (0x10 * nys);
                                     self.draw_sprite(
                                         gfx,
                                         bitmap,
@@ -199,6 +199,51 @@ impl Video {
 
 #[cfg(test)]
 mod tests {
+
+    /// MAME l.2789-2843 : la rangée s'AJOUTE au code ((code & ~0xf) + colonne + 0x10 × rangée).
+    /// Un OU perdait la retenue quand le code de base avait déjà des bits 4-7 à 1 (Willow, pose
+    /// d'attente : rangées de tuiles répétées ou manquantes).
+    #[test]
+    fn block_sprite_rows_add_to_code() {
+        use crate::regs::Video;
+        use crate::sprites::{BITMAP_H, BITMAP_W};
+        let mut v = Video::new("ghouls");
+        // gfx : tuile 16x16 n° 0x31 opaque (pen 1) sur sa première ligne, toutes les autres vides (pen 15)
+        let mut gfx = vec![0xFFu8; 0x80 * 128];
+        let t = 0x31 * 128;
+        for b in &mut gfx[t..t + 8] {
+            *b = 0x00;
+        }
+        // sprite 1 × 2 tuiles : code 0x21 -> rangée 1 = 0x21 + 0x10 = 0x31 (un OU donnait 0x21 | 0x10 = 0x31 aussi) ;
+        // code 0x30 + rangée 1 = 0x40 (OU : 0x30 | 0x10 = 0x30, tuile répétée)
+        let obj = [0x0080u16, 0x0040, 0x0021, 0x1000, 0, 0, 0, 0xFF00];
+        v.buffered_obj[..8].copy_from_slice(&obj);
+        v.last_sprite = 0;
+        let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
+        let mut pri = vec![0u8; BITMAP_W * BITMAP_H];
+        v.render_sprites(&gfx, &mut bitmap, &mut pri, false);
+        // la tuile 0x31 est dessinée en rangée 1 (y = 0x40 + 16)
+        assert_ne!(bitmap[(0x40 + 16) * BITMAP_W + 0x80], 0xBFF);
+        assert_eq!(bitmap[0x40 * BITMAP_W + 0x80], 0xBFF);
+        // code 0x30 : la rangée 1 doit être la tuile 0x40 (vide), pas une seconde copie de 0x30
+        let mut gfx2 = vec![0xFFu8; 0x80 * 128];
+        for b in &mut gfx2[0x30 * 128..0x30 * 128 + 8] {
+            *b = 0x00;
+        }
+        v.buffered_obj[2] = 0x0030;
+        let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
+        v.render_sprites(&gfx2, &mut bitmap, &mut pri, false);
+        assert_ne!(
+            bitmap[0x40 * BITMAP_W + 0x80],
+            0xBFF,
+            "rangée 0 = tuile 0x30"
+        );
+        assert_eq!(
+            bitmap[(0x40 + 16) * BITMAP_W + 0x80],
+            0xBFF,
+            "rangée 1 = tuile 0x40, pas 0x30"
+        );
+    }
     use super::*;
     use crate::sprites::{BITMAP_H, BITMAP_W};
 
