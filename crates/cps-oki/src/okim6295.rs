@@ -11,8 +11,7 @@ pub const OKIM6295_VOICES: usize = 4;
 
 /// Volume lookup table numerators (× 0x20). spec: docs/spec/03 §OKI l.59-77
 pub const VOLUME_NUM: [i32; 16] = [
-    0x20, 0x16, 0x10, 0x0B, 0x08, 0x06, 0x04, 0x03,
-    0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x20, 0x16, 0x10, 0x0B, 0x08, 0x06, 0x04, 0x03, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 ];
 
 /// A single voice channel on the MSM6295.
@@ -85,7 +84,11 @@ impl Okim6295 {
 
     /// Get the clock divisor based on pin 7 state. spec: docs/spec/03 §OKI l.120, l.168
     pub fn divisor(&self) -> u64 {
-        if self.pin7 { 132 } else { 165 }
+        if self.pin7 {
+            132
+        } else {
+            165
+        }
     }
 
     /// Write to the command register. spec: docs/spec/03 §OKI l.235-313
@@ -99,7 +102,7 @@ impl Okim6295 {
                     // Read ROM data before borrowing voice mutably
                     let base = (self.command * 8) as u32;
 
-                    let start = ((self.read_byte(base + 0) as u32) << 16)
+                    let start = ((self.read_byte(base) as u32) << 16)
                         | ((self.read_byte(base + 1) as u32) << 8)
                         | (self.read_byte(base + 2) as u32);
                     let start = start & 0x3FFFF;
@@ -110,16 +113,14 @@ impl Okim6295 {
                     let stop = stop & 0x3FFFF;
 
                     // Now borrow voice mutably
-                    if !self.voices[voicenum].playing {
-                        if start < stop {
-                            self.voices[voicenum].playing = true;
-                            self.voices[voicenum].base_offset = start;
-                            self.voices[voicenum].sample = 0;
-                            self.voices[voicenum].count = 2 * (stop - start + 1);
-                            self.voices[voicenum].adpcm.reset();
-                            let vol_idx = (command & 0x0F) as usize;
-                            self.voices[voicenum].volume = VOLUME_NUM[vol_idx];
-                        }
+                    if !self.voices[voicenum].playing && start < stop {
+                        self.voices[voicenum].playing = true;
+                        self.voices[voicenum].base_offset = start;
+                        self.voices[voicenum].sample = 0;
+                        self.voices[voicenum].count = 2 * (stop - start + 1);
+                        self.voices[voicenum].adpcm.reset();
+                        let vol_idx = (command & 0x0F) as usize;
+                        self.voices[voicenum].volume = VOLUME_NUM[vol_idx];
                     }
                 }
                 voicemask >>= 1;
@@ -202,23 +203,23 @@ mod tests {
     fn test_write_start_voice() {
         // ROM with sample entry at index 1 (offset 8): start=0x400, stop=0x480
         let mut rom = vec![0u8; 0x40000];
-        rom[8] = 0x00;   // start high byte
-        rom[9] = 0x04;   // start mid byte (0x400)
-        rom[10] = 0x00;  // start low byte
-        rom[11] = 0x00;  // stop high byte
-        rom[12] = 0x04;  // stop mid byte (0x480)
-        rom[13] = 0x80;  // stop low byte
+        rom[8] = 0x00; // start high byte
+        rom[9] = 0x04; // start mid byte (0x400)
+        rom[10] = 0x00; // start low byte
+        rom[11] = 0x00; // stop high byte
+        rom[12] = 0x04; // stop mid byte (0x480)
+        rom[13] = 0x80; // stop low byte
 
         let mut chip = Okim6295::new(rom);
 
         // Send start command: sample number 1, voice 0, volume 0
-        chip.write(0x81);  // bit7=1, sample num = 1
-        chip.write(0x10);  // voice mask = 1 (voice 0), volume = 0
+        chip.write(0x81); // bit7=1, sample num = 1
+        chip.write(0x10); // voice mask = 1 (voice 0), volume = 0
 
-        assert_eq!(chip.read(), 0xF1);  // Voice 0 playing
+        assert_eq!(chip.read(), 0xF1); // Voice 0 playing
         assert!(chip.voices[0].playing);
         assert_eq!(chip.voices[0].base_offset, 0x400);
-        assert_eq!(chip.voices[0].count, 2 * (0x480 - 0x400 + 1));  // 258
+        assert_eq!(chip.voices[0].count, 2 * (0x480 - 0x400 + 1)); // 258
     }
 
     #[test]
@@ -235,7 +236,7 @@ mod tests {
 
         // Volume index 8 -> VOLUME_NUM[8] = 0x02
         chip.write(0x81);
-        chip.write(0x18);  // voice 0, volume index 8
+        chip.write(0x18); // voice 0, volume index 8
 
         assert_eq!(chip.voices[0].volume, 0x02);
     }
@@ -283,35 +284,35 @@ mod tests {
         let original_sample = chip.voices[0].sample;
         chip.write(0x81);
         chip.write(0x10);
-        assert_eq!(chip.voices[0].sample, original_sample);  // Still at same position
+        assert_eq!(chip.voices[0].sample, original_sample); // Still at same position
     }
 
     #[test]
     fn test_write_ignored_start_ge_stop() {
         let mut rom = vec![0u8; 0x40000];
         rom[8] = 0x00;
-        rom[9] = 0x05;   // start = 0x500
+        rom[9] = 0x05; // start = 0x500
         rom[10] = 0x00;
         rom[11] = 0x00;
-        rom[12] = 0x04;  // stop = 0x480 (start > stop)
+        rom[12] = 0x04; // stop = 0x480 (start > stop)
         rom[13] = 0x80;
 
         let mut chip = Okim6295::new(rom);
 
         chip.write(0x81);
         chip.write(0x10);
-        assert!(!chip.voices[0].playing);  // Ignored because start >= stop
+        assert!(!chip.voices[0].playing); // Ignored because start >= stop
     }
 
     #[test]
     fn test_generate_stops_after_count() {
         let mut rom = vec![0u8; 0x40000];
-        rom[8] = 0x00;   // start high byte
-        rom[9] = 0x04;   // start mid byte (0x400)
-        rom[10] = 0x00;  // start low byte
-        rom[11] = 0x00;  // stop high byte
-        rom[12] = 0x04;  // stop mid byte (0x480)
-        rom[13] = 0x80;  // stop low byte
+        rom[8] = 0x00; // start high byte
+        rom[9] = 0x04; // start mid byte (0x400)
+        rom[10] = 0x00; // start low byte
+        rom[11] = 0x00; // stop high byte
+        rom[12] = 0x04; // stop mid byte (0x480)
+        rom[13] = 0x80; // stop low byte
 
         let mut chip = Okim6295::new(rom);
 
@@ -319,7 +320,7 @@ mod tests {
         chip.write(0x81);
         chip.write(0x10);
 
-        assert_eq!(chip.read(), 0xF1);  // Voice playing
+        assert_eq!(chip.read(), 0xF1); // Voice playing
         assert_eq!(chip.voices[0].count, 258);
 
         // Generate all samples - voice should stop after count is reached
@@ -328,7 +329,7 @@ mod tests {
         }
 
         assert!(!chip.voices[0].playing);
-        assert_eq!(chip.read(), 0xF0);  // Voice stopped
+        assert_eq!(chip.read(), 0xF0); // Voice stopped
     }
 
     #[test]
