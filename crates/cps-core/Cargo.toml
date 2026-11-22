@@ -18,3 +18,4 @@ bincode = "1"
 
 [dev-dependencies]
 cps-testkit = { path = "../cps-testkit" }
+png = "0.18.1"
