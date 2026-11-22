@@ -419,8 +419,7 @@ impl QSound {
 
     /// qsound_adpcm::update
     fn adpcm_update(&mut self, i: usize, mut curr_sample: i16, nibble: i32) -> i16 {
-        let step: i8;
-        if nibble == 0 {
+        let step: i8 = if nibble == 0 {
             let a = &mut self.adpcm[i];
             // Mute voice when it reaches the end address.
             if a.cur_addr == a.end_addr {
@@ -436,13 +435,13 @@ impl QSound {
             }
             // get top nibble
             let (bank, addr) = (a.bank, a.cur_addr);
-            step = (self.read_sample(bank, addr) >> 8) as i8;
+            (self.read_sample(bank, addr) >> 8) as i8
         } else {
             // get bottom nibble
             let (bank, addr) = (self.adpcm[i].bank, self.adpcm[i].cur_addr);
             self.adpcm[i].cur_addr = addr.wrapping_add(1);
-            step = (self.read_sample(bank, addr) >> 4) as i8;
-        }
+            (self.read_sample(bank, addr) >> 4) as i8
+        };
         // shift with sign extend
         let step = step >> 4;
         let a_step = i32::from(self.adpcm[i].step_size);
