@@ -18,3 +18,5 @@ __pycache__/
 # oracles versionnés (générés par Claude, voir tools/README-golden.md)
 !tests-data/ym2151/*.bin
 !tests-data/oki/*.bin
+Claude outputs/
+snap/
