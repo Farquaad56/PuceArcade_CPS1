@@ -468,7 +468,7 @@
     ],
     "file": "tasks/T500.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T500b",
@@ -479,7 +479,7 @@
     ],
     "file": "tasks/T500b.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T501",
@@ -490,7 +490,7 @@
     ],
     "file": "tasks/T501.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T502",
@@ -501,7 +501,7 @@
     ],
     "file": "tasks/T502.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T503",
@@ -512,7 +512,7 @@
     ],
     "file": "tasks/T503.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T503b",
@@ -523,7 +523,7 @@
     ],
     "file": "tasks/T503b.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T504",
@@ -534,7 +534,7 @@
     ],
     "file": "tasks/T504.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T505",
@@ -545,7 +545,7 @@
     ],
     "file": "tasks/T505.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T600",
@@ -556,7 +556,7 @@
     ],
     "file": "tasks/T600.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T601",
@@ -567,7 +567,7 @@
     ],
     "file": "tasks/T601.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T602",
@@ -578,7 +578,7 @@
     ],
     "file": "tasks/T602.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T603",
@@ -589,7 +589,7 @@
     ],
     "file": "tasks/T603.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T604",
@@ -611,7 +611,7 @@
     ],
     "file": "tasks/T605.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T700",
@@ -622,7 +622,7 @@
     ],
     "file": "tasks/T700.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T701",
@@ -644,6 +644,6 @@
     ],
     "file": "tasks/T702.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   }
 ]
