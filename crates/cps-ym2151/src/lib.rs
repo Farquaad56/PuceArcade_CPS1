@@ -9,6 +9,7 @@ pub mod fm_operator;
 pub mod fm_tables;
 pub mod opm_regs;
 mod opm_regs_ops;
+pub mod ym2151;
 
 #[cfg(feature = "serde")]
 mod serde_arr;
