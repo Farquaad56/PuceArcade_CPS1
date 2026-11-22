@@ -230,14 +230,14 @@
   },
   {
     "id": "T302",
-    "title": "T302 cps-ym2151 : registres OPM (1/2) ÔÇö structure, constantes, accesseurs, reset, tables, operator_map",
+    "title": "T302 cps-ym2151 : registres OPM (1/2) — structure, constantes, accesseurs, reset, tables, operator_map",
     "phase": "P3 Audio",
     "deps": [
       "T301"
     ],
     "file": "tasks/T302.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T302b",
