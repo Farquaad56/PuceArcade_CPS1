@@ -16,4 +16,6 @@ pub mod chips_stub;
 pub use chips_stub::NullChips;
 
 pub mod chips;
+pub mod upd4701;
 pub use chips::Chips;
+pub use upd4701::Upd4701;

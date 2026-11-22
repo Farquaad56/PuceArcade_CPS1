@@ -30,6 +30,8 @@ pub struct Bus68k<V: VideoPort> {
     pub inputs: InputState,
     pub dips: Dips,
     pub coinctrl: u16,
+    /// Molettes de Forgotten Worlds (uPD4701, machine « forgottn ») ; None ailleurs.
+    pub dial: Option<crate::Upd4701>,
 }
 
 impl<V: VideoPort> Bus68k<V> {
@@ -43,6 +45,7 @@ impl<V: VideoPort> Bus68k<V> {
             inputs: InputState::default(),
             dips,
             coinctrl: 0,
+            dial: None,
         }
     }
 
@@ -50,6 +53,14 @@ impl<V: VideoPort> Bus68k<V> {
     pub fn reset(&mut self) {
         self.ram.fill(0);
         self.coinctrl = 0;
+    }
+
+    /// Mouvement des molettes (joueur 1 = X, joueur 2 = Y) ; sans effet sans uPD4701.
+    pub fn add_dial(&mut self, dx: i32, dy: i32) {
+        if let Some(d) = &mut self.dial {
+            d.x_add(dx as i16);
+            d.y_add(dy as i16);
+        }
     }
 
     /// Met à jour les entrées et propage IN2/IN3 au port vidéo.
@@ -70,6 +81,16 @@ impl<V: VideoPort> Bus68k<V> {
         // spec: docs/spec/01 §68000 — IN1 800000-800007 (4 mots identiques)
         if (0x800000..0x800008).contains(&a) {
             return self.inputs.in1;
+        }
+
+        // forgottn_map (cps1.cpp l.605-606) : uPD4701 read_x 800052-55, read_y 80005A-5D (umask 0x00FF)
+        if let Some(d) = &mut self.dial {
+            if (0x800052..0x800056).contains(&a) {
+                return u16::from(d.read_x(((a - 0x800052) / 2) as u32));
+            }
+            if (0x80005A..0x80005E).contains(&a) {
+                return u16::from(d.read_y(((a - 0x80005A) / 2) as u32));
+            }
         }
 
         // spec: docs/spec/01 §68000 — cps1_dsw_r 800018-80001F
@@ -116,6 +137,18 @@ impl<V: VideoPort> Bus68k<V> {
         // spec: docs/spec/01 §68000 — ROM : écriture ignorée
         if a < 0x400000 {
             return None;
+        }
+
+        // forgottn_map (cps1.cpp l.603-604) : reset X en 800041, reset Y en 800049 (octet bas)
+        if let Some(d) = &mut self.dial {
+            if lds && a == 0x800040 {
+                d.reset_x_w();
+                return None;
+            }
+            if lds && a == 0x800048 {
+                d.reset_y_w();
+                return None;
+            }
         }
 
         // spec: docs/spec/01 §68000 — IN1, dsw, nopr : pas d'écriture
@@ -243,6 +276,28 @@ mod tests {
             self.gfxram_write_calls.push((word, data));
         }
         fn set_inputs(&mut self, _in2: u8, _in3: u8) {}
+    }
+
+    #[test]
+    fn forgottn_dial() {
+        let mut bus = Bus68k::new(vec![], TestVideo::default(), Dips::default());
+        assert_eq!(
+            bus.read16(0x800052, true, true),
+            0,
+            "sans molette : non mappé"
+        );
+        bus.add_dial(5, -3);
+        bus.dial = Some(crate::Upd4701::new());
+        bus.add_dial(5, -3);
+        let rd = |b: &mut Bus68k<TestVideo>, a: u32| {
+            b.read16(a + 2, true, true) << 8 | b.read16(a, true, true)
+        };
+        assert_eq!(rd(&mut bus, 0x800052), 5);
+        assert_eq!(rd(&mut bus, 0x80005A), 0xFFD);
+        bus.write16(0x800040, false, true, 0x00);
+        assert_eq!(rd(&mut bus, 0x800052), 0);
+        bus.write16(0x800048, false, true, 0x00);
+        assert_eq!(rd(&mut bus, 0x80005A), 0);
     }
 
     #[test]
