@@ -11,6 +11,7 @@ pub mod regs;
 pub mod render;
 pub mod sprites;
 pub mod sprites_render;
+pub mod stars;
 pub mod tilemap;
 pub mod video_base;
 pub mod video_io;

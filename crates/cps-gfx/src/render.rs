@@ -51,7 +51,16 @@ impl Video {
 
     /// Rendu complet d'une trame (screen_update_cps1 + render_layers).
     /// spec: docs/spec/02 §Composition ; MAME l.3001-3052, l.2970-2999
-    pub fn render_frame(&mut self, gfx: &[u8], fb: &mut Framebuffer) {
+    ///
+    /// `stars` : région « stars » si le jeu en a une ; `frame_number` : numéro de trame MAME
+    /// (`screen.frame_number()`), utilisé par le clignotement des étoiles.
+    pub fn render_frame(
+        &mut self,
+        gfx: &[u8],
+        stars: Option<&[u8]>,
+        frame_number: u64,
+        fb: &mut Framebuffer,
+    ) {
         // flip = VIDEOCONTROL bit15 (P2 : pas de debug_assert, on suit seulement sprites)
         let flip = (self.regs_a[VIDEOCONTROL] >> 15) & 1 != 0;
 
@@ -69,6 +78,13 @@ impl Video {
         let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
         // priority array initialized to 0
         let mut pri = vec![0u8; BITMAP_W * BITMAP_H];
+
+        // MAME l.3048 : if (m_region_stars) cps1_render_stars(...)
+        if let Some(stars) = stars {
+            if (self.debug_layer_mask >> 4) & 1 != 0 {
+                self.render_stars(stars, &mut bitmap, frame_number, flip);
+            }
+        }
 
         // Parse layer control register
         let lc = self.regs_b[(self.cfg.cpsb.layer_control / 2) as usize];
@@ -168,7 +184,7 @@ mod tests {
 
         let gfx = make_gfx();
         let mut fb = Framebuffer::new();
-        v.render_frame(&gfx, &mut fb);
+        v.render_frame(&gfx, None, 0, &mut fb);
 
         // All pixels should be background color (palette[0xBFF])
         for p in &fb.pixels {
@@ -177,7 +193,7 @@ mod tests {
 
         // Determinism: second render produces identical output
         let mut fb2 = Framebuffer::new();
-        v.render_frame(&gfx, &mut fb2);
+        v.render_frame(&gfx, None, 0, &mut fb2);
         assert_eq!(fb.crc32(), fb2.crc32());
     }
 
@@ -206,7 +222,7 @@ mod tests {
 
         let gfx = make_gfx();
         let mut fb = Framebuffer::new();
-        v.render_frame(&gfx, &mut fb);
+        v.render_frame(&gfx, None, 0, &mut fb);
 
         // Sans priorité : tuile dessinée d'abord, sprite par-dessus -> sprite
         assert_eq!(fb.pixels[0], 0xAA0000);
@@ -214,7 +230,7 @@ mod tests {
         // Avec priorité (regs_b[0x14] = 0x0100) : la tuile haute masque le sprite en (0,0)
         v.regs_b[0x14] = 0x0100;
         let mut fb2 = Framebuffer::new();
-        v.render_frame(&gfx, &mut fb2);
+        v.render_frame(&gfx, None, 0, &mut fb2);
         assert_eq!(fb2.pixels[0], 0x00BB00);
 
         // Pixel (1,0) : pas de pixel sprite, la tuile reste visible dans les deux cas
@@ -244,7 +260,7 @@ mod tests {
 
         let gfx = make_gfx();
         let mut fb = Framebuffer::new();
-        v.render_frame(&gfx, &mut fb);
+        v.render_frame(&gfx, None, 0, &mut fb);
 
         // Sprite dessiné d'abord, tuile par-dessus -> tuile même sans priorité
         assert_eq!(fb.pixels[0], 0x00BB00);
@@ -274,7 +290,7 @@ mod tests {
 
         let gfx = make_gfx();
         let mut fb = Framebuffer::new();
-        v.render_frame(&gfx, &mut fb);
+        v.render_frame(&gfx, None, 0, &mut fb);
 
         // Sprites masqués -> tuile même sans priorité
         assert_eq!(fb.pixels[0], 0x00BB00);
@@ -314,7 +330,7 @@ mod tests {
         v.palette[0xBFF] = 0x123456;
 
         let mut fb = Framebuffer::new();
-        v.render_frame(&gfx, &mut fb);
+        v.render_frame(&gfx, None, 0, &mut fb);
 
         // Oracle : tilemap_scroll donne +5 sur la ligne 20, rien sur la 21
         assert_eq!(v.tilemap_scroll(1, 20).0, 5);

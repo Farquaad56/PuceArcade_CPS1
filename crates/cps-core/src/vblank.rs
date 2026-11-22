@@ -14,7 +14,9 @@ pub fn vblank_event(host: &mut Host68k<'_>) {
     host.bus.video.vblank();
 
     // 3. Render the frame with current state
-    host.bus.video.render_frame(host.gfx, host.fb);
+    host.bus
+        .video
+        .render_frame(host.gfx, None, *host.frame, host.fb);
 
     // 4. Advance frame counter and schedule next VBLANK
     *host.frame += 1;
