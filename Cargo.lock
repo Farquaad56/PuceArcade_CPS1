@@ -803,6 +803,7 @@ dependencies = [
  "cps-oki",
  "cps-testkit",
  "cps-ym2151",
+ "png",
  "puce-m68k",
  "puce-z80",
  "serde",

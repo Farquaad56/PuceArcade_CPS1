@@ -14,5 +14,6 @@
 - [RÉSOLU] Q-PAR : rapport fourni au frontal JAMMA (BoardInfo.video.aspect = 4:3, 3:4 pour les jeux ROT270) ; choix carré/TV dans le frontal.
 - [OUVERT] Q-FRAMENO : numéro de trame passé au rendu des étoiles (`screen.frame_number()` de MAME = trames terminées avant la mise à jour ?) : retenu `frame` avant incrément (T603), à vérifier sur forgottn.
 - [OUVERT] Q-4P : joueurs 3-4 (captcomm, mercs 3 joueurs…) : in2/in3 de la carte C non câblés à JammaInputs.players[2..4] (carte à planifier en P6).
-- [OUVERT] Q-ROMSETS : `roms/` (137 zips, anciens noms) : ghouls et sf2 complets ; sf2ce.zip contient sf2ceea (920313), utilisé comme cible Champion Edition (T406) ;
-  sf2hf.zip est un ancien clone sans graphismes (T407 bloquée tant qu'un romset 0.287 n'est pas fourni). 76 romsets CPS1 complets au total (vérification CRC du 2026-11-21).
+- [RÉSOLU] Q-ROMSETS : `roms/` (137 zips, anciens noms ; 76 romsets CPS1 complets, vérification CRC du 2026-11-21). sf2ce.zip contient sf2ceea (920313), cible Champion Edition (T406).
+  sf2hf : jeu parent autonome dans MAME 0.287 ; `roms/sf2hf.zip` reconstruit le 2026-11-22 (ROM 68000 de l'ancien zip, gardé en sf2hf_ancien.zip, + ROM partagées de sf2ce.zip).
+- [OUVERT] Q-SF2HF-3000 : sf2hf a ~2 trames d'avance sur MAME à la trame 3000 (trames 120/600/1500 identiques) : à traiter avec Q-VBL / Q-RESET68K / Q-WAIT en T701.

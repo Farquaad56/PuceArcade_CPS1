@@ -65,6 +65,7 @@ fn sf2ceea_golden_comparison() {
                 // Write diff image for debugging
                 let diff_path =
                     manifest_dir.join(format!("../../target/diff/sf2ceea_f{:06}.ppm", frame));
+                std::fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
                 write_diff_ppm(machine.framebuffer(), &golden_pixels, &diff_path)
                     .expect("Failed to write diff PPM");
 
@@ -87,7 +88,7 @@ fn sf2ceea_golden_comparison() {
     println!("All golden comparisons passed!");
 
     // Update metrics
-    common::update_game_metrics(true);
+    common::update_game_metrics("sf2ceea", true);
 }
 
 #[test]

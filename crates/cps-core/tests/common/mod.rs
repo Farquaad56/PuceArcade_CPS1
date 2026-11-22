@@ -18,54 +18,46 @@ pub fn write_png(fb: &Framebuffer, path: &Path) {
     writer.write_image_data(&data).unwrap();
 }
 
-/// Update metrics/games.json with test results.
-pub fn update_game_metrics(pass: bool) {
+/// Enregistre le résultat d'un jeu dans metrics/games.json (un résultat par jeu : relancer un test
+/// remplace la valeur du jeu au lieu de l'ajouter ; pass/fail/total sont recalculés à partir de la liste).
+pub fn update_game_metrics(game: &str, pass: bool) {
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let metrics_path = manifest_dir.join("../../metrics/games.json");
-
-    // Read existing or create new
-    let (mut pass_count, mut fail_count, mut total_count) = if metrics_path.exists() {
-        let content = std::fs::read_to_string(&metrics_path).unwrap();
-        parse_metrics_json(&content)
-    } else {
-        (0, 0, 0)
-    };
-
-    total_count += 1;
-    if pass {
-        pass_count += 1;
-    } else {
-        fail_count += 1;
-    }
-
-    std::fs::create_dir_all(metrics_path.parent().unwrap()).unwrap();
-    let json_str = format!(
-        "{{\n  \"pass\": {},\n  \"fail\": {},\n  \"total\": {}\n}}",
-        pass_count, fail_count, total_count
+    let mut games = std::fs::read_to_string(&metrics_path)
+        .map(|c| parse_games(&c))
+        .unwrap_or_default();
+    games.insert(game.to_string(), pass);
+    let pass_count = games.values().filter(|&&p| p).count();
+    let fail_count = games.len() - pass_count;
+    let list: Vec<String> = games
+        .iter()
+        .map(|(g, p)| format!("    \"{g}\": {p}"))
+        .collect();
+    let json = format!(
+        "{{\n  \"pass\": {pass_count},\n  \"fail\": {fail_count},\n  \"total\": {},\n  \"games\": {{\n{}\n  }}\n}}\n",
+        games.len(),
+        list.join(",\n")
     );
-    std::fs::write(&metrics_path, &json_str).unwrap();
+    std::fs::create_dir_all(metrics_path.parent().unwrap()).unwrap();
+    std::fs::write(&metrics_path, json).unwrap();
 }
 
-fn parse_metrics_json(content: &str) -> (i64, i64, i64) {
-    let pass = extract_int(content, "pass").unwrap_or(0);
-    let fail = extract_int(content, "fail").unwrap_or(0);
-    let total = extract_int(content, "total").unwrap_or(0);
-    (pass, fail, total)
-}
-
-fn extract_int(json: &str, key: &str) -> Option<i64> {
-    let search_key = format!("\"{}\"", key);
-    if let Some(pos) = json.find(&search_key) {
-        let after_key = &json[pos + search_key.len()..];
-        let trimmed = after_key.trim_start();
-        if let Some(colon_pos) = trimmed.find(':') {
-            let value_str = trimmed[colon_pos + 1..].trim_start();
-            let num_chars: String = value_str
-                .chars()
-                .take_while(|c| c.is_ascii_digit())
-                .collect();
-            return num_chars.parse::<i64>().ok();
+/// Lit la liste `"games": { "nom": true|false, ... }` (format écrit par update_game_metrics).
+fn parse_games(content: &str) -> std::collections::BTreeMap<String, bool> {
+    let mut games = std::collections::BTreeMap::new();
+    let Some(pos) = content.find("\"games\"") else {
+        return games;
+    };
+    let body = &content[pos..];
+    let body = &body[body.find('{').map_or(0, |i| i + 1)..body.find('}').unwrap_or(body.len())];
+    for item in body.split(',') {
+        let mut kv = item.splitn(2, ':');
+        if let (Some(k), Some(v)) = (kv.next(), kv.next()) {
+            let k = k.trim().trim_matches('"');
+            if !k.is_empty() {
+                games.insert(k.to_string(), v.trim() == "true");
+            }
         }
     }
-    None
+    games
 }

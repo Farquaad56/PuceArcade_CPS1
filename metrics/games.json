@@ -1,5 +1,11 @@
 {
-  "pass": 4,
-  "fail": 0,
-  "total": 4
+  "pass": 3,
+  "fail": 1,
+  "total": 4,
+  "games": {
+    "ghouls": true,
+    "sf2": true,
+    "sf2ceea": true,
+    "sf2hf": false
+  }
 }
