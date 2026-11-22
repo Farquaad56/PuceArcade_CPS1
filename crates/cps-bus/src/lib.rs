@@ -14,3 +14,6 @@ pub use sound::SoundBoard;
 
 pub mod chips_stub;
 pub use chips_stub::NullChips;
+
+pub mod chips;
+pub use chips::Chips;
