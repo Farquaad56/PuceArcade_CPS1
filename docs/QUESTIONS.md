@@ -22,3 +22,4 @@
 
 - T500b (résolu par l'orchestrateur) : la carte attendait 859-860 échantillons après la 1re trame (0 -> début VBLANK). Le cœur termine chaque `run_frame` sur un multiple de TICKS_PER_FRAME (now = 84 510 720 après la 1re trame, Z80 synchrone à 1 période près) et ses tests attendent 937/938. Test aligné sur le cœur : 937..=938.
 - T505 (même cause que T500b) : 60 trames donnent 60 × 84 510 720 / 90 112 = 56 268-56 269 échantillons, pas 56 191-56 192. Test aligné sur le cœur.
+- T603 (résolu par l'orchestrateur) : la carte lisait l'id CPS-B de sf2ee en 0x8001F2 (offset 0x32 des CPS-B-21). sf2ee utilise CPS-B-18, id en offset 0x10 (cps1_v.cpp, CPS_B_18) : test en 0x8001D0 == 0x0408 et 0x800150 == 0.

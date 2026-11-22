@@ -14,6 +14,8 @@ pub struct Machine {
     pub z80: CpuZ80,
     pub sound: cps_bus::SoundBoard<cps_bus::Chips>,
     pub gfx: Vec<u8>,
+    /// Région « stars » (Forgotten Worlds…), passée au rendu.
+    pub stars: Option<Vec<u8>>,
     pub fb: Framebuffer,
     pub now: Tick,
     pub next_vblank: Tick,
@@ -35,6 +37,14 @@ impl Machine {
             cps_bus::Chips::new(game.regions.oki),
         );
         let gfx = game.regions.gfx;
+        let mut bus = bus;
+        // forgottn : uPD4701 (cps1.cpp l.3949-3957) ; sf2ee : CPS-B en 8001C0 (l.14594-14601)
+        if game.info.machine == "forgottn" {
+            bus.dial = Some(cps_bus::Upd4701::new());
+        }
+        if game.cpsb_at_1c0 {
+            bus.cpsb_base = 0x8001C0;
+        }
 
         let mut machine = Machine {
             cpu: Cpu68k::default(),
@@ -42,6 +52,7 @@ impl Machine {
             z80: CpuZ80::new(),
             sound,
             gfx,
+            stars: game.regions.stars,
             fb: Framebuffer::new(),
             now: 0,
             next_vblank: TICKS_VBLANK_START,
@@ -89,6 +100,11 @@ impl Machine {
     /// Set input state and propagate to bus/video.
     pub fn set_inputs(&mut self, i: InputState) {
         self.bus.set_inputs(i);
+    }
+
+    /// Molettes (forgottn) : mouvement relatif du joueur 1 (X) et du joueur 2 (Y).
+    pub fn add_dial(&mut self, dx: i32, dy: i32) {
+        self.bus.add_dial(dx, dy);
     }
 
     /// Set DIP switches.
@@ -212,5 +228,38 @@ mod tests {
         let m = make_machine();
         assert_eq!(m.framebuffer().pixels.len(), 384 * 224);
         assert_eq!(m.frame_count(), 0);
+    }
+
+    #[test]
+    fn sf2ee_cpsb_at_1c0() {
+        let mut g = testutil::synthetic_game(&[]);
+        g.info = cps_cart::find_game("sf2ee").unwrap();
+        g.cpsb_at_1c0 = true;
+        let mut m = Machine::new(g);
+        // spec: init_sf2ee — CPS-B-18 : id 0x0408 en offset 0x10 (cpsb_addr), donc 8001D0
+        assert_eq!(m.bus.read16(0x8001D0, true, true), 0x0408);
+        assert_eq!(
+            m.bus.read16(0x800150, true, true),
+            0,
+            "800140-80017F non mappé"
+        );
+    }
+
+    #[test]
+    fn forgottn_has_dial_and_stars() {
+        let mut g = testutil::synthetic_game(&[]);
+        g.info = cps_cart::find_game("forgottn").unwrap();
+        g.regions.stars = Some(vec![0x0F; 0x8000]);
+        let mut m = Machine::new(g);
+        assert!(m.bus.dial.is_some() && m.stars.is_some());
+        m.add_dial(5, -3);
+        assert_eq!(m.bus.read16(0x800052, true, true), 5);
+        let s = m.save_state();
+        m.add_dial(1, 1);
+        m.load_state(&s).unwrap();
+        assert_eq!(m.bus.read16(0x800052, true, true), 5);
+        // savestate d'un jeu sans molette refusé
+        let ghouls = Machine::new(testutil::synthetic_game(&[])).save_state();
+        assert!(m.load_state(&ghouls).is_err());
     }
 }

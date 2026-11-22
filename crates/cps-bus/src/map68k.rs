@@ -32,6 +32,8 @@ pub struct Bus68k<V: VideoPort> {
     pub coinctrl: u16,
     /// Molettes de Forgotten Worlds (uPD4701, machine « forgottn ») ; None ailleurs.
     pub dial: Option<crate::Upd4701>,
+    /// Adresse du CPS-B : 0x800140, ou 0x8001C0 pour init_sf2ee (cps1.cpp l.14594-14601).
+    pub cpsb_base: u32,
 }
 
 impl<V: VideoPort> Bus68k<V> {
@@ -46,6 +48,7 @@ impl<V: VideoPort> Bus68k<V> {
             dips,
             coinctrl: 0,
             dial: None,
+            cpsb_base: 0x800140,
         }
     }
 
@@ -110,8 +113,9 @@ impl<V: VideoPort> Bus68k<V> {
         }
 
         // spec: docs/spec/01 §68000 — CPS-B lecture 800140-80017F
-        if (0x800140..0x800180).contains(&a) {
-            let word = (a - 0x800140) / 2;
+        let cpsb = self.cpsb_base as usize;
+        if (cpsb..cpsb + 0x40).contains(&a) {
+            let word = (a - cpsb) / 2;
             return self.video.cps_b_read(word);
         }
 
@@ -162,8 +166,9 @@ impl<V: VideoPort> Bus68k<V> {
         }
 
         // spec: docs/spec/01 §68000 — CPS-B écriture 800140-80017F
-        if (0x800140..0x800180).contains(&a) {
-            let word = (a - 0x800140) / 2;
+        let cpsb = self.cpsb_base as usize;
+        if (cpsb..cpsb + 0x40).contains(&a) {
+            let word = (a - cpsb) / 2;
             self.video.cps_b_write(word, data, uds, lds);
             return None;
         }
@@ -276,6 +281,22 @@ mod tests {
             self.gfxram_write_calls.push((word, data));
         }
         fn set_inputs(&mut self, _in2: u8, _in3: u8) {}
+    }
+
+    #[test]
+    fn cpsb_relocated_for_sf2ee() {
+        let mut bus = Bus68k::new(vec![], TestVideo::default(), Dips::default());
+        bus.cpsb_base = 0x8001C0;
+        assert_eq!(
+            bus.read16(0x800172, true, true),
+            0,
+            "plage d'origine non mappée"
+        );
+        assert_eq!(bus.read16(0x8001F2, true, true), 0xBEEF);
+        assert_eq!(bus.video.cps_b_read_calls, vec![0x19]);
+        bus.write16(0x8001C2, true, true, 0x1234);
+        bus.write16(0x800142, true, true, 0x5678);
+        assert_eq!(bus.video.cps_b_write_calls, vec![(1, 0x1234)]);
     }
 
     #[test]

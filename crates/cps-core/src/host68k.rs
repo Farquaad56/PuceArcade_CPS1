@@ -20,6 +20,7 @@ pub struct Host68k<'a> {
     pub ticks_68k: u64,
     pub frame_done: &'a mut bool,
     pub gfx: &'a [u8],
+    pub stars: Option<&'a [u8]>,
     pub fb: &'a mut Framebuffer,
     pub frame_start: Tick,
 }
@@ -41,6 +42,7 @@ impl super::machine::Machine {
                 ticks_68k: self.ticks_68k,
                 frame_done: &mut self.frame_done,
                 gfx: &self.gfx,
+                stars: self.stars.as_deref(),
                 fb: &mut self.fb,
                 frame_start: self.frame_start,
             },
