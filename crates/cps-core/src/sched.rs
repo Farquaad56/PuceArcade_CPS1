@@ -2,13 +2,16 @@
 //! spec: docs/ARCHITECTURE.md §Ordonnanceur
 
 use crate::host68k::Host68k;
+use cps_common::clock::TICKS_PER_FRAME;
 use puce_m68k::cpu::Cpu as Cpu68k;
 
 impl super::machine::Machine {
     /// Exécute une trame complète (jusqu'au prochain VBLANK).
     pub fn run_frame(&mut self) {
         self.frame_done = false;
-        self.frame_start = self.now;
+        // Frontière absolue (multiple de TICKS_PER_FRAME) : le dépassement de finish_instruction
+        // ne doit pas s'accumuler d'une trame à l'autre (sinon ~7 000 ticks de dérive par trame).
+        self.frame_start = self.now - self.now % TICKS_PER_FRAME;
 
         loop {
             let (cpu, mut host): (&mut Cpu68k, Host68k<'_>) = self.split();
@@ -102,6 +105,22 @@ mod tests {
             TICKS_VBLANK_START + TICKS_PER_FRAME
         );
         assert_eq!(m.frame_count(), 2);
+    }
+
+    #[test]
+    fn frame_boundaries_do_not_drift() {
+        let mut m = nop_loop_machine();
+        for _ in 0..200 {
+            m.run_frame();
+        }
+        // Fin de la trame 200 : juste après 200 × TICKS_PER_FRAME (au plus une instruction de plus)
+        let end = 200 * TICKS_PER_FRAME;
+        assert!(
+            m.now >= end && m.now - end < 100_000,
+            "now={} end={end}",
+            m.now
+        );
+        assert_eq!(m.frame_count(), 200);
     }
 
     #[test]
