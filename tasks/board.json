@@ -873,7 +873,7 @@
     ],
     "file": "tasks/T842.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "blocked"
   },
   {
     "id": "T850",
@@ -906,6 +906,6 @@
     ],
     "file": "tasks/T851.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "blocked"
   }
 ]
