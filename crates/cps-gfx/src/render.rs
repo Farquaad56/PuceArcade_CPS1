@@ -5,7 +5,7 @@
 
 use crate::regs::{Video, VIDEOCONTROL};
 use crate::sprites::{BITMAP_H, BITMAP_W, CLIP};
-use crate::tilemap::{screen_to_tilemap, TILEMAP_DIM};
+use crate::tilemap::{screen_to_tilemap, TileInfo, TILEMAP_DIM};
 use cps_common::video::{Framebuffer, SCREEN_H, SCREEN_W};
 
 /// Flip écran des tilemaps (tilemap.cpp l.27-75 et draw_common l.1008-1012) : MAME dessine la
@@ -28,6 +28,7 @@ impl Video {
     }
 
     /// Dessine une couche tilemap (LAYER1 : pixels opaques -> bitmap).
+    /// Optimisation T703 : décode les infos de tuile une fois par tuile, pas par pixel.
     /// spec: docs/spec/02 §Composition ; MAME l.2943 + tilemap.cpp draw_common
     pub fn draw_tilemap(&self, gfx: &[u8], layer: usize, bitmap: &mut [u16], masks: &[u16; 4]) {
         if !self.bases.layer_enabled[layer] {
@@ -35,22 +36,54 @@ impl Video {
         }
 
         let dim = TILEMAP_DIM[layer];
+        let tile_size = match layer {
+            0 => 8,
+            1 => 16,
+            _ => 32,
+        };
         let flip = self.flip_screen();
+
         for sy in CLIP.2..=CLIP.3 {
             let ey = flipped(sy as u32, 255, flip);
             let (scrollx, scrolly) = self.tilemap_scroll(layer, ey);
+
+            // Pour chaque ligne écran, on suit la tuile courante pour éviter de recalculer
+            // les infos à chaque pixel. On ne recalcule qu'au changement de tuile.
+            let mut current_tile_col: Option<u32> = None;
+            let mut current_info: Option<TileInfo> = None;
+
             for sx in CLIP.0..=CLIP.1 {
                 let ex = flipped(sx as u32, 511, flip);
                 let (tx, ty) = screen_to_tilemap(ex, ey, scrollx, scrolly, dim);
-                let p = self.tilemap_pixel(gfx, layer, tx, ty, masks);
-                if p.layer1 {
-                    bitmap[sy * BITMAP_W + sx] = p.pen;
+
+                // Déterminer la colonne de tuile pour ce pixel
+                let tile_col = tx / tile_size;
+                let tile_row = ty / tile_size;
+
+                // Si on change de tuile (colonne ou ligne), recalculer les infos
+                if current_tile_col != Some(tile_col) || current_info.is_none() {
+                    let info = self.tilemap_tile(layer, tile_col, tile_row);
+                    current_info = Some(info);
+                    current_tile_col = Some(tile_col);
+                }
+
+                // Position dans la tuile
+                let px = tx % tile_size;
+                let py = ty % tile_size;
+
+                // Décode le pixel à partir des infos de la tuile (une fois par pixel)
+                if let Some(info) = current_info {
+                    let p = self.tile_info_pixel(gfx, &info, px, py, masks);
+                    if p.layer1 {
+                        bitmap[sy * BITMAP_W + sx] = p.pen;
+                    }
                 }
             }
         }
     }
 
     /// Dessine une couche tilemap haute priorité (LAYER0 : seulement pri |= 1).
+    /// Optimisation T703 : décode les infos de tuile une fois par tuile, pas par pixel.
     /// spec: docs/spec/02 §Composition ; MAME l.2958 + tilemap.cpp scanline_draw_opaque_null
     pub fn draw_tilemap_high(&self, gfx: &[u8], layer: usize, pri: &mut [u8], masks: &[u16; 4]) {
         if !self.bases.layer_enabled[layer] {
@@ -58,16 +91,47 @@ impl Video {
         }
 
         let dim = TILEMAP_DIM[layer];
+        let tile_size = match layer {
+            0 => 8,
+            1 => 16,
+            _ => 32,
+        };
         let flip = self.flip_screen();
+
         for sy in CLIP.2..=CLIP.3 {
             let ey = flipped(sy as u32, 255, flip);
             let (scrollx, scrolly) = self.tilemap_scroll(layer, ey);
+
+            // Pour chaque ligne écran, on suit la tuile courante pour éviter de recalculer
+            // les infos à chaque pixel. On ne recalcule qu'au changement de tuile.
+            let mut current_tile_col: Option<u32> = None;
+            let mut current_info: Option<TileInfo> = None;
+
             for sx in CLIP.0..=CLIP.1 {
                 let ex = flipped(sx as u32, 511, flip);
                 let (tx, ty) = screen_to_tilemap(ex, ey, scrollx, scrolly, dim);
-                let p = self.tilemap_pixel(gfx, layer, tx, ty, masks);
-                if p.layer0 {
-                    pri[sy * BITMAP_W + sx] |= 1;
+
+                // Déterminer la colonne de tuile pour ce pixel
+                let tile_col = tx / tile_size;
+                let tile_row = ty / tile_size;
+
+                // Si on change de tuile (colonne ou ligne), recalculer les infos
+                if current_tile_col != Some(tile_col) || current_info.is_none() {
+                    let info = self.tilemap_tile(layer, tile_col, tile_row);
+                    current_info = Some(info);
+                    current_tile_col = Some(tile_col);
+                }
+
+                // Position dans la tuile
+                let px = tx % tile_size;
+                let py = ty % tile_size;
+
+                // Décode le pixel à partir des infos de la tuile (une fois par pixel)
+                if let Some(info) = current_info {
+                    let p = self.tile_info_pixel(gfx, &info, px, py, masks);
+                    if p.layer0 {
+                        pri[sy * BITMAP_W + sx] |= 1;
+                    }
                 }
             }
         }
@@ -406,5 +470,73 @@ mod tests {
         let r20 = 4 * SCREEN_W;
         assert_eq!(fb.pixels[r20 + 10], 0xAA0000);
         assert_eq!(fb.pixels[r20 + 11], 0x123456);
+    }
+
+    /// Test T703 : l'optimisation par tuile produit le même bitmap que la boucle par pixel.
+    #[test]
+    fn test_tilemap_optimization_equivalence() {
+        use crate::tilemap::{screen_to_tilemap, TILEMAP_DIM};
+
+        // Graine fixe pour reproductibilité
+        let seed = 42u32;
+        let mut rng = seed;
+        fn next_rand(rng: &mut u32) -> u32 {
+            *rng = rng.wrapping_mul(1664525).wrapping_add(1013904223);
+            *rng >> 8
+        }
+
+        // Créer une tilemap pseudo-aléatoire avec plusieurs tuiles différentes
+        let mut v = Video::new("ghouls");
+        v.bases.layer_enabled[0] = true;
+
+        // Remplir la RAM de défilement avec des codes et attributs aléatoires
+        for i in 0..1024 {
+            rng = next_rand(&mut rng);
+            let code = (rng % 64) as u16;
+            rng = next_rand(&mut rng);
+            let attr = (rng % 512) as u16;
+            v.gfxram[2 * i] = code;
+            v.gfxram[2 * i + 1] = attr;
+        }
+
+        // Créer des données GFX aléatoires
+        let mut gfx = vec![0xFFu8; 0x4000];
+        for byte in gfx.iter_mut() {
+            rng = next_rand(&mut rng);
+            *byte = (rng % 256) as u8;
+        }
+
+        // Tester avec 4 valeurs de scroll différentes
+        let scrolls = [(0, 0), (32, 16), (-64, -32), (127, 99)];
+        for (sx_scroll, sy_scroll) in &scrolls {
+            v.bases.scrollx[0] = *sx_scroll;
+            v.bases.scrolly[0] = *sy_scroll;
+
+            // Version optimisée (par tuile)
+            let mut bitmap_optimized = vec![0xBFFu16; BITMAP_W * BITMAP_H];
+            v.draw_tilemap(&gfx, 0, &mut bitmap_optimized, &[0xFFFF; 4]);
+
+            // Version de référence (par pixel, ancienne implémentation)
+            let mut bitmap_reference = vec![0xBFFu16; BITMAP_W * BITMAP_H];
+            for sy in CLIP.2..=CLIP.3 {
+                let ey = sy as u32;
+                let (scrollx, scrolly) = v.tilemap_scroll(0, ey);
+                for sx in CLIP.0..=CLIP.1 {
+                    let ex = sx as u32;
+                    let (tx, ty) = screen_to_tilemap(ex, ey, scrollx, scrolly, TILEMAP_DIM[0]);
+                    let p = v.tilemap_pixel(&gfx, 0, tx, ty, &[0xFFFF; 4]);
+                    if p.layer1 {
+                        bitmap_reference[sy * BITMAP_W + sx] = p.pen;
+                    }
+                }
+            }
+
+            // Les deux bitmaps doivent être identiques
+            assert_eq!(
+                bitmap_optimized, bitmap_reference,
+                "Optimization mismatch at scroll ({}, {})",
+                sx_scroll, sy_scroll
+            );
+        }
     }
 }

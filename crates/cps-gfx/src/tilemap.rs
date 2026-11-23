@@ -17,6 +17,18 @@ pub struct TilePixel {
     pub layer1: bool,
 }
 
+/// Informations sur une tuile entière (calculées une fois par tuile).
+#[derive(Clone, Copy, Debug)]
+pub struct TileInfo {
+    pub code: i32,
+    pub layout: Layout,
+    pub flip_x: bool,
+    pub flip_y: bool,
+    pub palette_index: u16,
+    pub color_offset: u16,
+    pub priority_group: usize,
+}
+
 /// Scan tilemap0 : (col,row) -> index dans la RAM de défilement.
 /// spec: docs/spec/02 §Tilemaps scroll1 ; MAME l.2434-2438
 pub fn tilemap0_scan(col: u32, row: u32) -> u32 {
@@ -49,26 +61,10 @@ impl Video {
         masks
     }
 
-    /// Décode un pixel dans la tilemap à la position (tx, ty).
+    /// Récupère les informations d'une tuile entière (calculées une fois par tuile).
     /// spec: docs/spec/02 §Tilemaps ; MAME l.2452-2511 + drawgfx
-    pub fn tilemap_pixel(
-        &self,
-        gfx: &[u8],
-        layer: usize,
-        tx: u32,
-        ty: u32,
-        masks: &[u16; 4],
-    ) -> TilePixel {
+    pub fn tilemap_tile(&self, layer: usize, col: u32, row: u32) -> TileInfo {
         let _size = TILEMAP_DIM[layer];
-        let tile_size = match layer {
-            0 => 8,
-            1 => 16,
-            _ => 32,
-        };
-
-        // Position de la tuile dans la tilemap
-        let col = tx / tile_size;
-        let row = ty / tile_size;
 
         // Index dans la RAM de défilement selon le scan de la couche
         let index = match layer {
@@ -108,49 +104,114 @@ impl Video {
             _ => Layout::L32x32,
         };
 
-        // Position dans la tuile
-        let mut px = tx % tile_size;
-        let mut py = ty % tile_size;
-
         // Flip X/Y (attr bits 5 et 6)
-        if attr & 0x20 != 0 {
-            px = tile_size - 1 - px;
-        }
-        if attr & 0x40 != 0 {
-            py = tile_size - 1 - py;
-        }
+        let flip_x = attr & 0x20 != 0;
+        let flip_y = attr & 0x40 != 0;
 
-        // Décode le pixel brut (ou 15 si code == -1)
-        let raw = if code == -1 {
-            15u8
-        } else {
-            tile_pixel(gfx, layout, code as u32, px, py)
-        };
+        // Palette index from attributes (lower 5 bits)
+        let palette_index = attr & 0x1F;
 
-        // Couleur : (attr & 0x1F) + offset de couche
+        // Couleur : offset de couche
         let color_offset = match layer {
             0 => 0x20,
             1 => 0x40,
             _ => 0x60,
         };
-        let color = ((attr & 0x1F) + color_offset) % 0x80;
+
+        // Groupe de priorité (attr bits 7-8)
+        let priority_group = ((attr & 0x180) >> 7) as usize;
+
+        TileInfo {
+            code,
+            layout,
+            flip_x,
+            flip_y,
+            palette_index,
+            color_offset,
+            priority_group,
+        }
+    }
+
+    /// Décode un pixel à partir des informations d'une tuile.
+    pub fn tile_info_pixel(
+        &self,
+        gfx: &[u8],
+        info: &TileInfo,
+        px: u32,
+        py: u32,
+        masks: &[u16; 4],
+    ) -> TilePixel {
+        // Position dans la tuile (avec flip)
+        let tile_size = match info.layout {
+            Layout::L8x8 | Layout::L8x8b => 8,
+            Layout::L16x16 => 16,
+            Layout::L32x32 => 32,
+        };
+
+        let mut x = px;
+        let mut y = py;
+        if info.flip_x {
+            x = tile_size - 1 - x;
+        }
+        if info.flip_y {
+            y = tile_size - 1 - y;
+        }
+
+        // Décode le pixel brut (ou 15 si code == -1)
+        let raw = if info.code == -1 {
+            15u8
+        } else {
+            tile_pixel(gfx, info.layout, info.code as u32, x, y)
+        };
+
+        // Couleur : palette_index + offset de couche (modulo 0x80)
+        let color = (info.palette_index + info.color_offset) % 0x80;
 
         // Pen final : couleur * 16 + raw
         let pen = color * 16 + raw as u16;
 
-        // Groupe de priorité (attr bits 7-8)
-        let group = ((attr & 0x180) >> 7) as usize;
-
         // Flags de transparence : layer1 opaque si raw != 15 ;
         // layer0 opaque si bit raw du masque du groupe == 0
         let layer1 = raw != 15;
-        let layer0 = ((masks[group] >> raw) & 1) == 0;
+        let layer0 = ((masks[info.priority_group] >> raw) & 1) == 0;
 
         TilePixel {
             pen,
             layer0,
             layer1,
         }
+    }
+
+    /// Décode un pixel dans la tilemap à la position (tx, ty).
+    /// spec: docs/spec/02 §Tilemaps ; MAME l.2452-2511 + drawgfx
+    pub fn tilemap_pixel(
+        &self,
+        gfx: &[u8],
+        layer: usize,
+        tx: u32,
+        ty: u32,
+        masks: &[u16; 4],
+    ) -> TilePixel {
+        let _size = TILEMAP_DIM[layer];
+        let tile_size = match layer {
+            0 => 8,
+            1 => 16,
+            _ => 32,
+        };
+
+        // Position de la tuile dans la tilemap
+        let col = tx / tile_size;
+        let row = ty / tile_size;
+
+        // Récupère les infos de la tuile (une fois par tuile)
+        let info = self.tilemap_tile(layer, col, row);
+
+        // Position dans la tuile
+        let px = tx % tile_size;
+        let py = ty % tile_size;
+
+        // Décode le pixel à partir des infos de la tuile
+        self.tile_info_pixel(gfx, &info, px, py, masks)
     }
 
     /// Retourne le défilement effectif pour une couche à la ligne écran sy.
