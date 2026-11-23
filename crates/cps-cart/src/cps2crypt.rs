@@ -247,8 +247,10 @@ pub fn decode_key(key: &[u8]) -> Cps2Key {
 /// Déchiffre la région programme (mots gros-boutistes) : opcodes, même taille et même ordre d'octets.
 pub fn decrypt_program(rom: &[u8], key: &Cps2Key) -> Vec<u8> {
     let words: Vec<u16> = rom
-        .chunks_exact(2)
-        .map(|w| u16::from_be_bytes([w[0], w[1]]))
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|w| u16::from_be_bytes(*w))
         .collect();
     cps2_decrypt(&words, key.master, key.lower / 2, key.upper / 2)
         .iter()
