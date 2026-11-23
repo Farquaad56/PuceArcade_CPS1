@@ -23,4 +23,4 @@ pub use error::CartError;
 pub use game::{load_game, load_game_from, ticks_per_68k, Game};
 pub use regions::build_regions;
 pub use romset::{find_game, system_of, GameInfo, System};
-pub use support::{support_of, supported_games, Support};
+pub use support::{support_of, supported_games, supported_games2, Support};
