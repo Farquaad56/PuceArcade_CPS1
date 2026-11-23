@@ -2,6 +2,9 @@
 //! produit par tools/mame_golden.ps1). `CMP_GAMES="sf2rb,sf2m2" CMP_FRAME=1200 cargo test -p cps-core
 //! --release --test compare_mame -- --ignored --nocapture`.
 
+#[allow(dead_code)]
+mod common;
+
 use cps_core::{load_game, Config, Machine};
 use cps_testkit::golden::{diff_frame, load_png_rgb};
 use std::path::Path;
@@ -36,6 +39,10 @@ fn compare_with_mame() {
             m.run_frame();
             halted |= m.cpu.is_halted();
         }
+        common::write_png(
+            m.framebuffer(),
+            &root.join(format!("target/frames/{game}_f{frame:06}.png")),
+        );
         let res = match load_png_rgb(&golden) {
             Ok((w, h, px)) => match diff_frame(m.framebuffer(), &px, w, h) {
                 Ok(d) => format!("{:.2} % de pixels différents", d.ratio() * 100.0),
