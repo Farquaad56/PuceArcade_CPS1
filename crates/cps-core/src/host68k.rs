@@ -18,6 +18,9 @@ pub struct Host68k<'a> {
     pub ipl1: &'a mut bool,
     pub ipl2: &'a mut bool,
     pub ticks_68k: u64,
+    /// ADR-007 : `now` avance de ticks_68k / ticks_68k_den par cycle, reste dans `tick_acc`.
+    pub ticks_68k_den: u64,
+    pub tick_acc: &'a mut u64,
     pub frame_done: &'a mut bool,
     pub gfx: &'a [u8],
     pub stars: Option<&'a [u8]>,
@@ -40,6 +43,8 @@ impl super::machine::Machine {
                 ipl1: &mut self.ipl1,
                 ipl2: &mut self.ipl2,
                 ticks_68k: self.ticks_68k,
+                ticks_68k_den: self.ticks_68k_den,
+                tick_acc: &mut self.tick_acc,
                 frame_done: &mut self.frame_done,
                 gfx: &self.gfx,
                 stars: self.stars.as_deref(),
@@ -155,8 +160,10 @@ impl Bus for Host68k<'_> {
     }
 
     fn on_tick(&mut self, _pins: Pins) {
-        // Avancer l'horloge du 68000
-        *self.now += self.ticks_68k;
+        // Avancer l'horloge du 68000 : accumulateur entier (ADR-007), exact avec den = 1
+        *self.tick_acc += self.ticks_68k;
+        *self.now += *self.tick_acc / self.ticks_68k_den;
+        *self.tick_acc %= self.ticks_68k_den;
 
         // Catch-up de la carte son (Z80 + YM2151 + OKI)
         self.z80_run_until(*self.now);

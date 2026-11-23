@@ -23,6 +23,10 @@ pub struct Machine {
     pub ipl1: bool,
     pub ipl2: bool,
     pub ticks_68k: u64,
+    /// Dénominateur des ticks par cycle 68000 (ADR-007) : 1 (CPS1) ou 59 (CPS2).
+    pub ticks_68k_den: u64,
+    /// Reste fractionnaire des ticks du 68000 (< ticks_68k_den).
+    pub tick_acc: u64,
     pub frame_done: bool,
     pub game: String,
     pub frame_start: Tick,
@@ -71,6 +75,8 @@ impl Machine {
             ipl1: false,
             ipl2: false,
             ticks_68k: game.ticks_per_68k,
+            ticks_68k_den: game.ticks_68k_den.max(1),
+            tick_acc: 0,
             frame_done: false,
             game: game.info.name.to_string(),
             frame_start: 0,
@@ -90,6 +96,7 @@ impl Machine {
         self.z80 = CpuZ80::new();
         self.z80.reset();
         self.now = 0;
+        self.tick_acc = 0;
         self.next_vblank = TICKS_VBLANK_START;
         self.frame = 0;
         self.ipl1 = false;
@@ -204,6 +211,37 @@ mod tests {
     fn make_machine() -> Machine {
         let game = testutil::synthetic_game(&[(0, &[0, 0, 0x80, 0, 0, 0, 4, 0])]);
         Machine::new(game)
+    }
+
+    /// ADR-007 : n appels de on_tick, `now` relevé après chacun.
+    fn ticks(m: &mut Machine, n: usize) -> Vec<u64> {
+        use puce_m68k::bus::Bus;
+        (0..n)
+            .map(|_| {
+                let (_, mut h) = m.split();
+                h.on_tick(puce_m68k::pins::Pins::default());
+                *h.now
+            })
+            .collect()
+    }
+
+    #[test]
+    fn fractional_68k_clock() {
+        let mut g = testutil::synthetic_game(&[(0, &[0, 0, 0x80, 0, 0, 0, 4, 0])]);
+        g.ticks_per_68k = 25200;
+        g.ticks_68k_den = 59;
+        let mut m = Machine::new(g);
+        let t = ticks(&mut m, 59);
+        assert_eq!(t[0], 427);
+        assert_eq!(t[58], 25200);
+        assert_eq!(m.tick_acc, 0);
+    }
+
+    #[test]
+    fn cps1_clock_unchanged() {
+        let mut m = make_machine();
+        assert_eq!(ticks(&mut m, 10)[9], 5040);
+        assert_eq!(m.tick_acc, 0);
     }
 
     #[test]
