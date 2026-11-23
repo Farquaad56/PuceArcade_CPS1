@@ -12,6 +12,7 @@ pub mod dips_data;
 pub mod error;
 pub mod game;
 pub mod kabuki;
+pub mod quirks;
 pub mod regions;
 #[rustfmt::skip]
 pub mod romsets_data;
@@ -26,6 +27,7 @@ pub use cps2load::Cps2Rom;
 pub use dips::{dip_fields, input_layout};
 pub use error::CartError;
 pub use game::{load_game, load_game_from, ticks_68k_den, ticks_per_68k, Game};
+pub use quirks::{quirks_of, Quirks};
 pub use regions::build_regions;
 pub use romset::{find_game, system_of, GameInfo, System};
 pub use support::{support_of, supported_games, supported_games2, Support};

@@ -26,7 +26,7 @@ impl VideoPort for Video {
         Video::gfxram_write(self, word, data, uds, lds);
     }
 
-    fn set_inputs(&mut self, in2: u8, in3: u8) {
+    fn set_inputs(&mut self, in2: u16, in3: u16) {
         Video::set_inputs(self, in2, in3);
     }
 

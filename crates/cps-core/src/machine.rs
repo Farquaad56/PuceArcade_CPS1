@@ -68,6 +68,12 @@ impl Machine {
         if game.cpsb_at_1c0 {
             bus.cpsb_base = 0x8001C0;
         }
+        // bootlegs : particularités de carte (cps-cart quirks.rs)
+        bus.hack_dsw = game.quirks.hack_dsw;
+        bus.in2_high = game.quirks.in2_high;
+        if game.quirks.cpsb_mirror_1c0 {
+            bus.cpsb_mirror = Some(0x8001C0);
+        }
         // CPS2 (cps2.cpp cps2 / dead_cps2) : carte QSound sans ports F1C0xx, EEPROM 16 bits.
         // spec: docs/spec/05 §Carte mémoire 68000, §Son
         let opcodes = game.cps2.map(|c| {
@@ -229,6 +235,7 @@ pub mod testutil {
             ticks_per_68k: 504,
             dips: default_dips("ghouls"),
             cpsb_at_1c0: false,
+            quirks: Default::default(),
             audio_opcodes: None,
             qsound_dsp: None,
             ticks_68k_den: 1,

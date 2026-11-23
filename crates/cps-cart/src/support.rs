@@ -18,8 +18,11 @@ pub enum Support {
 }
 
 const MACHINES: [&str; 4] = ["cps1_10MHz", "cps1_12MHz", "forgottn", "qsound"];
-const INITS: [&str; 6] = [
+const INITS: [&str; 9] = [
     "empty_init",
+    "init_sf2hack",
+    "init_sf2rk",
+    "init_sf2thndr",
     "init_sf2ee",
     "init_wof",
     "init_dino",
@@ -77,7 +80,8 @@ mod tests {
         assert_eq!(s("sf2ee"), Support::Ok);
         assert_eq!(s("forgottn"), Support::Ok);
         // 160 CPS1 + 18 QSound (wof, dino, punisher, slammast, mbombrd et leurs clones)
-        assert_eq!(supported_games().len(), 178);
+        // + 17 bootlegs SF2 (init_sf2hack, init_sf2rk, init_sf2thndr)
+        assert_eq!(supported_games().len(), 195);
     }
 
     #[test]
@@ -91,7 +95,7 @@ mod tests {
         assert_eq!(s("pzloop2"), Support::UnsupportedInit);
         assert_eq!(s("ecofghtr"), Support::UnsupportedInit);
         assert_eq!(supported_games2().len(), 303);
-        assert_eq!(supported_games().len(), 178);
+        assert_eq!(supported_games().len(), 195);
     }
 
     #[test]

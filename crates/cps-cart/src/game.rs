@@ -19,6 +19,8 @@ pub struct Game {
     pub dips: cps_common::Dips,
     /// init_sf2ee (cps1.cpp l.14594-14601) : CPS-B en 8001C0 au lieu de 800140.
     pub cpsb_at_1c0: bool,
+    /// Particularités de carte des bootlegs (entrées, miroir du CPS-B).
+    pub quirks: crate::quirks::Quirks,
     /// QSound : opcodes Z80 déchiffrés (Kabuki, 0x8000 octets) ; la région audiocpu contient
     /// alors les données déchiffrées.
     pub audio_opcodes: Option<Vec<u8>>,
@@ -84,6 +86,7 @@ pub fn load_game_from(
     if system_of(info) == System::Cps2 {
         return load_cps2(info, regions, src, ticks, dips);
     }
+    crate::quirks::descramble_gfx(info.init, &mut regions.gfx);
     let audio_opcodes = crate::kabuki::decode(info.init, &mut regions.audiocpu);
     let qsound_dsp = if info.machine == "qsound" {
         Some(src.fetch("dl-1425.bin", DL1425_CRC)?)
@@ -97,6 +100,7 @@ pub fn load_game_from(
         ticks_per_68k: ticks,
         dips: dips.unwrap_or_else(|| dips_default(info.input)),
         cpsb_at_1c0: info.init == "init_sf2ee",
+        quirks: crate::quirks::quirks_of(info),
         audio_opcodes,
         qsound_dsp,
         ticks_68k_den: 1,
@@ -127,6 +131,7 @@ fn load_cps2(
         ticks_per_68k: ticks,
         dips: dips.unwrap_or_else(|| dips_default(info.input)),
         cpsb_at_1c0: false,
+        quirks: crate::quirks::Quirks::default(),
         audio_opcodes,
         qsound_dsp,
         ticks_68k_den: ticks_68k_den(info.machine),

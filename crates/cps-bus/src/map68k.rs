@@ -18,7 +18,8 @@ pub trait VideoPort {
     fn cps_b_write(&mut self, word: usize, data: u16, uds: bool, lds: bool);
     fn gfxram_read(&self, word: usize) -> u16;
     fn gfxram_write(&mut self, word: usize, data: u16, uds: bool, lds: bool);
-    fn set_inputs(&mut self, in2: u8, in3: u8);
+    /// Ports IN2 / IN3 tels que lus au CPS-B (mot complet).
+    fn set_inputs(&mut self, in2: u16, in3: u16);
     /// CPS2 : registres output (400000-40000B). spec: docs/spec/05 §Carte mémoire 68000
     fn cps2_output_read(&self, _word: usize) -> u16 {
         0
@@ -48,6 +49,12 @@ pub struct Bus68k<V: VideoPort> {
     pub dial: Option<crate::Upd4701>,
     /// Adresse du CPS-B : 0x800140, ou 0x8001C0 pour init_sf2ee (cps1.cpp l.14594-14601).
     pub cpsb_base: u32,
+    /// Miroir du CPS-B (init_sf2thndr : 8001C0), en plus de `cpsb_base`.
+    pub cpsb_mirror: Option<u32>,
+    /// cps1_hack_dsw_r : IN0 et DIP sur les deux octets (init_sf2hack).
+    pub hack_dsw: bool,
+    /// Entrées sf2hack : IN2 (boutons 4-6) sur l'octet fort, octet faible à 0xFF.
+    pub in2_high: bool,
     /// Carte QSound (qsound_main_map) : ports F1C000-F1C007, lecture F00000. La RAM partagée
     /// et l'EEPROM (F1C006) sont servies par l'hôte, qui a la carte son et l'heure.
     pub qsound: bool,
@@ -74,6 +81,9 @@ impl<V: VideoPort> Bus68k<V> {
             coinctrl: 0,
             dial: None,
             cpsb_base: 0x800140,
+            cpsb_mirror: None,
+            hack_dsw: false,
+            in2_high: false,
             qsound: false,
             user1: None,
             coinctrl2: 0,
@@ -99,7 +109,12 @@ impl<V: VideoPort> Bus68k<V> {
     /// Met à jour les entrées et propage IN2/IN3 au port vidéo.
     pub fn set_inputs(&mut self, i: InputState) {
         self.inputs = i;
-        self.video.set_inputs(i.in2, i.in3);
+        let in2 = if self.in2_high {
+            u16::from(i.in2) << 8 | 0xFF
+        } else {
+            u16::from(i.in2)
+        };
+        self.video.set_inputs(in2, u16::from(i.in3));
     }
 
     /// Lecture mot 68000 (adresse & 0xFFFFFF, bit 0 ignoré).
@@ -164,9 +179,7 @@ impl<V: VideoPort> Bus68k<V> {
         }
 
         // spec: docs/spec/01 §68000 — CPS-B lecture 800140-80017F
-        let cpsb = self.cpsb_base as usize;
-        if (cpsb..cpsb + 0x40).contains(&a) {
-            let word = (a - cpsb) / 2;
+        if let Some(word) = self.cpsb_word(a) {
             return self.video.cps_b_read(word);
         }
 
@@ -230,9 +243,7 @@ impl<V: VideoPort> Bus68k<V> {
         }
 
         // spec: docs/spec/01 §68000 — CPS-B écriture 800140-80017F
-        let cpsb = self.cpsb_base as usize;
-        if (cpsb..cpsb + 0x40).contains(&a) {
-            let word = (a - cpsb) / 2;
+        if let Some(word) = self.cpsb_word(a) {
             self.video.cps_b_write(word, data, uds, lds);
             return None;
         }
@@ -307,8 +318,19 @@ impl<V: VideoPort> Bus68k<V> {
             3 => self.dips.dswc,
             _ => 0xFF,
         };
-        // spec: docs/spec/01 §68000 — valeur = (port << 8) | 0xFF
-        ((port as u16) << 8) | 0xFF
+        // spec: docs/spec/01 §68000 — valeur = (port << 8) | 0xFF ; cps1_hack_dsw_r : (port << 8) | port
+        let low = if self.hack_dsw { port as u16 } else { 0xFF };
+        ((port as u16) << 8) | low
+    }
+
+    /// Mot du CPS-B adressé par `a` (à `cpsb_base` ou à son miroir), s'il y en a un.
+    fn cpsb_word(&self, a: usize) -> Option<usize> {
+        [Some(self.cpsb_base), self.cpsb_mirror]
+            .into_iter()
+            .flatten()
+            .map(|b| b as usize)
+            .find(|b| (*b..*b + 0x40).contains(&a))
+            .map(|b| (a - b) / 2)
     }
 }
 
@@ -344,7 +366,7 @@ mod tests {
         fn gfxram_write(&mut self, word: usize, data: u16, _uds: bool, _lds: bool) {
             self.gfxram_write_calls.push((word, data));
         }
-        fn set_inputs(&mut self, _in2: u8, _in3: u8) {}
+        fn set_inputs(&mut self, _in2: u16, _in3: u16) {}
     }
 
     #[test]

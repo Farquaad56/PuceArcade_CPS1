@@ -233,9 +233,9 @@ impl Video {
     }
 
     /// Définit les entrées IN2/IN3 (bits 8-15 toujours à zéro).
-    pub fn set_inputs(&mut self, in2: u8, in3: u8) {
-        self.in2 = in2 as u16;
-        self.in3 = in3 as u16;
+    pub fn set_inputs(&mut self, in2: u16, in3: u16) {
+        self.in2 = in2;
+        self.in3 = in3;
     }
 }
 

@@ -25,3 +25,6 @@ pub use sound::QSoundSide;
 pub mod upd4701;
 pub use chips::Chips;
 pub use upd4701::Upd4701;
+
+#[cfg(test)]
+mod quirk_tests;
