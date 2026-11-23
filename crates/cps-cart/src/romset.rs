@@ -76,6 +76,25 @@ pub struct GameInfo {
     pub romset: &'static RomSetDef,
 }
 
+/// Système d'un jeu : CPS1 (cps1.cpp) ou CPS2 (cps2.cpp). spec: docs/spec/05 §Système et jeux pris en charge
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum System {
+    Cps1,
+    Cps2,
+}
+
+/// Machines de cps2.cpp (spec: docs/spec/05 §Système et jeux pris en charge).
+const CPS2_MACHINES: [&str; 5] = ["cps2", "dead_cps2", "cps2comm", "dead_cps2comm", "gigaman2"];
+
+/// Système d'un jeu d'après sa configuration machine.
+pub fn system_of(info: &GameInfo) -> System {
+    if CPS2_MACHINES.contains(&info.machine) {
+        System::Cps2
+    } else {
+        System::Cps1
+    }
+}
+
 /// Recherche linéaire dans la table des jeux CPS1, puis dans celle du CPS2.
 pub fn find_game(name: &str) -> Option<&'static GameInfo> {
     romsets_data::GAMES
@@ -112,6 +131,8 @@ mod tests {
         assert_eq!(g.machine, "dead_cps2");
         assert_eq!(g.input, "cps2_2p6b");
         assert_eq!(g.init, "init_cps2");
+        assert_eq!(system_of(g), System::Cps2);
+        assert_eq!(system_of(find_game("ghouls").unwrap()), System::Cps1);
     }
 
     #[test]
