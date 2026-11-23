@@ -19,6 +19,8 @@ pub enum CartError {
     },
     UnknownGame(String),
     UnsupportedMachine(String),
+    /// CPS2 : fichier .key absent du romset (région « key »).
+    MissingKey(String),
     OutOfRegion {
         region: String,
         offset: usize,
@@ -55,6 +57,9 @@ impl std::fmt::Display for CartError {
             }
             CartError::UnknownGame(name) => write!(f, "jeu inconnu : {}", name),
             CartError::UnsupportedMachine(name) => write!(f, "machine non supportée : {}", name),
+            CartError::MissingKey(name) => {
+                write!(f, "clé CPS2 (.key) absente du romset de {}", name)
+            }
             CartError::OutOfRegion { region, offset } => {
                 write!(
                     f,

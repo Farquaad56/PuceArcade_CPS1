@@ -34,6 +34,7 @@ pub fn build_regions(
             // « user1 » dans MAME 0.287, « audiorom_raw » dans la référence : ROM Z80 encore
             // chiffrée (ROM_COPY avant kabuki_setup), lue par le 68000 en F00000
             "user1" | "audiorom_raw" => regions.user1 = Some(data),
+            "key" => regions.key = Some(data),
             _ => {}
         }
     }
