@@ -28,6 +28,8 @@ pub struct Host68k<'a> {
     pub frame_start: Tick,
     /// CPS2 : opcodes déchiffrés (ADR-006).
     pub opcodes: Option<&'a [u8]>,
+    pub next_line: &'a mut Tick,
+    pub raster_irq_at: &'a mut Option<Tick>,
 }
 
 impl super::machine::Machine {
@@ -53,6 +55,8 @@ impl super::machine::Machine {
                 fb: &mut self.fb,
                 frame_start: self.frame_start,
                 opcodes: self.opcodes.as_deref(),
+                next_line: &mut self.next_line,
+                raster_irq_at: &mut self.raster_irq_at,
             },
         )
     }
@@ -134,17 +138,20 @@ impl Bus for Host68k<'_> {
             if let Some(v) = self.cps2_read(a as u32) {
                 return v;
             }
+            self.update_hpos();
             return self.bus.read16(addr, uds, lds);
         }
         if let Some(v) = self.qsound_read(addr & 0xFF_FFFE) {
             return v;
         }
+        self.update_hpos();
         self.bus.read16(addr, uds, lds)
     }
 
     fn write(&mut self, addr: u32, _fc: u8, uds: bool, lds: bool, data: u16) {
         if self.bus.cps2.is_some() {
             if !self.cps2_write(addr & 0xFF_FFFE, uds, lds, data) {
+                self.update_hpos();
                 self.bus.write16(addr, uds, lds, data);
             }
             return;
@@ -153,6 +160,7 @@ impl Bus for Host68k<'_> {
             return;
         }
         // Écriture bus normale - capture le SoundCmd si latch écrit
+        self.update_hpos();
         let cmd = self.bus.write16(addr, uds, lds, data);
 
         // Traiter la commande son retournée par le bus
@@ -192,6 +200,9 @@ impl Bus for Host68k<'_> {
 
         // Catch-up de la carte son (Z80 + YM2151 + OKI)
         self.z80_run_until(*self.now);
+
+        // Compteurs raster du CPS-B et IRQ4 (ADR-003 b ; CPS2)
+        crate::raster_sched::raster_events(self);
 
         // Événement VBLANK si atteint (ligne 240)
         if *self.now >= *self.next_vblank {

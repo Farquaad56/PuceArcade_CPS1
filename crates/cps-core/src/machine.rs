@@ -32,6 +32,10 @@ pub struct Machine {
     pub frame_start: Tick,
     /// CPS2 : opcodes du 68000 déchiffrés, lus quand le FC désigne le programme.
     pub opcodes: Option<Vec<u8>>,
+    /// Raster (ADR-003 b) : début de la prochaine ligne à traiter.
+    pub next_line: Tick,
+    /// Raster : instant de l'IRQ4 programmée.
+    pub raster_irq_at: Option<Tick>,
 }
 
 impl Machine {
@@ -93,6 +97,8 @@ impl Machine {
             game: game.info.name.to_string(),
             frame_start: 0,
             opcodes,
+            next_line: 0,
+            raster_irq_at: None,
         };
         machine.reset();
         machine
@@ -110,6 +116,8 @@ impl Machine {
         self.z80.reset();
         self.now = 0;
         self.tick_acc = 0;
+        self.next_line = 0;
+        self.raster_irq_at = None;
         self.next_vblank = TICKS_VBLANK_START;
         self.frame = 0;
         self.ipl1 = false;
