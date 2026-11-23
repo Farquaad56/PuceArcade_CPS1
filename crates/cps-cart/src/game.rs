@@ -2,10 +2,12 @@
 //! spec: docs/spec/00 §Horloges du matériel, docs/spec/01 §DIP, docs/spec/04 §Jeux cibles
 
 use crate::config::Config;
+use crate::cps2crypt::{decode_key, decrypt_program};
+use crate::cps2load::{cps2_gfx_decode, Cps2Rom};
 use crate::dips::default_dips as dips_default;
 use crate::error::CartError;
 use crate::regions::build_regions;
-use crate::romset::{find_game, GameInfo};
+use crate::romset::{find_game, system_of, GameInfo, System};
 use crate::source::{sources_for, FileSource};
 
 /// Structure représentant un jeu chargé.
@@ -22,6 +24,10 @@ pub struct Game {
     pub audio_opcodes: Option<Vec<u8>>,
     /// QSound : ROM interne du DSP (`dl-1425.bin`, cherchée aussi dans `qsound.zip`).
     pub qsound_dsp: Option<Vec<u8>>,
+    /// Dénominateur des ticks par cycle 68000 (ADR-007) : 1 pour le CPS1, 59 pour le CPS2.
+    pub ticks_68k_den: u64,
+    /// CPS2 : opcodes déchiffrés et variantes de carte (None pour le CPS1).
+    pub cps2: Option<Cps2Rom>,
 }
 
 /// CRC de `dl-1425.bin` (qsoundhle.cpp, ROM_START( qsound_hle )).
@@ -36,7 +42,17 @@ pub fn ticks_per_68k(machine: &str) -> Result<u64, CartError> {
         "forgottn" => Ok(504),
         // qsound = cps1_12MHz + Z80 8 MHz et DSP QSound (cps1.cpp l.4013-4044)
         "qsound" => Ok(420),
+        // CPS2 : 16 MHz × 0,7375 = 11,8 MHz -> 25 200 / 59 ticks (ADR-007, spec: docs/spec/05 §Horloges)
+        "cps2" | "dead_cps2" => Ok(25200),
         other => Err(CartError::UnsupportedMachine(other.to_string())),
+    }
+}
+
+/// Dénominateur des ticks par cycle 68000 (ADR-007) : 59 pour le CPS2, 1 sinon.
+pub fn ticks_68k_den(machine: &str) -> u64 {
+    match machine {
+        "cps2" | "dead_cps2" => 59,
+        _ => 1,
     }
 }
 
@@ -65,6 +81,9 @@ pub fn load_game_from(
 
     // Construit les régions.
     let mut regions = build_regions(info.romset, src, allow_bad_crc)?;
+    if system_of(info) == System::Cps2 {
+        return load_cps2(info, regions, src, ticks, dips);
+    }
     let audio_opcodes = crate::kabuki::decode(info.init, &mut regions.audiocpu);
     let qsound_dsp = if info.machine == "qsound" {
         Some(src.fetch("dl-1425.bin", DL1425_CRC)?)
@@ -80,6 +99,42 @@ pub fn load_game_from(
         cpsb_at_1c0: info.init == "init_sf2ee",
         audio_opcodes,
         qsound_dsp,
+        ticks_68k_den: 1,
+        cps2: None,
+    })
+}
+
+/// Fin du chargement d'un jeu CPS2 : graphismes, clé, opcodes, carte QSound (Z80 en clair).
+/// spec: docs/spec/05 §Romsets, §Chiffrement, §Son
+fn load_cps2(
+    info: &'static GameInfo,
+    mut regions: Regions,
+    src: &dyn FileSource,
+    ticks: u64,
+    dips: Option<cps_common::Dips>,
+) -> Result<Game, CartError> {
+    cps2_gfx_decode(&mut regions.gfx);
+    let key = regions
+        .key
+        .as_ref()
+        .ok_or_else(|| CartError::MissingKey(info.name.to_string()))?;
+    let opcodes = decrypt_program(&regions.maincpu, &decode_key(key));
+    let audio_opcodes = Some(regions.audiocpu[..0x8000].to_vec());
+    let qsound_dsp = Some(src.fetch("dl-1425.bin", DL1425_CRC)?);
+    Ok(Game {
+        info,
+        regions,
+        ticks_per_68k: ticks,
+        dips: dips.unwrap_or_else(|| dips_default(info.input)),
+        cpsb_at_1c0: false,
+        audio_opcodes,
+        qsound_dsp,
+        ticks_68k_den: ticks_68k_den(info.machine),
+        cps2: Some(Cps2Rom {
+            opcodes,
+            dead: info.machine == "dead_cps2",
+            singbrd: info.init == "init_singbrd",
+        }),
     })
 }
 
@@ -95,6 +150,8 @@ pub struct Regions {
     pub qsound: Vec<u8>,
     /// Données lues par le 68000 en F00000 (protection de Slam Masters ; qsound_rom_r).
     pub user1: Option<Vec<u8>>,
+    /// CPS2 : fichier .key (région « key »).
+    pub key: Option<Vec<u8>>,
 }
 
 #[cfg(test)]
@@ -110,6 +167,14 @@ mod tests {
     #[test]
     fn ticks_per_68k_12mhz() {
         assert_eq!(ticks_per_68k("cps1_12MHz").unwrap(), 420);
+    }
+
+    #[test]
+    fn ticks_cps2() {
+        assert_eq!(ticks_per_68k("cps2").unwrap(), 25200);
+        assert_eq!(ticks_68k_den("cps2"), 59);
+        assert_eq!(ticks_68k_den("dead_cps2"), 59);
+        assert_eq!(ticks_68k_den("cps1_10MHz"), 1);
     }
 
     #[test]
@@ -146,6 +211,24 @@ mod tests {
         assert_eq!(g.regions.audiocpu.len(), 0x18000);
         assert_eq!(g.regions.oki, vec![0xFF; 0x40000]);
         assert_eq!(g.ticks_per_68k, 504);
+    }
+
+    /// ROM réelles : ssf2.zip (fichiers de ssf2ud et phoenix.key, MAME 0.287) et qsound.zip.
+    #[test]
+    #[ignore]
+    fn real_ssf2ud() {
+        let g = load_game(&cfg(), "ssf2ud").expect("ssf2ud");
+        assert_eq!(g.regions.maincpu.len(), 0x400000);
+        assert_eq!(g.regions.gfx.len(), 0xC00000);
+        assert_eq!(g.regions.audiocpu.len(), 0x50000);
+        assert_eq!(g.regions.qsound.len(), 0x400000);
+        let c = g.cps2.as_ref().expect("jeu CPS2");
+        assert!(c.dead);
+        assert_eq!(
+            c.opcodes, g.regions.maincpu,
+            "clé Phoenix : rien n'est déchiffré"
+        );
+        assert_eq!((g.ticks_per_68k, g.ticks_68k_den), (25200, 59));
     }
 
     #[test]

@@ -189,6 +189,8 @@ pub mod testutil {
             cpsb_at_1c0: false,
             audio_opcodes: None,
             qsound_dsp: None,
+            ticks_68k_den: 1,
+            cps2: None,
         }
     }
 }
