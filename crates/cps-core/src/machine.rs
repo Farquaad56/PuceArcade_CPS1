@@ -36,6 +36,8 @@ pub struct Machine {
     pub next_line: Tick,
     /// Raster : instant de l'IRQ4 programmée.
     pub raster_irq_at: Option<Tick>,
+    /// CPS2 : lectures des vecteurs de reset (SSP, PC = 4 mots) restant à servir déchiffrées.
+    pub reset_vector_reads: u8,
 }
 
 impl Machine {
@@ -99,6 +101,7 @@ impl Machine {
             opcodes,
             next_line: 0,
             raster_irq_at: None,
+            reset_vector_reads: 0,
         };
         machine.reset();
         machine
@@ -112,6 +115,10 @@ impl Machine {
         self.sound.time = 0;
         self.cpu = Cpu68k::default();
         self.cpu.reset();
+        // Le 68000 lit les vecteurs de reset en espace programme (FC = 6) : sur CPS2 ils passent par
+        // le déchiffrement. puce-m68k les lit en espace données (FC = 5) : l'hôte corrige.
+        // spec: docs/spec/05 §Chiffrement
+        self.reset_vector_reads = 4;
         self.z80 = CpuZ80::new();
         self.z80.reset();
         self.now = 0;

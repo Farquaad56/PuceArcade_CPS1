@@ -83,6 +83,24 @@ mod tests {
     }
 
     #[test]
+    fn reset_vectors_from_opcodes() {
+        // vecteurs « chiffrés » : SSP et PC lus dans les opcodes déchiffrés
+        let mut g = testutil::synthetic_cps2_game();
+        g.regions.maincpu[..8].copy_from_slice(&[0xDE, 0xAD, 0xBE, 0xEF, 0x12, 0x34, 0x56, 0x78]);
+        let ops = &mut g.cps2.as_mut().unwrap().opcodes;
+        ops[..8].copy_from_slice(&[0x00, 0xFF, 0x80, 0x00, 0x00, 0x00, 0x04, 0x00]);
+        ops[0x400..0x402].copy_from_slice(&[0x60, 0xFE]); // BRA.S *
+        let mut m = Machine::new(g);
+        m.run_frame();
+        assert_eq!(m.reset_vector_reads, 0);
+        let s = m.cpu.state();
+        assert!((0x400..0x406).contains(&s.pc), "PC {:#X}", s.pc);
+        // ensuite, une lecture de données en 0 reste brute
+        let (_, mut h) = m.split();
+        assert_eq!(h.read(0, 5, true, true), 0xDEAD);
+    }
+
+    #[test]
     fn shared_ram_and_inputs() {
         let mut m = machine();
         {

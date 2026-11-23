@@ -30,6 +30,7 @@ pub struct Host68k<'a> {
     pub opcodes: Option<&'a [u8]>,
     pub next_line: &'a mut Tick,
     pub raster_irq_at: &'a mut Option<Tick>,
+    pub reset_vector_reads: &'a mut u8,
 }
 
 impl super::machine::Machine {
@@ -57,6 +58,7 @@ impl super::machine::Machine {
                 opcodes: self.opcodes.as_deref(),
                 next_line: &mut self.next_line,
                 raster_irq_at: &mut self.raster_irq_at,
+                reset_vector_reads: &mut self.reset_vector_reads,
             },
         )
     }
@@ -128,7 +130,12 @@ impl Bus for Host68k<'_> {
         // spec: docs/spec/05 §Chiffrement
         let a = (addr & 0xFF_FFFE) as usize;
         if let Some(ops) = self.opcodes {
-            if fc & 3 == 2 && a < 0x400000 {
+            // vecteurs de reset (SSP, PC) : espace programme sur un vrai 68000
+            let reset_vector = *self.reset_vector_reads > 0 && a < 8;
+            if reset_vector {
+                *self.reset_vector_reads -= 1;
+            }
+            if (fc & 3 == 2 || reset_vector) && a < 0x400000 {
                 return ops
                     .get(a..a + 2)
                     .map_or(0, |w| u16::from_be_bytes([w[0], w[1]]));
