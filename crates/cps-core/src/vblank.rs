@@ -14,9 +14,16 @@ pub fn vblank_event(host: &mut Host68k<'_>) {
 
     // 1. Rendu de la trame (render_frame recalcule lui-même les bases, comme screen_update_cps1)
     //    frame_number = trames déjà rendues (avant incrément)
-    host.bus
-        .video
-        .render_frame(host.gfx, host.stars, *host.frame, host.fb);
+    //    Avec raster (CPS2, ADR-003 c) : fin du rendu partiel commencé en ligne 0.
+    if host.bus.video.raster.is_some() {
+        host.bus
+            .video
+            .finish_frame(host.gfx, host.stars, *host.frame, host.fb);
+    } else {
+        host.bus
+            .video
+            .render_frame(host.gfx, host.stars, *host.frame, host.fb);
+    }
 
     // 2. IRQ2 (IPL1) au début du VBLANK
     *host.ipl1 = true;
