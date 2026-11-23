@@ -24,6 +24,12 @@ Priorité : **Ghouls'n Ghosts** (`ghouls`), puis **Street Fighter II** (`sf2`, `
 Plein écran : bezels au format RetroArch (`<jeu>.cfg` + PNG, repli sur le parent puis `_generic.cfg`) dans `bezels/`,
 activés ou désactivés par Ctrl+B ou le menu Affichage. Les bezels ne sont pas versionnés (voir `bezels/LISEZMOI.txt`).
 
+## Filtres et mires
+Menu « Filtres » : effets CRT réglables en onglets (scanlines à faisceau gaussien, masques d'arcade, halo,
+température 9 300 K, courbure, images noires…), préréglage « Moniteur d'arcade 15 kHz ». Bouton « Mires » ou
+Ctrl+M : mires de réglage de l'écran et des filtres (géométrie, convergence, overscan, couleurs, contraste,
+luminosité, gamma, netteté, mouvement). Détails dans le README du frontal JAMMA.
+
 ## Son
 Barre d'état : « son 55930 Hz mono » pour les jeux CPS1 (YM2151 + OKI), « son 24038 Hz stéréo » pour les jeux QSound
 (wof, dino, punisher, slammast, mbombrd et clones, qui exigent `qsound.zip` dans `roms_dir`). Le débogueur l'indique aussi
