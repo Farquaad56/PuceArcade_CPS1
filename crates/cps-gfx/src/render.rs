@@ -174,6 +174,14 @@ impl Video {
             }
         }
 
+        // CPS2 : marque de fin du tampon d'objets CPS2, puis composition CPS2 (cps2.cpp l.1040-1102)
+        if let Some(c2) = self.cps2.as_mut() {
+            c2.find_last_sprite();
+            self.cps2_render_layers(gfx, &mut bitmap, &mut pri, &masks, flip);
+            self.to_framebuffer(&bitmap, fb);
+            return;
+        }
+
         // Parse layer control register
         let lc = self.regs_b[(self.cfg.cpsb.layer_control / 2) as usize];
         let l0 = (lc >> 6) & 3;
@@ -196,7 +204,11 @@ impl Video {
         }
         self.draw_layer(gfx, l3 as usize, &mut bitmap, &mut pri, masks, flip);
 
-        // Convert bitmap to framebuffer via palette
+        self.to_framebuffer(&bitmap, fb);
+    }
+
+    /// Convertit le bitmap en framebuffer via la palette.
+    fn to_framebuffer(&self, bitmap: &[u16], fb: &mut Framebuffer) {
         for fy in 0..SCREEN_H {
             let sy = fy + CLIP.2;
             for fx in 0..SCREEN_W {

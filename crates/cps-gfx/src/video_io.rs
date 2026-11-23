@@ -92,6 +92,12 @@ impl Video {
         // screen_vblank_cps1: call get_video_base() on entry
         self.get_video_base();
 
+        // CPS2 : seul cps2_objram_latch est branché (cps2.cpp l.1824-1825)
+        if let Some(c2) = self.cps2.as_mut() {
+            c2.objram_latch();
+            return;
+        }
+
         // cps1_objram_latch: copy obj RAM to buffered_obj
         let obj_base = self.cps1_base(OBJ_BASE, OBJ_SIZE);
         for i in 0..0x400 {

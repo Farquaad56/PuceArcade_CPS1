@@ -3,6 +3,7 @@
 
 pub mod config;
 pub mod cps2;
+pub mod cps2_render;
 pub mod cps2_sprites;
 #[rustfmt::skip]
 pub mod config_data;

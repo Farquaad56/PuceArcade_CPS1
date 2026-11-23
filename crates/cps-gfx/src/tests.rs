@@ -144,3 +144,42 @@ fn new_cps2_uses_cps2_config() {
     assert!(v.cps2.is_some());
     assert!(crate::regs::Video::new("sf2").cps2.is_none());
 }
+
+#[test]
+fn cps2_vblank_latches_objram_only() {
+    let mut v = crate::regs::Video::new_cps2("ssf2ud");
+    for (i, w) in v.gfxram.iter_mut().enumerate() {
+        *w = i as u16 | 1;
+    }
+    {
+        let c = v.cps2.as_mut().unwrap();
+        c.objram1[7] = 0x1234;
+        c.objram2[7] = 0x5678;
+    }
+    v.vblank();
+    let c = v.cps2.as_ref().unwrap();
+    assert_eq!(c.buffered_obj[7], 0x1234);
+    assert_eq!(c.buffered_obj, c.objram1);
+    assert!(v.buffered_obj.iter().all(|&w| w == 0));
+}
+
+#[test]
+fn cps2_render_frame_draws_sprite() {
+    let mut v = crate::regs::Video::new_cps2("ssf2ud");
+    {
+        let c = v.cps2.as_mut().unwrap();
+        c.output[4] = 0x40;
+        c.output[5] = 0x10;
+        // priorité 1 : primasks[1] = 0 avec pri_ctrl = 0 (primasks[0] = 0xFF masque tout)
+        c.objram1[..8].copy_from_slice(&[100 | 1 << 13, 50, 1, 3, 0, 0x8000, 0, 0]);
+    }
+    v.vblank();
+    v.palette[0x30] = 0x00FF_0000;
+    let mut gfx = vec![0xFFu8; 0x10000];
+    gfx[128..256].fill(0);
+    let mut fb = cps_common::video::Framebuffer::new();
+    v.render_frame(&gfx, None, 0, &mut fb);
+    assert_eq!(v.cps2.as_ref().unwrap().last_sprite, 0);
+    let (x, y) = (100 - crate::sprites::CLIP.0, 50 - crate::sprites::CLIP.2);
+    assert_eq!(fb.pixels[y * cps_common::video::SCREEN_W + x], 0x00FF_0000);
+}
