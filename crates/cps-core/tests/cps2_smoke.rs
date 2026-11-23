@@ -57,3 +57,41 @@ fn smoke_ddtod() {
 fn smoke_xmvsf() {
     smoke("xmvsf");
 }
+
+/// Vecteurs de reset et premiers mots programme, bruts et déchiffrés.
+#[test]
+#[ignore]
+fn opcodes_at_reset() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let Ok(cfg) = Config::load(&root.join("cps1.toml")) else {
+        return;
+    };
+    for game in ["ssf2ud", "ssf2", "xmcota", "sfa3"] {
+        let Ok(g) = load_game(&cfg, game) else {
+            continue;
+        };
+        let raw = &g.regions.maincpu;
+        let ops = &g.cps2.as_ref().unwrap().opcodes;
+        let w = |b: &[u8], a: usize| u16::from_be_bytes([b[a], b[a + 1]]);
+        let pc = (u32::from(w(raw, 4)) << 16 | u32::from(w(raw, 6))) as usize;
+        let key = g
+            .regions
+            .key
+            .as_ref()
+            .map(|k| cps_cart::cps2crypt::decode_key(k));
+        println!(
+            "{game} : maincpu {:#X} octets, clé {key:X?}, SSP {:04X}{:04X} PC {pc:06X}",
+            raw.len(),
+            w(raw, 0),
+            w(raw, 2)
+        );
+        let raw_s: Vec<String> = (0..8)
+            .map(|i| format!("{:04X}", w(raw, pc + 2 * i)))
+            .collect();
+        let dec_s: Vec<String> = (0..8)
+            .map(|i| format!("{:04X}", w(ops, pc + 2 * i)))
+            .collect();
+        println!("  brut     : {}", raw_s.join(" "));
+        println!("  déchiffré: {}", dec_s.join(" "));
+    }
+}
