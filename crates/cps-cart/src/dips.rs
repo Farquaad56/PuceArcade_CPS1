@@ -30,9 +30,31 @@ pub fn input_layout(input: &str) -> (u8, u8) {
             return (*players, *buttons);
         }
     }
+    for (name, players, buttons) in INPUTS2 {
+        if name == input {
+            return (players, buttons);
+        }
+    }
     // Absent : 2 joueurs, 3 boutons.
     (2, 3)
 }
+
+/// Dispositions CPS2 (joueurs, boutons) des ports pris en charge.
+/// spec: docs/spec/05 §Ports d'entrée
+const INPUTS2: [(&str, u8, u8); 12] = [
+    ("cps2_4p4b", 4, 4),
+    ("cps2_4p2b", 4, 2),
+    ("cps2_3p3b", 3, 3),
+    ("cps2_2p6b", 2, 6),
+    ("cps2_2p6bt", 2, 6),
+    ("cps2_2p3b", 2, 3),
+    ("cps2_2p2b", 2, 2),
+    ("cps2_2p1b", 2, 1),
+    ("cps2_1p2b", 1, 2),
+    ("cybots", 2, 4),
+    ("qndream", 2, 4),
+    ("choko", 1, 3),
+];
 
 /// Valeurs par défaut des DIP switches pour un bloc INPUT_PORTS donné.
 pub fn default_dips(input: &str) -> cps_common::Dips {
@@ -51,6 +73,15 @@ pub fn default_dips(input: &str) -> cps_common::Dips {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn cps2_input_layouts() {
+        assert_eq!(input_layout("cps2_2p6b"), (2, 6));
+        assert_eq!(input_layout("cps2_4p4b"), (4, 4));
+        assert_eq!(input_layout("qndream"), (2, 4));
+        assert_eq!(input_layout("choko"), (1, 3));
+        assert_eq!(input_layout("sf2"), (2, 6));
+    }
     use super::*;
 
     #[test]
