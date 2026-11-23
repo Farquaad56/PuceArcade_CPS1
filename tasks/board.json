@@ -840,7 +840,7 @@
     ],
     "file": "tasks/T834.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "blocked"
   },
   {
     "id": "T840",
