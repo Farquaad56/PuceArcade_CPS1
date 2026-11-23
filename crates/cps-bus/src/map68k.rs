@@ -57,6 +57,9 @@ pub struct Bus68k<V: VideoPort> {
     pub in2_high: bool,
     /// init_dinohunt : F18000-F19FFF lit 0x00FF, IN2 (joueur 3) en FC0000.
     pub dinohunt_io: bool,
+    /// Protection de bootleg (init MAME) et sa valeur latchée (sf2ceblp, pang3b4).
+    pub protection: crate::protection::Protection,
+    pub prot_latch: u16,
     /// Carte QSound (qsound_main_map) : ports F1C000-F1C007, lecture F00000. La RAM partagée
     /// et l'EEPROM (F1C006) sont servies par l'hôte, qui a la carte son et l'heure.
     pub qsound: bool,
@@ -87,6 +90,8 @@ impl<V: VideoPort> Bus68k<V> {
             hack_dsw: false,
             in2_high: false,
             dinohunt_io: false,
+            protection: crate::protection::Protection::None,
+            prot_latch: 0,
             qsound: false,
             user1: None,
             coinctrl2: 0,
@@ -125,6 +130,9 @@ impl<V: VideoPort> Bus68k<V> {
         let a = (addr & 0xFFFFFF) as usize;
         if self.cps2.is_some() {
             return self.cps2_read16(a);
+        }
+        if let Some(v) = self.protection_read(a) {
+            return v;
         }
 
         // spec: docs/spec/01 §68000 — ROM programme 000000-3FFFFF
@@ -213,6 +221,9 @@ impl<V: VideoPort> Bus68k<V> {
     /// Écriture mot 68000. Retourne Some(SoundCmd) si latch son écrit.
     pub fn write16(&mut self, addr: u32, uds: bool, lds: bool, data: u16) -> Option<SoundCmd> {
         let a = (addr & 0xFFFFFF) as usize;
+        if self.protection_write(a, data) {
+            return None;
+        }
         if self.cps2.is_some() {
             // pas de latch son sur CPS2 : la RAM partagée QSound est servie par l'hôte
             self.cps2_write16(a, uds, lds, data);

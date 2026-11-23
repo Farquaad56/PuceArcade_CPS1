@@ -18,7 +18,9 @@ pub use chips_stub::NullChips;
 
 pub mod chips;
 pub mod cps2_io;
+pub mod protection;
 pub use cps2_io::{Cps2Inputs, Cps2Io};
+pub use protection::Protection;
 pub mod eeprom;
 pub use eeprom::Eeprom93c46;
 pub use sound::QSoundSide;

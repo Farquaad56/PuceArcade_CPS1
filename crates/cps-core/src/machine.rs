@@ -72,6 +72,7 @@ impl Machine {
         bus.hack_dsw = game.quirks.hack_dsw;
         bus.in2_high = game.quirks.in2_high;
         bus.dinohunt_io = game.quirks.dinohunt_io;
+        bus.protection = cps_bus::Protection::from_init(game.info.init);
         if game.quirks.cpsb_mirror_1c0 {
             bus.cpsb_mirror = Some(0x8001C0);
         }
