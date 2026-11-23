@@ -752,7 +752,7 @@
     ],
     "file": "tasks/T820.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T820b",
