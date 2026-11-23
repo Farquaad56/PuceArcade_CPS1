@@ -664,7 +664,7 @@
     "deps": [],
     "file": "tasks/T800.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T801",
