@@ -2,6 +2,9 @@
 #![forbid(unsafe_code)]
 
 pub mod config;
+pub mod cps2crypt;
+#[rustfmt::skip]
+pub mod cps2crypt_tables;
 pub mod dips;
 #[rustfmt::skip]
 pub mod dips_data;
