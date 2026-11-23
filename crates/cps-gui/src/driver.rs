@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use cps_cart::{load_game, Config, GameInfo};
 use puce_jamma::board::JammaBoard;
-use puce_jamma::driver::{BoardDriver, GameEntry};
+use puce_jamma::driver::{BoardDriver, GameEntry, GameKind};
 
 use crate::board::Cps1Board;
 
@@ -54,6 +54,7 @@ impl BoardDriver for Cps1Driver {
                 parent: g.parent.into(),
                 available: self.available(g),
                 supported: true,
+                kind: GameKind::from_mame(g.parent, g.maker, g.title),
             })
             .collect()
     }
@@ -126,6 +127,24 @@ mod tests {
         assert!(!names.contains(&"pang3"));
         assert!(names.contains(&"1941"));
         assert_eq!(names.len(), 178);
+    }
+
+    #[test]
+    fn game_kinds_from_catalogue() {
+        let (d, dir) = driver("kind");
+        let g = d.games();
+        let kind = |n: &str| g.iter().find(|e| e.name == n).map(|e| e.kind);
+        assert_eq!(kind("sf2"), Some(GameKind::Original));
+        assert_eq!(kind("sf2ua"), Some(GameKind::Clone));
+        assert_eq!(kind("sf2red"), Some(GameKind::Bootleg));
+        // bootleg dont seul le constructeur MAME le dit
+        assert_eq!(kind("strideruc"), Some(GameKind::Bootleg));
+        assert_eq!(kind("ffightae"), Some(GameKind::Hack));
+        assert_eq!(kind("forgottnj"), Some(GameKind::Prototype));
+        // CPS2
+        assert_eq!(kind("ssf2"), Some(GameKind::Original));
+        assert_eq!(kind("ssf2u"), Some(GameKind::Clone));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
