@@ -1,6 +1,7 @@
 //! Diagnostic du son QSound : WAV brut du cœur (24 038 Hz, stéréo) et mesures (largeur stéréo,
 //! saturation, sauts). `cargo test -p cps-core --release --test qsound_audio -- --ignored --nocapture`.
-//! Variables : QS_GAME (défaut xmcota), QS_FRAMES (défaut 1800). WAV dans target/audio/.
+//! Variables : QS_GAME (défaut xmcota), QS_FRAMES (défaut 1800), QS_PRESS (« trame:COIN1|START1:durée,… »,
+//! comme CPS_PRESS de tools/mame_inputs.lua). WAV dans target/audio/.
 
 use cps_core::{load_game, Config, Machine};
 use std::io::Write;
@@ -46,8 +47,31 @@ fn qsound_dump() {
         return println!("{game} : ROM absentes");
     };
     let mut m = Machine::new(g);
+    // entrées : (début, fin exclue, masque IN2 actif bas)
+    let presses: Vec<(u64, u64, u16)> = std::env::var("QS_PRESS")
+        .unwrap_or_default()
+        .split(',')
+        .filter_map(|p| {
+            let v: Vec<&str> = p.split(':').collect();
+            let mask = match *v.get(1)? {
+                "COIN1" => 0x1000,
+                "START1" => 0x0100,
+                _ => return None,
+            };
+            let from: u64 = v[0].parse().ok()?;
+            Some((from, from + v.get(2)?.parse::<u64>().ok()?, mask))
+        })
+        .collect();
     let mut s = Vec::new();
-    for _ in 0..frames {
+    for f in 1..=frames {
+        let held = presses
+            .iter()
+            .filter(|p| f >= p.0 && f < p.1)
+            .fold(0u16, |a, p| a | p.2);
+        m.set_cps2_inputs(cps_bus::Cps2Inputs {
+            in2: !held,
+            ..Default::default()
+        });
         m.run_frame();
         s.extend(m.take_audio());
     }
