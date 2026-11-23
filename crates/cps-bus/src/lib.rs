@@ -10,6 +10,7 @@ pub mod video_port;
 pub use video_port::{new_cps_bus, CpsBus};
 
 pub mod sound;
+pub mod sound_reset;
 pub use sound::SoundBoard;
 
 pub mod chips_stub;

@@ -87,10 +87,12 @@ pub struct SoundBoard<C: SoundChips> {
     pub z80_ticks: Tick,
     /// Carte QSound (None : carte CPS1 YM2151 + OKI).
     pub qsound: Option<Box<QSoundSide>>,
+    /// CPS2 : Z80 tenu en reset par le 68000 (port 804040 bit 3). spec: docs/spec/05 §Son
+    pub z80_reset_held: bool,
     /// Pin-server state (last pins, read data, write done).
-    last_pins: Pins,
-    read_data: Option<u8>,
-    write_done: bool,
+    pub(crate) last_pins: Pins,
+    pub(crate) read_data: Option<u8>,
+    pub(crate) write_done: bool,
 }
 
 impl<C: SoundChips> SoundBoard<C> {
@@ -116,6 +118,7 @@ impl<C: SoundChips> SoundBoard<C> {
             time: 0,
             z80_ticks: cps_common::clock::TICKS_PER_Z80,
             qsound: None,
+            z80_reset_held: false,
             last_pins: Pins(0),
             read_data: None,
             write_done: false,
@@ -131,6 +134,7 @@ impl<C: SoundChips> SoundBoard<C> {
         self.last_pins = Pins(0);
         self.read_data = None;
         self.write_done = false;
+        self.z80_reset_held = false;
         if let Some(q) = self.qsound.as_mut() {
             q.reset();
         }
@@ -266,6 +270,12 @@ impl<C: SoundChips> SoundBoard<C> {
         // QSound : DSP et IRQ à jour avant tout accès de cet instant
         if let Some(q) = self.qsound.as_mut() {
             q.advance(self.time);
+        }
+
+        // CPS2 : Z80 tenu en reset, le temps avance sans instruction
+        if self.z80_reset_held {
+            self.time += self.z80_ticks;
+            return;
         }
 
         // Build input pins for this tick based on previous outputs
