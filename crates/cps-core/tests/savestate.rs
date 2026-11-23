@@ -77,3 +77,52 @@ fn ghouls_savestate() {
 fn sf2ceea_savestate() {
     check("sf2ceea", true);
 }
+
+/// Machine CPS2 synthétique (sans ROM) : boucle ADDQ.W #1,$FF0000 ; BRA.S, dans le programme et
+/// dans les opcodes déchiffrés.
+fn cps2_machine() -> Machine {
+    let mut g = cps_core::machine::testutil::synthetic_cps2_game();
+    let prog = [0x52, 0x79, 0x00, 0xFF, 0x00, 0x00, 0x60, 0xF8];
+    g.regions.maincpu[0x400..0x408].copy_from_slice(&prog);
+    g.cps2.as_mut().unwrap().opcodes[0x400..0x408].copy_from_slice(&prog);
+    Machine::new(g)
+}
+
+fn run(m: &mut Machine, n: usize) {
+    for _ in 0..n {
+        m.run_frame();
+        m.take_audio();
+    }
+}
+
+#[test]
+fn cps2_savestate_roundtrip() {
+    // référence : 3 + 2 + 2 trames sans sauvegarde
+    let mut r = cps2_machine();
+    run(&mut r, 3);
+    let _ = r.save_state(); // aligne les frontières d'instruction comme dans le cas testé
+    run(&mut r, 4);
+    let (crc_ref, end_ref) = (r.framebuffer().crc32(), r.save_state());
+
+    let mut m = cps2_machine();
+    run(&mut m, 3);
+    let saved = m.save_state();
+    run(&mut m, 2);
+    m.load_state(&saved).unwrap();
+    run(&mut m, 4);
+    assert_eq!(m.framebuffer().crc32(), crc_ref);
+    assert!(
+        m.save_state() == end_ref,
+        "état final différent après reprise"
+    );
+    assert!(m.bus.cps2.is_some() && m.opcodes.is_some());
+}
+
+#[test]
+fn version_3_is_refused() {
+    let mut m = cps2_machine();
+    let mut s = m.save_state();
+    s[4..8].copy_from_slice(&3u32.to_le_bytes());
+    let e = m.load_state(&s).unwrap_err();
+    assert!(e.contains("version 3 non prise en charge"), "{e}");
+}
