@@ -1,14 +1,11 @@
-//! EEPROM série 93C46 en organisation 8 bits (128 × 8), des cartes QSound.
+//! EEPROM série 93C46 en organisation 8 bits (128 × 8, cartes QSound) ou 16 bits (64 × 16, CPS2).
 // license:BSD-3-Clause
 // copyright-holders:Aaron Giles
 // source: MAME 0.287 src/devices/machine/eepromser.cpp (eeprom_serial_base_device,
-//         eeprom_serial_93cxx_device) et eeprom.cpp (temps d'opération, valeur par défaut ~0)
+//         eeprom_serial_93cxx_device) et eeprom.cpp (temps d'opération, valeur par défaut ~0,
+//         internal_read / internal_write l.283-303). spec: docs/spec/05 §Port 804040
 
 use cps_common::clock::{Tick, TICKS_PER_SECOND};
-
-const ADDRESS_BITS: u32 = 7;
-const DATA_BITS: u32 = 8;
-const COMMAND_ADDRESS_BITS: u32 = 7;
 
 /// eeprom.cpp l.42-45 (µs -> ticks)
 const fn us(n: u64) -> Tick {
@@ -47,6 +44,11 @@ enum Command {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eeprom93c46 {
     pub data: Vec<u8>,
+    /// Bits d'adresse (7 en 8 bits, 6 en 16 bits) ; command_address_bits = address_bits
+    /// (eepromser.cpp l.186-187).
+    address_bits: u32,
+    /// Largeur d'un mot (8 ou 16).
+    data_bits: u32,
     state: State,
     locked: bool,
     bits_accum: u32,
@@ -68,10 +70,22 @@ impl Default for Eeprom93c46 {
 }
 
 impl Eeprom93c46 {
-    /// Contenu par défaut : tout à 0xFF (eeprom.cpp nvram_default, ~0).
+    /// Organisation 8 bits (cartes QSound). Contenu par défaut : tout à 0xFF (eeprom.cpp
+    /// nvram_default, ~0).
     pub fn new() -> Self {
+        Self::with_organisation(7, 8)
+    }
+
+    /// EEPROM_93C46_16BIT (eepromser.cpp l.1100) : 64 mots de 16 bits, 6 bits d'adresse (CPS2).
+    pub fn new_16bit() -> Self {
+        Self::with_organisation(6, 16)
+    }
+
+    fn with_organisation(address_bits: u32, data_bits: u32) -> Self {
         Eeprom93c46 {
-            data: vec![0xFF; 1 << ADDRESS_BITS],
+            data: vec![0xFF; (1 << address_bits) * (data_bits as usize / 8)],
+            address_bits,
+            data_bits,
             state: State::InReset,
             locked: true,
             bits_accum: 0,
@@ -85,6 +99,32 @@ impl Eeprom93c46 {
             last_cs_rising_edge_time: 0,
             completion_time: 0,
         }
+    }
+
+    /// internal_read (eeprom.cpp l.283-290) : mot petit-boutiste en 16 bits.
+    fn internal_read(&self, address: u32) -> u32 {
+        let a = address as usize;
+        if self.data_bits == 16 {
+            u32::from(self.data[2 * a]) | u32::from(self.data[2 * a + 1]) << 8
+        } else {
+            u32::from(self.data[a])
+        }
+    }
+
+    /// internal_write (eeprom.cpp l.295-303).
+    fn internal_write(&mut self, address: u32, value: u32) {
+        let a = address as usize;
+        if self.data_bits == 16 {
+            self.data[2 * a] = value as u8;
+            self.data[2 * a + 1] = (value >> 8) as u8;
+        } else {
+            self.data[a] = value as u8;
+        }
+    }
+
+    /// Masque d'un mot (valeur d'un mot effacé).
+    fn word_mask(&self) -> u32 {
+        (1 << self.data_bits) - 1
     }
 
     fn ready(&self, now: Tick) -> bool {
@@ -106,6 +146,14 @@ impl Eeprom93c46 {
         self.di_write(data & 0x01 != 0);
         self.clk_write(data & 0x40 != 0, now);
         self.cs_write(data & 0x80 != 0, now);
+    }
+
+    /// Écriture du port 804040 du CPS2 : DI = bit 12, CLK = bit 13, CS = bit 14, dans cet
+    /// ordre (cps2.cpp l.1458-1461).
+    pub fn write_word_port(&mut self, data: u16, now: Tick) {
+        self.di_write(data & 0x1000 != 0);
+        self.clk_write(data & 0x2000 != 0, now);
+        self.cs_write(data & 0x4000 != 0, now);
     }
 
     pub fn di_write(&mut self, state: bool) {
@@ -159,7 +207,7 @@ impl Eeprom93c46 {
             State::WaitForCommand => {
                 self.command_address_accum = (self.command_address_accum << 1) | u32::from(self.di);
                 self.bits_accum += 1;
-                if self.bits_accum == 2 + COMMAND_ADDRESS_BITS {
+                if self.bits_accum == 2 + self.address_bits {
                     self.execute_command(now);
                 }
             }
@@ -168,9 +216,9 @@ impl Eeprom93c46 {
                 self.bits_accum += 1;
                 // streaming désactivé : seul le premier mot est chargé
                 if bit_index == 0 {
-                    let a =
-                        (self.address + self.bits_accum / DATA_BITS) & ((1 << ADDRESS_BITS) - 1);
-                    self.shift_register = u32::from(self.data[a as usize]) << (32 - DATA_BITS);
+                    let a = (self.address + self.bits_accum / self.data_bits)
+                        & ((1 << self.address_bits) - 1);
+                    self.shift_register = self.internal_read(a) << (32 - self.data_bits);
                 } else {
                     self.shift_register = (self.shift_register << 1) | 1;
                 }
@@ -178,7 +226,7 @@ impl Eeprom93c46 {
             State::WaitForData => {
                 self.shift_register = (self.shift_register << 1) | u32::from(self.di);
                 self.bits_accum += 1;
-                if self.bits_accum == DATA_BITS {
+                if self.bits_accum == self.data_bits {
                     self.execute_write_command(now);
                 }
             }
@@ -189,10 +237,11 @@ impl Eeprom93c46 {
     /// parse_command_and_address (93cxx)
     fn parse_command_and_address(&mut self) {
         self.command = Command::Invalid;
-        self.address = self.command_address_accum & ((1 << COMMAND_ADDRESS_BITS) - 1);
-        match self.command_address_accum >> COMMAND_ADDRESS_BITS {
+        let bits = self.address_bits; // command_address_bits
+        self.address = self.command_address_accum & ((1 << bits) - 1);
+        match self.command_address_accum >> bits {
             0 => {
-                self.command = match self.address >> (COMMAND_ADDRESS_BITS - 2) {
+                self.command = match self.address >> (bits - 2) {
                     0 => Command::Lock,
                     1 => Command::WriteAll,
                     2 => Command::EraseAll,
@@ -222,7 +271,7 @@ impl Eeprom93c46 {
                 if self.locked {
                     self.state = State::InReset;
                 } else {
-                    self.data[self.address as usize] = 0xFF;
+                    self.internal_write(self.address, self.word_mask());
                     self.completion_time = now + ERASE_TIME;
                     self.state = State::WaitForCompletion;
                 }
@@ -239,12 +288,14 @@ impl Eeprom93c46 {
                 if self.locked {
                     self.state = State::InReset;
                 } else {
-                    self.data.fill(0xFF);
+                    for a in 0..1 << self.address_bits {
+                        self.internal_write(a, self.word_mask());
+                    }
                     self.completion_time = now + ERASE_ALL_TIME;
                     self.state = State::WaitForCompletion;
                 }
             }
-            // PORT-NOTE: MAME lève une erreur fatale ; impossible avec 2 + 7 bits complets.
+            // PORT-NOTE: MAME lève une erreur fatale ; impossible avec 2 + n bits complets.
             Command::Invalid => self.state = State::InReset,
         }
     }
@@ -254,15 +305,18 @@ impl Eeprom93c46 {
             self.state = State::InReset;
             return;
         }
-        let v = self.shift_register as u8;
+        let v = self.shift_register & self.word_mask();
         match self.command {
             Command::Write => {
-                self.data[self.address as usize] = v;
+                self.internal_write(self.address, v);
                 self.completion_time = now + WRITE_TIME;
             }
             _ => {
                 // WRITEALL : internal_write(a, internal_read(a) & data)
-                self.data.iter_mut().for_each(|d| *d &= v);
+                for a in 0..1 << self.address_bits {
+                    let old = self.internal_read(a);
+                    self.internal_write(a, old & v);
+                }
                 self.completion_time = now + WRITE_ALL_TIME;
             }
         }
@@ -271,84 +325,5 @@ impl Eeprom93c46 {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// Pilote un mot de commande bit à bit (CS haut), comme le 68000.
-    struct Host {
-        e: Eeprom93c46,
-        t: Tick,
-    }
-
-    impl Host {
-        fn new() -> Self {
-            Host {
-                e: Eeprom93c46::new(),
-                t: 1000,
-            }
-        }
-        fn port(&mut self, di: bool, clk: bool, cs: bool) {
-            self.t += 1000;
-            let v = u8::from(di) | if clk { 0x40 } else { 0 } | if cs { 0x80 } else { 0 };
-            self.e.write_port(v, self.t);
-        }
-        fn bit(&mut self, b: bool) {
-            self.port(b, false, true);
-            self.port(b, true, true);
-        }
-        fn send(&mut self, bits: u32, n: u32) {
-            for i in (0..n).rev() {
-                self.bit(bits >> i & 1 != 0);
-            }
-        }
-        fn select(&mut self) {
-            self.port(false, false, false);
-            self.port(false, false, true);
-        }
-        fn deselect(&mut self) {
-            self.port(false, false, false);
-        }
-        fn read(&mut self, addr: u32) -> u8 {
-            self.select();
-            self.send(0b110 << 7 | addr, 10); // start + READ + adresse
-            let mut v = 0;
-            for _ in 0..8 {
-                self.bit(false);
-                v = v << 1 | u8::from(self.e.do_read(self.t));
-            }
-            self.deselect();
-            v
-        }
-    }
-
-    #[test]
-    fn default_contents_and_read() {
-        let mut h = Host::new();
-        assert_eq!(h.read(0x05), 0xFF);
-    }
-
-    #[test]
-    fn locked_write_is_ignored_then_unlock_write_read() {
-        let mut h = Host::new();
-        h.select();
-        h.send(0b101 << 7 | 0x05, 10); // WRITE 5
-        h.send(0x5A, 8);
-        h.deselect();
-        assert_eq!(h.e.data[5], 0xFF, "verrouillée au démarrage");
-        h.select();
-        h.send(0b100 << 7 | 0b11 << 5, 10); // EWEN (unlock)
-        h.deselect();
-        h.select();
-        h.send(0b101 << 7 | 0x05, 10);
-        h.send(0x5A, 8);
-        h.deselect();
-        assert_eq!(h.e.data[5], 0x5A);
-        // occupé 1,75 ms : DO = 0 en attente du bit de départ
-        h.select();
-        assert!(!h.e.do_read(h.t));
-        h.t += WRITE_TIME;
-        assert!(h.e.do_read(h.t), "prêt après le temps d'écriture");
-        h.deselect();
-        assert_eq!(h.read(0x05), 0x5A);
-    }
-}
+#[path = "eeprom_tests.rs"]
+mod tests;
