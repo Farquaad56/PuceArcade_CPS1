@@ -76,9 +76,12 @@ pub struct GameInfo {
     pub romset: &'static RomSetDef,
 }
 
-/// Recherche linéaire dans la table des jeux.
+/// Recherche linéaire dans la table des jeux CPS1, puis dans celle du CPS2.
 pub fn find_game(name: &str) -> Option<&'static GameInfo> {
-    romsets_data::GAMES.iter().find(|g| g.name == name)
+    romsets_data::GAMES
+        .iter()
+        .chain(crate::romsets2_data::GAMES2.iter())
+        .find(|g| g.name == name)
 }
 
 #[cfg(test)]
@@ -100,6 +103,15 @@ mod tests {
     fn find_sf2ce_machine() {
         let g = find_game("sf2ce").expect("sf2ce doit exister");
         assert_eq!(g.machine, "cps1_12MHz");
+    }
+
+    #[test]
+    fn find_cps2_game() {
+        let g = find_game("ssf2ud").expect("ssf2ud doit exister");
+        assert_eq!(g.parent, "ssf2");
+        assert_eq!(g.machine, "dead_cps2");
+        assert_eq!(g.input, "cps2_2p6b");
+        assert_eq!(g.init, "init_cps2");
     }
 
     #[test]

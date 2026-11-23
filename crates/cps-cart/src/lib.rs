@@ -11,6 +11,8 @@ pub mod kabuki;
 pub mod regions;
 #[rustfmt::skip]
 pub mod romsets_data;
+#[rustfmt::skip]
+pub mod romsets2_data;
 pub mod romset;
 pub mod source;
 pub mod support;
