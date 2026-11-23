@@ -94,6 +94,55 @@ impl<V: VideoPort> Bus68k<V> {
     }
 }
 
+impl<V: VideoPort> Bus68k<V> {
+    /// Écriture mot du 68000 CPS2 (COMBINE_DATA : uds = octet fort, lds = octet faible).
+    /// 618000-619FFF et 804040 (EEPROM) sont servis par l'hôte ; le reste non listé est ignoré.
+    pub fn cps2_write16(&mut self, a: usize, uds: bool, lds: bool, data: u16) {
+        let Some(io) = self.cps2.as_deref_mut() else {
+            return;
+        };
+        let dead = io.dead;
+        match a {
+            0x400000..=0x40000B => self
+                .video
+                .cps2_output_write((a - 0x400000) / 2, data, uds, lds),
+            0xFFFFF0..=0xFFFFFB if dead => {
+                self.video
+                    .cps2_output_write((a - 0xFFFFF0) / 2, data, uds, lds)
+            }
+            0x660000..=0x663FFF => {
+                let o = (a - 0x660000) & !1;
+                if uds {
+                    io.extra_ram[o] = (data >> 8) as u8;
+                }
+                if lds {
+                    io.extra_ram[o + 1] = data as u8;
+                }
+            }
+            0x664000..=0x664001 => {
+                let mask = if uds { 0xFF00 } else { 0 } | if lds { 0x00FF } else { 0 };
+                io.ram664 = (io.ram664 & !mask) | (data & mask);
+            }
+            0x700000..=0x701FFF => {
+                self.video
+                    .cps2_objram1_write((a - 0x700000) / 2, data, uds, lds)
+            }
+            0x708000..=0x70FFFF => {
+                let w = (a - 0x708000) / 2 % 0x1000;
+                self.video.cps2_objram2_write(w, data, uds, lds)
+            }
+            0x800100..=0x80013F => self.video.cps_a_write((a - 0x800100) / 2, data, uds, lds),
+            0x804100..=0x80413F => self.video.cps_a_write((a - 0x804100) / 2, data, uds, lds),
+            0x800140..=0x80017F => self.video.cps_b_write((a - 0x800140) / 2, data, uds, lds),
+            0x804140..=0x80417F => self.video.cps_b_write((a - 0x804140) / 2, data, uds, lds),
+            0x8040E0..=0x8040E1 => self.video.cps2_objram_bank_write(data, lds),
+            0x900000..=0x92FFFF => self.video.gfxram_write((a - 0x900000) / 2, data, uds, lds),
+            0xFF0000..=0xFFFFFF => self.write_ram_word((a - 0xFF0000) & !1, data, uds, lds),
+            _ => {}
+        }
+    }
+}
+
 #[cfg(test)]
 #[path = "cps2_io_tests.rs"]
 mod tests;

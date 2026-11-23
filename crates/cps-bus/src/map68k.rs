@@ -188,6 +188,11 @@ impl<V: VideoPort> Bus68k<V> {
     /// Écriture mot 68000. Retourne Some(SoundCmd) si latch son écrit.
     pub fn write16(&mut self, addr: u32, uds: bool, lds: bool, data: u16) -> Option<SoundCmd> {
         let a = (addr & 0xFFFFFF) as usize;
+        if self.cps2.is_some() {
+            // pas de latch son sur CPS2 : la RAM partagée QSound est servie par l'hôte
+            self.cps2_write16(a, uds, lds, data);
+            return None;
+        }
 
         // spec: docs/spec/01 §68000 — ROM : écriture ignorée
         if a < 0x400000 {
@@ -285,7 +290,7 @@ impl<V: VideoPort> Bus68k<V> {
         ((self.ram[addr] as u16) << 8) | (self.ram[addr + 1] as u16)
     }
 
-    fn write_ram_word(&mut self, addr: usize, data: u16, uds: bool, lds: bool) {
+    pub(crate) fn write_ram_word(&mut self, addr: usize, data: u16, uds: bool, lds: bool) {
         if uds {
             self.ram[addr] = ((data >> 8) & 0xFF) as u8;
         }
