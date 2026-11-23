@@ -55,6 +55,11 @@ impl BoardDriver for Cps1Driver {
                 available: self.available(g),
                 supported: true,
                 kind: GameKind::from_mame(g.parent, g.maker, g.title),
+                system: match cps_cart::system_of(g) {
+                    cps_cart::System::Cps1 => "CPS1",
+                    cps_cart::System::Cps2 => "CPS2",
+                }
+                .to_string(),
             })
             .collect()
     }
@@ -144,6 +149,9 @@ mod tests {
         // CPS2
         assert_eq!(kind("ssf2"), Some(GameKind::Original));
         assert_eq!(kind("ssf2u"), Some(GameKind::Clone));
+        let sys = |n: &str| g.iter().find(|e| e.name == n).map(|e| e.system.clone());
+        assert_eq!(sys("sf2").as_deref(), Some("CPS1"));
+        assert_eq!(sys("ssf2").as_deref(), Some("CPS2"));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
