@@ -24,6 +24,8 @@ pub struct Cps1Board {
     /// Fichier de l'EEPROM (`<saves>/<jeu>.nv`), relu au chargement et écrit à la fermeture,
     /// comme la nvram de MAME (cartes QSound).
     nv_path: Option<std::path::PathBuf>,
+    /// Disposition des entrées du jeu (`GameInfo::input`), pour les ports CPS2.
+    input: &'static str,
 }
 
 impl Cps1Board {
@@ -84,7 +86,8 @@ pub fn board_info(info: &GameInfo, dips: Dips) -> BoardInfo {
             rotation,
         },
         // QSound : stéréo à 24 038 Hz ; CPS1 : haut-parleur mono à 55 930 Hz
-        audio: if info.machine == "qsound" {
+        // QSound : cartes QSound du CPS1 et toutes les cartes CPS2 (stéréo)
+        audio: if info.machine == "qsound" || cps_cart::system_of(info) == cps_cart::System::Cps2 {
             AudioInfo {
                 sample_rate: cps_core::QSOUND_HZ,
                 channels: 2,
@@ -126,11 +129,13 @@ pub fn board_info(info: &GameInfo, dips: Dips) -> BoardInfo {
 impl Cps1Board {
     pub fn new(game: Game) -> Cps1Board {
         let info = board_info(game.info, game.dips);
+        let input = game.info.input;
         Cps1Board {
             machine: Machine::new(game),
             info,
             audio_mono: Vec::new(),
             nv_path: None,
+            input,
         }
     }
 }
@@ -176,6 +181,12 @@ impl JammaBoard for Cps1Board {
     }
 
     fn set_inputs(&mut self, inputs: &JammaInputs) {
+        if self.machine.bus.cps2.is_some() {
+            // CPS2 : ports IN0-IN2 (spec: docs/spec/05 §Ports d'entrée)
+            let i = crate::inputs_cps2::to_cps2_inputs(inputs, self.input);
+            self.machine.set_cps2_inputs(i);
+            return;
+        }
         self.machine
             .set_inputs(to_cps_inputs_for(inputs, self.info.players));
     }
@@ -217,6 +228,17 @@ pub(crate) mod tests {
             (0x400, &[0x60, 0xFE]),
         ];
         Cps1Board::new(testutil::synthetic_game(&program))
+    }
+
+    #[test]
+    fn cps2_board_inputs_and_audio() {
+        let mut b = Cps1Board::new(testutil::synthetic_cps2_game());
+        assert_eq!(b.info().audio.channels, 2);
+        let mut j = JammaInputs::default();
+        j.players[0].buttons[0] = true;
+        b.set_inputs(&j);
+        assert_eq!(b.machine.bus.cps2.as_ref().unwrap().inputs.in0, 0xFFEF);
+        assert_eq!(b.machine.bus.eeprom.as_ref().unwrap().data.len(), 128);
     }
 
     #[test]

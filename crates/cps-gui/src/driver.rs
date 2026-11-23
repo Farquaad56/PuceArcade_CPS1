@@ -40,12 +40,14 @@ pub fn supported_games() -> Vec<&'static GameInfo> {
 
 impl BoardDriver for Cps1Driver {
     fn system_name(&self) -> &str {
-        "Capcom CPS1"
+        "Capcom CPS1 / CPS2"
     }
 
+    /// Jeux CPS1 (prioritaires en tête) puis jeux CPS2 dans l'ordre de la table (ADR-006 §5).
     fn games(&self) -> Vec<GameEntry> {
         supported_games()
             .into_iter()
+            .chain(cps_cart::supported_games2())
             .map(|g| GameEntry {
                 name: g.name.into(),
                 title: g.title.into(),
@@ -80,6 +82,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(dir.join("ghouls")).unwrap();
         std::fs::write(dir.join("sf2.zip"), b"").unwrap();
+        std::fs::write(dir.join("ssf2.zip"), b"").unwrap();
         let cfg = Config::parse(&format!(
             "[paths]\nroms_dir = \"{}\"\nsaves_dir = \"{}\"\n",
             dir.display().to_string().replace('\\', "/"),
@@ -102,6 +105,11 @@ mod tests {
         // sf2ua est un clone de sf2 : le zip du parent suffit
         assert!(avail("sf2ua"));
         assert!(g.iter().all(|e| e.supported));
+        // CPS2 après le dernier jeu CPS1 ; ssf2.zip couvre ssf2 et son clone ssf2ud
+        assert_eq!(g.len(), 178 + 303);
+        let pos = |n: &str| g.iter().position(|e| e.name == n).unwrap();
+        assert!(pos("ssf2") >= 178 && pos("ssf2ud") >= 178);
+        assert!(avail("ssf2") && avail("ssf2ud"));
         let err = d.load("zzz").err().unwrap();
         assert!(err.contains("zzz"), "{err}");
         assert_eq!(d.saves_dir(), dir.join("saves"));
