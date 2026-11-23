@@ -3,8 +3,10 @@
 //! `cargo test -p cps-cart --release --test rom_check -- --ignored --nocapture`.
 //! Rapport écrit dans `target/roms_rapport.md` (hors dépôt).
 
+use cps_cart::game::DL1425_CRC;
 use cps_cart::romsets2_data::GAMES2;
 use cps_cart::romsets_data::GAMES;
+use cps_cart::source::{DirSource, FileSource, ZipSource};
 use cps_cart::{load_game, support_of, system_of, Config, GameInfo, Support, System};
 use std::collections::BTreeMap;
 use std::fmt::Write;
@@ -14,6 +16,38 @@ fn system_name(g: &GameInfo) -> &'static str {
     match system_of(g) {
         System::Cps1 => "CPS1",
         System::Cps2 => "CPS2",
+    }
+}
+
+/// ROM système : (set, fichier, CRC, rôle). Pas des jeux, mais requises par certains jeux.
+const SYSTEM_ROMS: [(&str, &str, u32, &str); 1] = [(
+    "qsound",
+    "dl-1425.bin",
+    DL1425_CRC,
+    "programme de la puce son QSound",
+)];
+
+/// Jeux pris en charge qui ont besoin du set système `set`.
+fn needs(g: &GameInfo, set: &str) -> bool {
+    set == "qsound" && (g.machine == "qsound" || system_of(g) == System::Cps2)
+}
+
+/// État d'une ROM système : zip `set.zip` ou dossier `set/` dans roms_dir.
+fn system_rom_status(cfg: &Config, set: &str, file: &str, crc: u32) -> Result<(), String> {
+    let zip = cfg.roms_dir.join(format!("{set}.zip"));
+    let dir = cfg.roms_dir.join(set);
+    if zip.exists() {
+        ZipSource { path: zip }
+            .fetch(file, crc)
+            .map(|_| ())
+            .map_err(|e| e.to_string())
+    } else if dir.is_dir() {
+        DirSource { dir }
+            .fetch(file, crc)
+            .map(|_| ())
+            .map_err(|e| e.to_string())
+    } else {
+        Err(format!("{set}.zip absent"))
     }
 }
 
@@ -42,6 +76,9 @@ fn rom_check() {
     let (mut ok, mut bad, mut unsupported) = (Vec::new(), Vec::new(), Vec::new());
     let mut unknown = Vec::new();
     for set in sets.keys() {
+        if SYSTEM_ROMS.iter().any(|r| r.0 == set) {
+            continue;
+        }
         // jeux portés par ce set : lui-même s'il est parent, ou ses clones
         let games: Vec<&&GameInfo> = all
             .iter()
@@ -75,6 +112,29 @@ fn rom_check() {
     }
     let mut r = String::new();
     let _ = writeln!(r, "# Bilan du dossier ROM ({})\n", cfg.roms_dir.display());
+    let _ = writeln!(r, "## ROM système\n");
+    for (set, file, crc, role) in SYSTEM_ROMS {
+        let n = all
+            .iter()
+            .filter(|g| support_of(g) == Support::Ok && needs(g, set))
+            .count();
+        match system_rom_status(&cfg, set, file, crc) {
+            Ok(()) => {
+                let _ = writeln!(
+                    r,
+                    "- ✅ {set} ({file}, {role}) : bonne, utilisée par {n} jeux"
+                );
+            }
+            Err(e) => {
+                let _ = writeln!(
+                    r,
+                    "- ❌ {set} ({file}, {role}) : ROM système manquante ou mauvaise ({e}) ; \
+                     nécessaire pour {n} jeux (cartes QSound du CPS1 et tous les jeux CPS2)"
+                );
+            }
+        }
+    }
+    let _ = writeln!(r);
     let _ = writeln!(
         r,
         "{} jeux bons, {} jeux en erreur, {} non pris en charge, {} sets inconnus\n",
