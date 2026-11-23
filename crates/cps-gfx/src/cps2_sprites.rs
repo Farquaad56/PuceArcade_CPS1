@@ -22,6 +22,7 @@ fn draw_sprite2(
     sy: i32,
     pmask: u32,
     flip: bool,
+    rows: (usize, usize),
 ) {
     let (code, color) = (code as u32, color as u32);
     if flip {
@@ -36,9 +37,12 @@ fn draw_sprite2(
             512 - 16 - sx,
             256 - 16 - sy,
             pmask,
+            rows,
         );
     } else {
-        prio_transpen16(gfx, bitmap, pri, code, color, flipx, flipy, sx, sy, pmask);
+        prio_transpen16(
+            gfx, bitmap, pri, code, color, flipx, flipy, sx, sy, pmask, rows,
+        );
     }
 }
 
@@ -54,6 +58,7 @@ fn draw_block(
     (flipx, flipy): (bool, bool),
     pmask: u32,
     flip: bool,
+    rows: (usize, usize),
     tile: impl Fn(i32, i32) -> i32,
 ) {
     for nys in 0..ny {
@@ -72,6 +77,7 @@ fn draw_block(
                 sy,
                 pmask,
                 flip,
+                rows,
             );
         }
     }
@@ -86,11 +92,12 @@ impl Video {
         pri: &mut [u8],
         primasks: &[u32; 8],
         flip: bool,
+        rows: (usize, usize),
     ) {
         let Some(c2) = self.cps2.as_deref() else {
             return;
         };
-        render(c2, gfx, bitmap, pri, primasks, flip);
+        render(c2, gfx, bitmap, pri, primasks, flip, rows);
     }
 }
 
@@ -101,6 +108,7 @@ fn render(
     pri: &mut [u8],
     primasks: &[u32; 8],
     flip: bool,
+    rows: (usize, usize),
 ) {
     let base = &c2.buffered_obj;
     let xoffs = 64 - i32::from(c2.output[4]);
@@ -141,6 +149,7 @@ fn render(
                         (true, true),
                         pmask,
                         flip,
+                        rows,
                         |nxs, nys| code + (nx - 1) - nxs + 0x10 * (ny - 1 - nys),
                     );
                 } else {
@@ -154,6 +163,7 @@ fn render(
                         (false, true),
                         pmask,
                         flip,
+                        rows,
                         |nxs, nys| code + nxs + 0x10 * (ny - 1 - nys),
                     );
                 }
@@ -168,6 +178,7 @@ fn render(
                     (true, false),
                     pmask,
                     flip,
+                    rows,
                     |nxs, nys| code + (nx - 1) - nxs + 0x10 * nys,
                 );
             } else {
@@ -181,6 +192,7 @@ fn render(
                     (false, false),
                     pmask,
                     flip,
+                    rows,
                     |nxs, nys| {
                         (code & !0xf) + ((code + nxs) & 0xf) + 0x10 * nys // pgear fix
                     },
@@ -200,6 +212,7 @@ fn render(
                 (y + yoffs) & 0x3ff,
                 pmask,
                 flip,
+                rows,
             );
         }
         i -= 4;

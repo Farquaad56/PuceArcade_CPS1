@@ -5,10 +5,20 @@
 use crate::mapper::{gfxrom_bank_mapper, GFXTYPE_SPRITES};
 use crate::regs::Video;
 use crate::sprites::prio_transpen16;
+#[cfg(test)]
+use crate::sprites::FULL_ROWS;
 
 impl Video {
     /// Rendu des sprites (port de cps1_render_sprites, l.2720-2866).
-    pub fn render_sprites(&mut self, gfx: &[u8], bitmap: &mut [u16], pri: &mut [u8], flip: bool) {
+    /// `rows` : bande de lignes du bitmap (y1 exclu), voir sprites::band.
+    pub fn render_sprites(
+        &mut self,
+        gfx: &[u8],
+        bitmap: &mut [u16],
+        pri: &mut [u8],
+        flip: bool,
+        rows: (usize, usize),
+    ) {
         let base = &self.buffered_obj;
 
         // Determine iteration order based on bootleg_kludge bit 6
@@ -59,6 +69,7 @@ impl Video {
                                         true,
                                         sx,
                                         sy,
+                                        rows,
                                     );
                                 }
                             }
@@ -82,6 +93,7 @@ impl Video {
                                         true,
                                         sx,
                                         sy,
+                                        rows,
                                     );
                                 }
                             }
@@ -107,6 +119,7 @@ impl Video {
                                         false,
                                         sx,
                                         sy,
+                                        rows,
                                     );
                                 }
                             }
@@ -130,6 +143,7 @@ impl Video {
                                         false,
                                         sx,
                                         sy,
+                                        rows,
                                     );
                                 }
                             }
@@ -150,6 +164,7 @@ impl Video {
                         flipy,
                         sx,
                         sy,
+                        rows,
                     );
                 }
             }
@@ -177,6 +192,7 @@ impl Video {
         flipy: bool,
         sx: i32,
         sy: i32,
+        rows: (usize, usize),
     ) {
         if flip {
             prio_transpen16(
@@ -190,9 +206,12 @@ impl Video {
                 512 - 16 - sx,
                 256 - 16 - sy,
                 0x02,
+                rows,
             );
         } else {
-            prio_transpen16(gfx, bitmap, pri, code, color, flipx, flipy, sx, sy, 0x02);
+            prio_transpen16(
+                gfx, bitmap, pri, code, color, flipx, flipy, sx, sy, 0x02, rows,
+            );
         }
     }
 }
@@ -221,7 +240,7 @@ mod tests {
         v.last_sprite = 0;
         let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
         let mut pri = vec![0u8; BITMAP_W * BITMAP_H];
-        v.render_sprites(&gfx, &mut bitmap, &mut pri, false);
+        v.render_sprites(&gfx, &mut bitmap, &mut pri, false, FULL_ROWS);
         // la tuile 0x31 est dessinée en rangée 1 (y = 0x40 + 16)
         assert_ne!(bitmap[(0x40 + 16) * BITMAP_W + 0x80], 0xBFF);
         assert_eq!(bitmap[0x40 * BITMAP_W + 0x80], 0xBFF);
@@ -232,7 +251,7 @@ mod tests {
         }
         v.buffered_obj[2] = 0x0030;
         let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
-        v.render_sprites(&gfx2, &mut bitmap, &mut pri, false);
+        v.render_sprites(&gfx2, &mut bitmap, &mut pri, false, FULL_ROWS);
         assert_ne!(
             bitmap[0x40 * BITMAP_W + 0x80],
             0xBFF,
@@ -293,7 +312,7 @@ mod tests {
         let mut bitmap = vec![0u16; BITMAP_W * BITMAP_H];
         let mut pri = vec![0u8; BITMAP_W * BITMAP_H];
 
-        v.render_sprites(&gfx, &mut bitmap, &mut pri, false);
+        v.render_sprites(&gfx, &mut bitmap, &mut pri, false, FULL_ROWS);
 
         // Pixel at (100, 50) should be drawn with color base 2*16=32 + pen 8 = 40 = 0x28
         let idx = 50 * BITMAP_W + 100;
@@ -321,7 +340,7 @@ mod tests {
         let mut bitmap = vec![0u16; BITMAP_W * BITMAP_H];
         let mut pri = vec![0u8; BITMAP_W * BITMAP_H];
 
-        v.render_sprites(&gfx, &mut bitmap, &mut pri, false);
+        v.render_sprites(&gfx, &mut bitmap, &mut pri, false, FULL_ROWS);
 
         // Entry 0 drawn first sets pri=31, entry 1 blocked -> pixel is color 2 (0x28)
         let idx = 50 * BITMAP_W + 100;
@@ -344,7 +363,7 @@ mod tests {
         let mut bitmap = vec![0u16; BITMAP_W * BITMAP_H];
         let mut pri = vec![0u8; BITMAP_W * BITMAP_H];
 
-        v.render_sprites(&gfx, &mut bitmap, &mut pri, false);
+        v.render_sprites(&gfx, &mut bitmap, &mut pri, false, FULL_ROWS);
 
         // Sub-sprite 0: code 0x10 at (100, 50) -> pen 0x28
         let idx0 = 50 * BITMAP_W + 100;
@@ -371,7 +390,7 @@ mod tests {
         let mut bitmap = vec![0u16; BITMAP_W * BITMAP_H];
         let mut pri = vec![0u8; BITMAP_W * BITMAP_H];
 
-        v.render_sprites(&gfx, &mut bitmap, &mut pri, false);
+        v.render_sprites(&gfx, &mut bitmap, &mut pri, false, FULL_ROWS);
 
         // With flipX on sub-sprites: source pixel (0,0) maps to dest x+15
         // Sub-sprite 0 at (100, 50): pixel appears at (115, 50)
@@ -399,7 +418,7 @@ mod tests {
         let mut bitmap = vec![0u16; BITMAP_W * BITMAP_H];
         let mut pri = vec![0u8; BITMAP_W * BITMAP_H];
 
-        v.render_sprites(&gfx, &mut bitmap, &mut pri, false);
+        v.render_sprites(&gfx, &mut bitmap, &mut pri, false, FULL_ROWS);
 
         // Sub-sprite 0: code 0x10 at (100, 50) -> pen 0x28
         let idx0 = 50 * BITMAP_W + 100;
@@ -427,7 +446,7 @@ mod tests {
         let mut pri = vec![0u8; BITMAP_W * BITMAP_H];
 
         // Render with screen flip: flips become !true=false, so no effective flips
-        v.render_sprites(&gfx, &mut bitmap, &mut pri, true);
+        v.render_sprites(&gfx, &mut bitmap, &mut pri, true, FULL_ROWS);
 
         // With screen flip: position becomes (512-16-100, 256-16-50) = (396, 190)
         let idx = 190 * BITMAP_W + 396;
@@ -450,7 +469,7 @@ mod tests {
         let mut bitmap = vec![0u16; BITMAP_W * BITMAP_H];
         let mut pri = vec![0u8; BITMAP_W * BITMAP_H];
 
-        v.render_sprites(&gfx, &mut bitmap, &mut pri, false);
+        v.render_sprites(&gfx, &mut bitmap, &mut pri, false, FULL_ROWS);
 
         // Nothing should be drawn (completely outside clip)
         let idx = 50 * BITMAP_W + 504;

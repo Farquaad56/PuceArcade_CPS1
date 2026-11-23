@@ -204,3 +204,91 @@ fn cps1_has_no_raster() {
     assert!(v.raster.is_none());
     assert_eq!(v.cps_b_read(0x10 / 2), 0xFFFF);
 }
+
+/// Générateur pseudo-aléatoire déterministe (xorshift) pour les scènes de test.
+fn xorshift(seed: &mut u32) -> u32 {
+    *seed ^= *seed << 13;
+    *seed ^= *seed >> 17;
+    *seed ^= *seed << 5;
+    *seed
+}
+
+/// Scène aléatoire : GFXRAM, ROM graphique, couches actives, scrolls, sprites CPS1 (et CPS2).
+fn random_scene(cps2: bool) -> (crate::regs::Video, Vec<u8>) {
+    let mut seed = 0x1234_5678;
+    let mut v = if cps2 {
+        crate::regs::Video::new_cps2("ssf2ud")
+    } else {
+        crate::regs::Video::new("ghouls")
+    };
+    for w in v.gfxram.iter_mut() {
+        *w = xorshift(&mut seed) as u16;
+    }
+    let gfx: Vec<u8> = (0..0x40000).map(|_| xorshift(&mut seed) as u8).collect();
+    for l in 0..3 {
+        v.bases.layer_enabled[l] = true;
+        v.bases.scrollx[l] = (xorshift(&mut seed) & 0x3FF) as i32;
+        v.bases.scrolly[l] = (xorshift(&mut seed) & 0x3FF) as i32;
+    }
+    let lc = (v.cfg.cpsb.layer_control / 2) as usize;
+    v.regs_b[lc] = 0x12C0; // ordre 3, 2, 0 (sprites), 1
+    for w in v.buffered_obj.iter_mut() {
+        *w = xorshift(&mut seed) as u16 & 0x33FF; // blocs d'au plus 4 × 4 tuiles
+    }
+    v.last_sprite = 0x7C;
+    if let Some(c2) = v.cps2.as_mut() {
+        for w in c2.buffered_obj.iter_mut() {
+            *w = xorshift(&mut seed) as u16 & 0x33FF;
+        }
+        c2.buffered_obj[0x81] = 0x8000; // fin de table après 32 sprites
+        c2.output[4] = 0x40;
+        c2.output[5] = 0x10;
+        c2.pri_ctrl = 0x0531;
+        c2.find_last_sprite();
+    }
+    (v, gfx)
+}
+
+/// Rend les bandes données, dans l'ordre, dans un même bitmap.
+fn render_bands(cps2: bool, bands: &[(usize, usize)]) -> (Vec<u16>, Vec<u8>) {
+    use crate::sprites::{BITMAP_H, BITMAP_W};
+    let (mut v, gfx) = random_scene(cps2);
+    let masks = v.update_transmasks();
+    let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
+    let mut pri = vec![0u8; BITMAP_W * BITMAP_H];
+    for &rows in bands {
+        v.compose(&gfx, None, 0, &mut bitmap, &mut pri, masks, false, rows);
+    }
+    (bitmap, pri)
+}
+
+#[test]
+fn bands_equal_full_frame_cps1() {
+    let full = render_bands(false, &[(16, 240)]);
+    assert!(
+        full.0.iter().filter(|&&p| p != 0xBFF).count() > 10_000,
+        "scène non vide"
+    );
+    assert!(full == render_bands(false, &[(16, 100), (100, 240)]));
+}
+
+#[test]
+fn bands_equal_full_frame_cps2() {
+    let full = render_bands(true, &[(16, 240)]);
+    assert!(
+        full.0.iter().filter(|&&p| p != 0xBFF).count() > 10_000,
+        "scène non vide"
+    );
+    assert!(full == render_bands(true, &[(16, 100), (100, 240)]));
+}
+
+#[test]
+fn band_outside_rows_is_untouched() {
+    use crate::sprites::BITMAP_W;
+    let (b, _) = render_bands(false, &[(100, 101)]);
+    assert!(b[..100 * BITMAP_W].iter().all(|&p| p == 0xBFF));
+    assert!(b[101 * BITMAP_W..].iter().all(|&p| p == 0xBFF));
+    assert!(b[100 * BITMAP_W..101 * BITMAP_W]
+        .iter()
+        .any(|&p| p != 0xBFF));
+}

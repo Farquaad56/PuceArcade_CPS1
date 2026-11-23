@@ -6,7 +6,7 @@
 //!         ref/mame-emu/tilemap.cpp l.188-210 (scanline_draw_masked_ind16 : pri = (pri & 0xFF) | pcode)
 
 use crate::regs::Video;
-use crate::sprites::{BITMAP_W, CLIP};
+use crate::sprites::{band, BITMAP_W, CLIP};
 use crate::tilemap::{screen_to_tilemap, TILEMAP_DIM};
 
 /// Masques de priorité des sprites (l.1076-1095), après le retrait de la couche sprites CPS1.
@@ -82,6 +82,7 @@ impl Video {
     }
 
     /// draw_tilemap avec code de priorité : `pri |= primask` sur chaque pixel LAYER1 dessiné.
+    #[allow(clippy::too_many_arguments)]
     pub fn draw_tilemap_pri(
         &self,
         gfx: &[u8],
@@ -90,13 +91,15 @@ impl Video {
         pri: &mut [u8],
         masks: &[u16; 4],
         primask: u8,
+        rows: (usize, usize),
     ) {
         if !self.bases.layer_enabled[layer] {
             return;
         }
         let dim = TILEMAP_DIM[layer];
         let flip = self.flip_screen();
-        for sy in CLIP.2..=CLIP.3 {
+        let (y0, y1) = band(rows);
+        for sy in y0..y1 {
             let ey = if flip { 255 - sy as u32 } else { sy as u32 };
             let (scrollx, scrolly) = self.tilemap_scroll(layer, ey);
             for sx in CLIP.0..=CLIP.1 {
@@ -123,14 +126,15 @@ impl Video {
         pri: &mut [u8],
         masks: &[u16; 4],
         flip: bool,
+        rows: (usize, usize),
     ) {
         let debug_bit = if layer == 0 { 0 } else { layer };
         if (self.debug_layer_mask >> debug_bit) & 1 == 0 {
             return;
         }
         match layer {
-            0 => self.render_sprites(gfx, bitmap, pri, flip),
-            1..=3 => self.draw_tilemap_pri(gfx, layer - 1, bitmap, pri, masks, primask),
+            0 => self.render_sprites(gfx, bitmap, pri, flip, rows),
+            1..=3 => self.draw_tilemap_pri(gfx, layer - 1, bitmap, pri, masks, primask, rows),
             _ => {}
         }
     }
@@ -143,13 +147,14 @@ impl Video {
         pri: &mut [u8],
         masks: &[u16; 4],
         flip: bool,
+        rows: (usize, usize),
     ) {
         let ([l0, l1, l2], primasks) = self.cps2_layer_order();
-        self.cps2_render_layer(gfx, l0, 1, bitmap, pri, masks, flip);
-        self.cps2_render_layer(gfx, l1, 2, bitmap, pri, masks, flip);
-        self.cps2_render_layer(gfx, l2, 4, bitmap, pri, masks, flip);
+        self.cps2_render_layer(gfx, l0, 1, bitmap, pri, masks, flip, rows);
+        self.cps2_render_layer(gfx, l1, 2, bitmap, pri, masks, flip, rows);
+        self.cps2_render_layer(gfx, l2, 4, bitmap, pri, masks, flip, rows);
         if self.debug_layer_mask & 1 != 0 {
-            self.cps2_render_sprites(gfx, bitmap, pri, &primasks, flip);
+            self.cps2_render_sprites(gfx, bitmap, pri, &primasks, flip, rows);
         }
     }
 }
@@ -198,7 +203,15 @@ mod tests {
         let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
         let mut pri = vec![1u8; BITMAP_W * BITMAP_H];
         let masks = v.update_transmasks();
-        v.draw_tilemap_pri(&gfx, 0, &mut bitmap, &mut pri, &masks, 4);
+        v.draw_tilemap_pri(
+            &gfx,
+            0,
+            &mut bitmap,
+            &mut pri,
+            &masks,
+            4,
+            crate::sprites::FULL_ROWS,
+        );
         let drawn: Vec<usize> = (0..bitmap.len()).filter(|&i| bitmap[i] != 0xBFF).collect();
         assert!(!drawn.is_empty());
         assert!(drawn.iter().all(|&i| pri[i] == 5));

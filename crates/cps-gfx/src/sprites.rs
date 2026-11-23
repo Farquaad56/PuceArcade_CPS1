@@ -7,6 +7,14 @@ pub const BITMAP_W: usize = 512;
 pub const BITMAP_H: usize = 262;
 pub const CLIP: (usize, usize, usize, usize) = (64, 447, 16, 239);
 
+/// Bande d'une trame entière (lignes CLIP.2 incluse à CLIP.3 + 1 exclue), ADR-003 décision 2c.
+pub const FULL_ROWS: (usize, usize) = (CLIP.2, CLIP.3 + 1);
+
+/// Lignes dessinables d'une bande : `rows ∩ CLIP`, en (y0 inclus, y1 exclu).
+pub fn band(rows: (usize, usize)) -> (usize, usize) {
+    (rows.0.max(CLIP.2), rows.1.min(CLIP.3 + 1))
+}
+
 /// Trouve l'offset du dernier sprite dans le tampon obj.
 /// spec: docs/spec/02-video-cps-a-b.md §Sprites (MAME l.2684-2718)
 pub fn find_last_sprite(obj: &[u16], kludge: i32) -> i32 {
@@ -44,8 +52,11 @@ pub fn prio_transpen16(
     sx: i32,
     sy: i32,
     pmask: u32,
+    rows: (usize, usize),
 ) {
-    let (clip_x0, clip_x1, clip_y0, clip_y1) = CLIP;
+    let (clip_x0, clip_x1, _, _) = CLIP;
+    // bande de lignes (y1 exclu) ∩ CLIP
+    let (clip_y0, y_end) = band(rows);
     // high bit of the mask is implicitly on
     let pmask = pmask | (1 << 31);
     // colorbase + granularity * (color % colors()) -> base = (color % 0x80) * 16
@@ -65,7 +76,7 @@ pub fn prio_transpen16(
             if dst_x < clip_x0 as i32 || dst_x > clip_x1 as i32 {
                 continue;
             }
-            if dst_y < clip_y0 as i32 || dst_y > clip_y1 as i32 {
+            if dst_y < clip_y0 as i32 || dst_y >= y_end as i32 {
                 continue;
             }
 
@@ -140,6 +151,7 @@ mod tests {
             100,
             50,
             0x02,
+            FULL_ROWS,
         );
 
         // pixel (0,0) raw=8 -> pen = base(32) + 8 = 40 = 0x28
@@ -177,6 +189,7 @@ mod tests {
             100,
             50,
             0x02,
+            FULL_ROWS,
         );
 
         // blocked: bitmap unchanged
@@ -207,6 +220,7 @@ mod tests {
             100,
             50,
             0x02,
+            FULL_ROWS,
         );
 
         // with flipx, pixel (0,0) source goes to dest x=100+15=115
@@ -237,6 +251,7 @@ mod tests {
             440,
             50,
             0x02,
+            FULL_ROWS,
         );
 
         // pixel at dest x=440 should be drawn
@@ -271,6 +286,7 @@ mod tests {
             504,
             50,
             0x02,
+            FULL_ROWS,
         );
 
         // nothing drawn

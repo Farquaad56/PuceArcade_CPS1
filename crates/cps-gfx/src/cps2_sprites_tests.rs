@@ -38,6 +38,7 @@ impl Scene {
             &mut self.pri,
             &self.primasks,
             flip,
+            crate::sprites::FULL_ROWS,
         );
     }
     fn at(&self, x: usize, y: usize) -> u16 {
@@ -121,6 +122,13 @@ fn no_cps2_state_draws_nothing() {
     let v = Video::new("sf2");
     let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
     let mut pri = vec![0u8; BITMAP_W * BITMAP_H];
-    v.cps2_render_sprites(&[0; 256], &mut bitmap, &mut pri, &[0; 8], false);
+    v.cps2_render_sprites(
+        &[0; 256],
+        &mut bitmap,
+        &mut pri,
+        &[0; 8],
+        false,
+        crate::sprites::FULL_ROWS,
+    );
     assert!(bitmap.iter().all(|&p| p == 0xBFF));
 }

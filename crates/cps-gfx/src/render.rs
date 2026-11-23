@@ -4,7 +4,7 @@
 // source: ref/mame-cps1/cps1_v.cpp l.2933-3052
 
 use crate::regs::{Video, VIDEOCONTROL};
-use crate::sprites::{BITMAP_H, BITMAP_W, CLIP};
+use crate::sprites::{band, BITMAP_H, BITMAP_W, CLIP, FULL_ROWS};
 use crate::tilemap::{screen_to_tilemap, TileInfo, TILEMAP_DIM};
 use cps_common::video::{Framebuffer, SCREEN_H, SCREEN_W};
 
@@ -30,7 +30,14 @@ impl Video {
     /// Dessine une couche tilemap (LAYER1 : pixels opaques -> bitmap).
     /// Optimisation T703 : décode les infos de tuile une fois par tuile, pas par pixel.
     /// spec: docs/spec/02 §Composition ; MAME l.2943 + tilemap.cpp draw_common
-    pub fn draw_tilemap(&self, gfx: &[u8], layer: usize, bitmap: &mut [u16], masks: &[u16; 4]) {
+    pub fn draw_tilemap(
+        &self,
+        gfx: &[u8],
+        layer: usize,
+        bitmap: &mut [u16],
+        masks: &[u16; 4],
+        rows: (usize, usize),
+    ) {
         if !self.bases.layer_enabled[layer] {
             return;
         }
@@ -42,8 +49,8 @@ impl Video {
             _ => 32,
         };
         let flip = self.flip_screen();
-
-        for sy in CLIP.2..=CLIP.3 {
+        let (y0, y1) = band(rows);
+        for sy in y0..y1 {
             let ey = flipped(sy as u32, 255, flip);
             let (scrollx, scrolly) = self.tilemap_scroll(layer, ey);
 
@@ -85,7 +92,14 @@ impl Video {
     /// Dessine une couche tilemap haute priorité (LAYER0 : seulement pri |= 1).
     /// Optimisation T703 : décode les infos de tuile une fois par tuile, pas par pixel.
     /// spec: docs/spec/02 §Composition ; MAME l.2958 + tilemap.cpp scanline_draw_opaque_null
-    pub fn draw_tilemap_high(&self, gfx: &[u8], layer: usize, pri: &mut [u8], masks: &[u16; 4]) {
+    pub fn draw_tilemap_high(
+        &self,
+        gfx: &[u8],
+        layer: usize,
+        pri: &mut [u8],
+        masks: &[u16; 4],
+        rows: (usize, usize),
+    ) {
         if !self.bases.layer_enabled[layer] {
             return;
         }
@@ -97,8 +111,8 @@ impl Video {
             _ => 32,
         };
         let flip = self.flip_screen();
-
-        for sy in CLIP.2..=CLIP.3 {
+        let (y0, y1) = band(rows);
+        for sy in y0..y1 {
             let ey = flipped(sy as u32, 255, flip);
             let (scrollx, scrolly) = self.tilemap_scroll(layer, ey);
 
@@ -167,18 +181,48 @@ impl Video {
         // priority array initialized to 0
         let mut pri = vec![0u8; BITMAP_W * BITMAP_H];
 
+        // CPS2 : marque de fin du tampon d'objets CPS2
+        if let Some(c2) = self.cps2.as_mut() {
+            c2.find_last_sprite();
+        }
+        self.compose(
+            gfx,
+            stars,
+            frame_number,
+            &mut bitmap,
+            &mut pri,
+            masks,
+            flip,
+            FULL_ROWS,
+        );
+        self.to_framebuffer(&bitmap, fb);
+    }
+
+    /// Composition d'une bande de lignes `rows` (étoiles, couches, sprites) dans `bitmap` / `pri`,
+    /// avec les bases, le dernier sprite et les masques déjà calculés pour la trame.
+    /// Plusieurs bandes disjointes donnent le même résultat que la trame entière (ADR-003 2c).
+    #[allow(clippy::too_many_arguments)]
+    pub fn compose(
+        &mut self,
+        gfx: &[u8],
+        stars: Option<&[u8]>,
+        frame_number: u64,
+        bitmap: &mut [u16],
+        pri: &mut [u8],
+        masks: [u16; 4],
+        flip: bool,
+        rows: (usize, usize),
+    ) {
         // MAME l.3048 : if (m_region_stars) cps1_render_stars(...)
         if let Some(stars) = stars {
             if (self.debug_layer_mask >> 4) & 1 != 0 {
-                self.render_stars(stars, &mut bitmap, frame_number, flip);
+                self.render_stars(stars, bitmap, frame_number, flip, rows);
             }
         }
 
-        // CPS2 : marque de fin du tampon d'objets CPS2, puis composition CPS2 (cps2.cpp l.1040-1102)
-        if let Some(c2) = self.cps2.as_mut() {
-            c2.find_last_sprite();
-            self.cps2_render_layers(gfx, &mut bitmap, &mut pri, &masks, flip);
-            self.to_framebuffer(&bitmap, fb);
+        // CPS2 : composition CPS2 (cps2.cpp l.1040-1102)
+        if self.cps2.is_some() {
+            self.cps2_render_layers(gfx, bitmap, pri, &masks, flip, rows);
             return;
         }
 
@@ -190,21 +234,19 @@ impl Video {
         let l3 = (lc >> 12) & 3;
 
         // Draw sequence: draw(l0); if l1==0 high(l0); draw(l1); ...
-        self.draw_layer(gfx, l0 as usize, &mut bitmap, &mut pri, masks, flip);
+        self.draw_layer(gfx, l0 as usize, bitmap, pri, masks, flip, rows);
         if l1 == 0 {
-            self.high_layer(gfx, l0 as usize, &mut pri, masks);
+            self.high_layer(gfx, l0 as usize, pri, masks, rows);
         }
-        self.draw_layer(gfx, l1 as usize, &mut bitmap, &mut pri, masks, flip);
+        self.draw_layer(gfx, l1 as usize, bitmap, pri, masks, flip, rows);
         if l2 == 0 {
-            self.high_layer(gfx, l1 as usize, &mut pri, masks);
+            self.high_layer(gfx, l1 as usize, pri, masks, rows);
         }
-        self.draw_layer(gfx, l2 as usize, &mut bitmap, &mut pri, masks, flip);
+        self.draw_layer(gfx, l2 as usize, bitmap, pri, masks, flip, rows);
         if l3 == 0 {
-            self.high_layer(gfx, l2 as usize, &mut pri, masks);
+            self.high_layer(gfx, l2 as usize, pri, masks, rows);
         }
-        self.draw_layer(gfx, l3 as usize, &mut bitmap, &mut pri, masks, flip);
-
-        self.to_framebuffer(&bitmap, fb);
+        self.draw_layer(gfx, l3 as usize, bitmap, pri, masks, flip, rows);
     }
 
     /// Convertit le bitmap en framebuffer via la palette.
@@ -220,6 +262,7 @@ impl Video {
     }
 
     /// Dessine une couche (sprites ou tilemap) selon son numéro.
+    #[allow(clippy::too_many_arguments)]
     fn draw_layer(
         &mut self,
         gfx: &[u8],
@@ -228,6 +271,7 @@ impl Video {
         pri: &mut [u8],
         masks: [u16; 4],
         flip: bool,
+        rows: (usize, usize),
     ) {
         // Debug layer mask check (bit0 = sprites, bit n = scroll n)
         let debug_bit = if layer == 0 { 0 } else { layer };
@@ -236,17 +280,24 @@ impl Video {
         }
 
         match layer {
-            0 => self.render_sprites(gfx, bitmap, pri, flip),
-            1..=3 => self.draw_tilemap(gfx, layer - 1, bitmap, &masks),
+            0 => self.render_sprites(gfx, bitmap, pri, flip, rows),
+            1..=3 => self.draw_tilemap(gfx, layer - 1, bitmap, &masks, rows),
             _ => {}
         }
     }
 
     /// Dessine une couche haute priorité (LAYER0) selon son numéro.
-    fn high_layer(&self, gfx: &[u8], layer: usize, pri: &mut [u8], masks: [u16; 4]) {
+    fn high_layer(
+        &self,
+        gfx: &[u8],
+        layer: usize,
+        pri: &mut [u8],
+        masks: [u16; 4],
+        rows: (usize, usize),
+    ) {
         match layer {
             0 => {} // no high priority sprites
-            1..=3 => self.draw_tilemap_high(gfx, layer - 1, pri, &masks),
+            1..=3 => self.draw_tilemap_high(gfx, layer - 1, pri, &masks, rows),
             _ => {}
         }
     }
@@ -272,7 +323,7 @@ mod tests {
             v.regs_a[VIDEOCONTROL] = 0x8000;
         }
         let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
-        v.draw_tilemap(&gfx, 0, &mut bitmap, &[0xFFFF; 4]);
+        v.draw_tilemap(&gfx, 0, &mut bitmap, &[0xFFFF; 4], FULL_ROWS);
         bitmap
     }
 
@@ -526,7 +577,7 @@ mod tests {
 
             // Version optimisée (par tuile)
             let mut bitmap_optimized = vec![0xBFFu16; BITMAP_W * BITMAP_H];
-            v.draw_tilemap(&gfx, 0, &mut bitmap_optimized, &[0xFFFF; 4]);
+            v.draw_tilemap(&gfx, 0, &mut bitmap_optimized, &[0xFFFF; 4], FULL_ROWS);
 
             // Version de référence (par pixel, ancienne implémentation)
             let mut bitmap_reference = vec![0xBFFu16; BITMAP_W * BITMAP_H];

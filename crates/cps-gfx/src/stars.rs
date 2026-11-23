@@ -11,7 +11,14 @@ pub const STARS_ROM_SIZE: usize = 0x2000;
 
 impl Video {
     /// spec: docs/spec/02 §Étoiles et flip écran — port 1:1 de cps1_render_stars.
-    pub fn render_stars(&self, stars: &[u8], bitmap: &mut [u16], frame_number: u64, flip: bool) {
+    pub fn render_stars(
+        &self,
+        stars: &[u8],
+        bitmap: &mut [u16],
+        frame_number: u64,
+        flip: bool,
+        rows: (usize, usize),
+    ) {
         // PORT-NOTE: `!stars_rom && enabled` -> popmessage + return ; ici une région vide.
         if stars.is_empty() {
             return;
@@ -19,11 +26,11 @@ impl Video {
         let b = &self.bases;
         // Couche 0 (m_stars_enabled[0]) lit stars_rom[8*offs + 4] avec starsx/y[1], pens 0xA00
         if b.stars_enabled[0] {
-            self.star_layer(stars, bitmap, frame_number, flip, 4, 1, 0xA00);
+            self.star_layer(stars, bitmap, frame_number, flip, 4, 1, 0xA00, rows);
         }
         // Couche 1 (m_stars_enabled[1]) lit stars_rom[8*offs] avec starsx/y[0], pens 0x800
         if b.stars_enabled[1] {
-            self.star_layer(stars, bitmap, frame_number, flip, 0, 0, 0x800);
+            self.star_layer(stars, bitmap, frame_number, flip, 0, 0, 0x800, rows);
         }
     }
 
@@ -39,8 +46,10 @@ impl Video {
         byte: usize,
         scroll: usize,
         pen_base: u16,
+        rows: (usize, usize),
     ) {
-        let (x0, x1, y0, y1) = CLIP;
+        let (x0, x1, _, _) = CLIP;
+        let (y0, y_end) = crate::sprites::band(rows);
         for offs in 0..STARS_ROM_SIZE / 2 {
             let Some(&c) = stars.get(8 * offs + byte) else {
                 return;
@@ -61,7 +70,7 @@ impl Video {
             let cnt = ((frame_number / 16) % period) as i32;
             col = ((col & 0xe0) >> 1) + cnt;
             let (ux, uy) = (sx as usize, sy as usize);
-            if (x0..=x1).contains(&ux) && (y0..=y1).contains(&uy) {
+            if (x0..=x1).contains(&ux) && (y0..y_end).contains(&uy) {
                 bitmap[uy * BITMAP_W + ux] = pen_base + col as u16;
             }
         }
@@ -86,7 +95,7 @@ mod tests {
         v.bases.starsx = [0, 0];
         v.bases.starsy = [0, 0];
         let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
-        v.render_stars(&rom(), &mut bitmap, 32, false);
+        v.render_stars(&rom(), &mut bitmap, 32, false, crate::sprites::FULL_ROWS);
         assert_eq!(bitmap[40 * 512 + 101], 0x802);
         assert_eq!(bitmap.iter().filter(|&&p| p != 0xBFF).count(), 1);
     }
@@ -96,12 +105,12 @@ mod tests {
         let mut v = Video::new("forgottn");
         v.bases.stars_enabled = [false, true];
         let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
-        v.render_stars(&rom(), &mut bitmap, 0, true);
+        v.render_stars(&rom(), &mut bitmap, 0, true, crate::sprites::FULL_ROWS);
         // flip : sx = 512 - 101 = 411, sy = 256 - 40 = 216 ; cnt = 0
         assert_eq!(bitmap[216 * 512 + 411], 0x800);
         v.bases.stars_enabled = [false, false];
         let mut b2 = vec![0xBFFu16; BITMAP_W * BITMAP_H];
-        v.render_stars(&rom(), &mut b2, 0, false);
+        v.render_stars(&rom(), &mut b2, 0, false, crate::sprites::FULL_ROWS);
         assert!(b2.iter().all(|&p| p == 0xBFF));
     }
 
@@ -114,7 +123,7 @@ mod tests {
         v.bases.starsx[1] = -100; // sx = 0 + 100 + 16 = 116
         v.bases.starsy[1] = -20; // sy = 20
         let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
-        v.render_stars(&r, &mut bitmap, 16 * 15, false);
+        v.render_stars(&r, &mut bitmap, 16 * 15, false, crate::sprites::FULL_ROWS);
         // cnt = 15 % 15 = 0 ; col = (0x80 >> 1) + 0 = 0x40
         assert_eq!(bitmap[20 * 512 + 116], 0xA40);
     }
