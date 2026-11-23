@@ -20,6 +20,7 @@ fn main() -> ExitCode {
     let opts = AppOptions {
         window_title: "PuceArcade CPS1".into(),
         config_dir: ".".into(),
+        bezels_dir: Some("bezels".into()),
     };
     match puce_jamma_gui::run(Box::new(Cps1Driver { cfg }), opts) {
         Ok(()) => ExitCode::SUCCESS,

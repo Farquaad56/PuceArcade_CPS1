@@ -125,7 +125,21 @@ fn sound(m: &Machine) -> Vec<(String, String)> {
         .filter(|(_, v)| v.playing)
         .map(|(i, _)| i.to_string())
         .collect();
+    if s.qsound.is_some() {
+        return vec![
+            (
+                "carte son".into(),
+                "QSound (Z80 Kabuki, DSP HLE, 24 038 Hz stéréo)".into(),
+            ),
+            ("latch1".into(), format!("{:02X}", s.latch[0])),
+            ("latch2".into(), format!("{:02X}", s.latch[1])),
+        ];
+    }
     vec![
+        (
+            "carte son".into(),
+            "YM2151 + OKI M6295 (55 930 Hz mono)".into(),
+        ),
         ("latch1".into(), format!("{:02X}", s.latch[0])),
         ("latch2".into(), format!("{:02X}", s.latch[1])),
         ("banque".into(), s.bank.to_string()),

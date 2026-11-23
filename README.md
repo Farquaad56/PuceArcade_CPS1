@@ -20,4 +20,13 @@ Priorité : **Ghouls'n Ghosts** (`ghouls`), puis **Street Fighter II** (`sf2`, `
 ## Horloge
 1 tick = 1/5,04 GHz (PPCM de 10, 12, 16 et 3,579545 MHz) : voir `docs/adr/001-tick-5040mhz.md`.
 
+## Bezels
+Plein écran : bezels au format RetroArch (`<jeu>.cfg` + PNG, repli sur le parent puis `_generic.cfg`) dans `bezels/`,
+activés ou désactivés par Ctrl+B ou le menu Affichage. Les bezels ne sont pas versionnés (voir `bezels/LISEZMOI.txt`).
+
+## Son
+Barre d'état : « son 55930 Hz mono » pour les jeux CPS1 (YM2151 + OKI), « son 24038 Hz stéréo » pour les jeux QSound
+(wof, dino, punisher, slammast, mbombrd et clones, qui exigent `qsound.zip` dans `roms_dir`). Le débogueur l'indique aussi
+(groupe Son, ligne « carte son »).
+
 Aucune ROM n'est fournie ni versionnée.
