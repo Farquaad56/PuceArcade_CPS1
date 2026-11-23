@@ -60,7 +60,7 @@ impl super::machine::Machine {
 
 impl Host68k<'_> {
     /// Fait tourner le Z80 T-state par T-state jusqu'à `t` (jamais au-delà).
-    fn z80_run_until(&mut self, t: Tick) {
+    pub(crate) fn z80_run_until(&mut self, t: Tick) {
         while self.sound.time + self.sound.z80_ticks <= t {
             self.sound.tick(self.z80);
         }
@@ -144,7 +144,7 @@ impl Bus for Host68k<'_> {
 
     fn write(&mut self, addr: u32, _fc: u8, uds: bool, lds: bool, data: u16) {
         if self.bus.cps2.is_some() {
-            if !self.cps2_write(addr & 0xFF_FFFE, lds, data) {
+            if !self.cps2_write(addr & 0xFF_FFFE, uds, lds, data) {
                 self.bus.write16(addr, uds, lds, data);
             }
             return;
