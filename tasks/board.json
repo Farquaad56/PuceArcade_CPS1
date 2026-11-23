@@ -884,7 +884,7 @@
     ],
     "file": "tasks/T850.md",
     "assignee": "rust-dev",
-    "status": "todo"
+    "status": "done"
   },
   {
     "id": "T850b",
