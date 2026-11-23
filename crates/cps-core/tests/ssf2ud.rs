@@ -73,3 +73,24 @@ fn ssf2ud_determinism() {
     assert_eq!(a.framebuffer().crc32(), b.framebuffer().crc32());
     assert_eq!(a.cpu.state().pc, b.cpu.state().pc);
 }
+
+/// Sonde de diagnostic : écart de nos trames voisines avec le golden 1500 (`--ignored --nocapture`).
+#[test]
+#[ignore]
+fn ssf2ud_probe_1500() {
+    let Some(mut m) = machine() else { return };
+    let golden = golden_dir(GAME).join("f001500.png");
+    let Ok((w, h, pixels)) = load_png_rgb(&golden) else {
+        return;
+    };
+    for frame in 1..=1504u64 {
+        m.run_frame();
+        if frame >= 1496 {
+            let d = diff_frame(m.framebuffer(), &pixels, w, h).expect("taille");
+            println!(
+                "sonde : notre trame {frame} / golden 1500 : {:.4} %",
+                d.ratio() * 100.0
+            );
+        }
+    }
+}
