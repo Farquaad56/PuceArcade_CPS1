@@ -30,6 +30,8 @@ pub struct Machine {
     pub frame_done: bool,
     pub game: String,
     pub frame_start: Tick,
+    /// CPS2 : opcodes du 68000 déchiffrés, lus quand le FC désigne le programme.
+    pub opcodes: Option<Vec<u8>>,
 }
 
 impl Machine {
@@ -60,6 +62,16 @@ impl Machine {
         if game.cpsb_at_1c0 {
             bus.cpsb_base = 0x8001C0;
         }
+        // CPS2 (cps2.cpp cps2 / dead_cps2) : carte QSound sans ports F1C0xx, EEPROM 16 bits.
+        // spec: docs/spec/05 §Carte mémoire 68000, §Son
+        let opcodes = game.cps2.map(|c| {
+            bus.video = cps_gfx::regs::Video::new_cps2(game.info.name);
+            bus.cps2 = Some(Box::new(cps_bus::Cps2Io::new(c.dead, c.singbrd)));
+            bus.qsound = false;
+            bus.user1 = None;
+            bus.eeprom = Some(cps_bus::Eeprom93c46::new_16bit());
+            c.opcodes
+        });
 
         let mut machine = Machine {
             cpu: Cpu68k::default(),
@@ -80,6 +92,7 @@ impl Machine {
             frame_done: false,
             game: game.info.name.to_string(),
             frame_start: 0,
+            opcodes,
         };
         machine.reset();
         machine
@@ -118,6 +131,13 @@ impl Machine {
     /// Set input state and propagate to bus/video.
     pub fn set_inputs(&mut self, i: InputState) {
         self.bus.set_inputs(i);
+    }
+
+    /// CPS2 : entrées IN0, IN1, IN2 (sans effet sur une machine CPS1).
+    pub fn set_cps2_inputs(&mut self, i: cps_bus::Cps2Inputs) {
+        if let Some(io) = self.bus.cps2.as_mut() {
+            io.inputs = i;
+        }
     }
 
     /// Molettes (forgottn) : mouvement relatif du joueur 1 (X) et du joueur 2 (Y).
@@ -199,6 +219,27 @@ pub mod testutil {
             ticks_68k_den: 1,
             cps2: None,
         }
+    }
+
+    /// Jeu CPS2 synthétique : maincpu 0x1111 en 0x400, opcodes 0x2222 en 0x400, carte QSound
+    /// (DSP et ROM d'échantillons vides), horloge 25 200 / 59.
+    pub fn synthetic_cps2_game() -> cps_cart::Game {
+        let mut g = synthetic_game(&[(0, &[0, 0xFF, 0, 0, 0, 0, 4, 0]), (0x400, &[0x11, 0x11])]);
+        g.info = find_game("ssf2ud").expect("ssf2ud definition");
+        let mut opcodes = g.regions.maincpu.clone();
+        opcodes[0x400..0x402].copy_from_slice(&[0x22, 0x22]);
+        g.regions.audiocpu = vec![0u8; 0x50000];
+        g.regions.qsound = vec![0u8; 0x1000];
+        g.audio_opcodes = Some(vec![0u8; 0x8000]);
+        g.qsound_dsp = Some(vec![0u8; 0x2000]);
+        g.ticks_per_68k = 25200;
+        g.ticks_68k_den = 59;
+        g.cps2 = Some(cps_cart::Cps2Rom {
+            opcodes,
+            dead: false,
+            singbrd: false,
+        });
+        g
     }
 }
 

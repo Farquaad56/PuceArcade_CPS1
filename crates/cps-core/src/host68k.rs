@@ -26,6 +26,8 @@ pub struct Host68k<'a> {
     pub stars: Option<&'a [u8]>,
     pub fb: &'a mut Framebuffer,
     pub frame_start: Tick,
+    /// CPS2 : opcodes déchiffrés (ADR-006).
+    pub opcodes: Option<&'a [u8]>,
 }
 
 impl super::machine::Machine {
@@ -50,6 +52,7 @@ impl super::machine::Machine {
                 stars: self.stars.as_deref(),
                 fb: &mut self.fb,
                 frame_start: self.frame_start,
+                opcodes: self.opcodes.as_deref(),
             },
         )
     }
@@ -116,7 +119,23 @@ impl Host68k<'_> {
 }
 
 impl Bus for Host68k<'_> {
-    fn read(&mut self, addr: u32, _fc: u8, uds: bool, lds: bool) -> u16 {
+    fn read(&mut self, addr: u32, fc: u8, uds: bool, lds: bool) -> u16 {
+        // CPS2 : opcodes déchiffrés pour un accès programme (FC & 3 == 2) sous 0x400000
+        // spec: docs/spec/05 §Chiffrement
+        let a = (addr & 0xFF_FFFE) as usize;
+        if let Some(ops) = self.opcodes {
+            if fc & 3 == 2 && a < 0x400000 {
+                return ops
+                    .get(a..a + 2)
+                    .map_or(0, |w| u16::from_be_bytes([w[0], w[1]]));
+            }
+        }
+        if self.bus.cps2.is_some() {
+            if let Some(v) = self.cps2_read(a as u32) {
+                return v;
+            }
+            return self.bus.read16(addr, uds, lds);
+        }
         if let Some(v) = self.qsound_read(addr & 0xFF_FFFE) {
             return v;
         }
@@ -124,6 +143,12 @@ impl Bus for Host68k<'_> {
     }
 
     fn write(&mut self, addr: u32, _fc: u8, uds: bool, lds: bool, data: u16) {
+        if self.bus.cps2.is_some() {
+            if !self.cps2_write(addr & 0xFF_FFFE, lds, data) {
+                self.bus.write16(addr, uds, lds, data);
+            }
+            return;
+        }
         if self.qsound_write(addr & 0xFF_FFFE, lds, data) {
             return;
         }

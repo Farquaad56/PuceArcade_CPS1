@@ -4,6 +4,7 @@
 
 pub mod debug;
 pub mod host68k;
+pub mod host_cps2;
 pub mod machine;
 pub mod sched;
 pub mod state;
