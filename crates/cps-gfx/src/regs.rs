@@ -100,6 +100,14 @@ pub struct Video {
     /// État propre au CPS2 (None pour le CPS1). spec: docs/spec/05 §Vidéo
     #[cfg_attr(feature = "serde", serde(default))]
     pub cps2: Option<Box<crate::cps2::Cps2Video>>,
+    /// Rendu partiel (ADR-003 2c) : bitmap et priorités de la trame en cours, et première
+    /// ligne pas encore rendue. Non sérialisés : reconstruits au prochain `begin_frame`.
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub frame_bitmap: Vec<u16>,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub frame_pri: Vec<u8>,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub rendered_to: usize,
     /// Compteurs raster du CPS-B (m_raster_irq != nullptr : CPS2). ADR-003 étape (a).
     #[cfg_attr(feature = "serde", serde(default))]
     pub raster: Option<crate::raster::Raster>,
@@ -133,6 +141,9 @@ impl Video {
             last_sprite: -4,
             debug_layer_mask: 0xFFFF_FFFF,
             cps2: None,
+            frame_bitmap: Vec::new(),
+            frame_pri: Vec::new(),
+            rendered_to: 0,
             raster: None,
             hpos: 0,
         };

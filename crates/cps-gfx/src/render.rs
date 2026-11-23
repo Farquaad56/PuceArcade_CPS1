@@ -4,7 +4,7 @@
 // source: ref/mame-cps1/cps1_v.cpp l.2933-3052
 
 use crate::regs::{Video, VIDEOCONTROL};
-use crate::sprites::{band, BITMAP_H, BITMAP_W, CLIP, FULL_ROWS};
+use crate::sprites::{band, BITMAP_H, BITMAP_W, CLIP};
 use crate::tilemap::{screen_to_tilemap, TileInfo, TILEMAP_DIM};
 use cps_common::video::{Framebuffer, SCREEN_H, SCREEN_W};
 
@@ -163,6 +163,36 @@ impl Video {
         frame_number: u64,
         fb: &mut Framebuffer,
     ) {
+        self.begin_frame();
+        self.finish_frame(gfx, stars, frame_number, fb);
+    }
+
+    /// Début d'une trame à rendu partiel : bitmap à 0xBFF, priorités à 0, aucune ligne rendue.
+    pub fn begin_frame(&mut self) {
+        self.frame_bitmap.clear();
+        self.frame_bitmap.resize(BITMAP_W * BITMAP_H, 0xBFF);
+        self.frame_pri.clear();
+        self.frame_pri.resize(BITMAP_W * BITMAP_H, 0);
+        self.rendered_to = CLIP.2;
+    }
+
+    /// Rend les lignes [rendered_to, min(y_end, CLIP.3 + 1)) avec l'état vidéo courant (bases,
+    /// scroll, flip, dernier sprite, masques recalculés comme screen_update_cps1).
+    pub fn render_lines(
+        &mut self,
+        gfx: &[u8],
+        stars: Option<&[u8]>,
+        frame_number: u64,
+        y_end: usize,
+    ) {
+        if y_end <= self.rendered_to {
+            return;
+        }
+        if self.frame_bitmap.len() != BITMAP_W * BITMAP_H {
+            self.begin_frame();
+        }
+        let rows = (self.rendered_to, y_end.min(CLIP.3 + 1));
+
         // flip = VIDEOCONTROL bit15 : tilemaps (T605), sprites (T205), étoiles (T600)
         let flip = self.flip_screen();
 
@@ -172,19 +202,16 @@ impl Video {
         // Find the offset of the last sprite in the sprite table
         self.last_sprite =
             crate::sprites::find_last_sprite(&self.buffered_obj, self.cfg.bootleg_kludge);
-
-        // Update transparency masks
-        let masks = self.update_transmasks();
-
-        // bitmap filled with background pen 0xBFF
-        let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
-        // priority array initialized to 0
-        let mut pri = vec![0u8; BITMAP_W * BITMAP_H];
-
         // CPS2 : marque de fin du tampon d'objets CPS2
         if let Some(c2) = self.cps2.as_mut() {
             c2.find_last_sprite();
         }
+
+        // Update transparency masks
+        let masks = self.update_transmasks();
+
+        let mut bitmap = std::mem::take(&mut self.frame_bitmap);
+        let mut pri = std::mem::take(&mut self.frame_pri);
         self.compose(
             gfx,
             stars,
@@ -193,9 +220,25 @@ impl Video {
             &mut pri,
             masks,
             flip,
-            FULL_ROWS,
+            rows,
         );
+        self.frame_bitmap = bitmap;
+        self.frame_pri = pri;
+        self.rendered_to = y_end;
+    }
+
+    /// Fin de trame : lignes restantes puis conversion palette vers `fb`.
+    pub fn finish_frame(
+        &mut self,
+        gfx: &[u8],
+        stars: Option<&[u8]>,
+        frame_number: u64,
+        fb: &mut Framebuffer,
+    ) {
+        self.render_lines(gfx, stars, frame_number, CLIP.3 + 1);
+        let bitmap = std::mem::take(&mut self.frame_bitmap);
         self.to_framebuffer(&bitmap, fb);
+        self.frame_bitmap = bitmap;
     }
 
     /// Composition d'une bande de lignes `rows` (étoiles, couches, sprites) dans `bitmap` / `pri`,
@@ -323,7 +366,13 @@ mod tests {
             v.regs_a[VIDEOCONTROL] = 0x8000;
         }
         let mut bitmap = vec![0xBFFu16; BITMAP_W * BITMAP_H];
-        v.draw_tilemap(&gfx, 0, &mut bitmap, &[0xFFFF; 4], FULL_ROWS);
+        v.draw_tilemap(
+            &gfx,
+            0,
+            &mut bitmap,
+            &[0xFFFF; 4],
+            crate::sprites::FULL_ROWS,
+        );
         bitmap
     }
 
@@ -577,7 +626,13 @@ mod tests {
 
             // Version optimisée (par tuile)
             let mut bitmap_optimized = vec![0xBFFu16; BITMAP_W * BITMAP_H];
-            v.draw_tilemap(&gfx, 0, &mut bitmap_optimized, &[0xFFFF; 4], FULL_ROWS);
+            v.draw_tilemap(
+                &gfx,
+                0,
+                &mut bitmap_optimized,
+                &[0xFFFF; 4],
+                crate::sprites::FULL_ROWS,
+            );
 
             // Version de référence (par pixel, ancienne implémentation)
             let mut bitmap_reference = vec![0xBFFu16; BITMAP_W * BITMAP_H];

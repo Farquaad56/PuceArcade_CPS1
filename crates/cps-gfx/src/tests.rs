@@ -292,3 +292,46 @@ fn band_outside_rows_is_untouched() {
         .iter()
         .any(|&p| p != 0xBFF));
 }
+
+/// Trame de la scène aléatoire CPS1 avec le scroll X du scroll1 donné ; `split` : changement de
+/// scroll après `render_lines(…, 120)`.
+fn scroll_frame(first: u16, then: Option<u16>) -> Vec<u32> {
+    use crate::regs::{SCROLL1_X, VIDEOCONTROL};
+    let (mut v, gfx) = random_scene(false);
+    for (i, p) in v.palette.iter_mut().enumerate() {
+        *p = i as u32;
+    }
+    let lc = (v.cfg.cpsb.layer_control / 2) as usize;
+    v.regs_b[lc] = 0x0040 | v.cfg.cpsb.layer_enable_mask[0] as u16; // scroll1 seul
+    v.regs_a[VIDEOCONTROL] = 0;
+    v.regs_a[SCROLL1_X] = first;
+    let mut fb = cps_common::video::Framebuffer::new();
+    match then {
+        None => v.render_frame(&gfx, None, 0, &mut fb),
+        Some(s) => {
+            v.begin_frame();
+            v.render_lines(&gfx, None, 0, 120);
+            v.regs_a[SCROLL1_X] = s;
+            v.finish_frame(&gfx, None, 0, &mut fb);
+        }
+    }
+    fb.pixels
+}
+
+#[test]
+fn partial_render_follows_scroll_change() {
+    use cps_common::video::SCREEN_W;
+    let a = scroll_frame(0x10, None);
+    let b = scroll_frame(0x37, None);
+    let c = scroll_frame(0x10, Some(0x37));
+    let split = (120 - crate::sprites::CLIP.2) * SCREEN_W;
+    assert_ne!(a[..split], b[..split]);
+    assert_ne!(a[split..], b[split..]);
+    assert_eq!(c[..split], a[..split], "lignes < 120 : ancien scroll");
+    assert_eq!(c[split..], b[split..], "lignes >= 120 : nouveau scroll");
+}
+
+#[test]
+fn render_frame_equals_partial_in_one_call() {
+    assert_eq!(scroll_frame(0x22, None), scroll_frame(0x22, Some(0x22)));
+}
