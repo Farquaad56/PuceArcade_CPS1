@@ -74,23 +74,38 @@ fn ssf2ud_determinism() {
     assert_eq!(a.cpu.state().pc, b.cpu.state().pc);
 }
 
-/// Sonde de diagnostic : écart de nos trames voisines avec le golden 1500 (`--ignored --nocapture`).
+/// Image golden : largeur, hauteur, pixels.
+type Golden = (usize, usize, Vec<u32>);
+
+/// Sonde de diagnostic : pour chaque golden `target/golden_probe/ssf2ud/fNNNNNN.png`, écart de nos
+/// trames N-3..N+3 (`--ignored --nocapture`).
 #[test]
 #[ignore]
-fn ssf2ud_probe_1500() {
+fn ssf2ud_probe() {
     let Some(mut m) = machine() else { return };
-    let golden = golden_dir(GAME).join("f001500.png");
-    let Ok((w, h, pixels)) = load_png_rgb(&golden) else {
-        return;
-    };
-    for frame in 1..=1504u64 {
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/golden_probe/ssf2ud");
+    let mut goldens: Vec<(u64, Golden)> = std::fs::read_dir(&dir)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .filter_map(|e| {
+            let n = e.file_name().to_string_lossy().to_string();
+            let f: u64 = n.strip_prefix('f')?.strip_suffix(".png")?.parse().ok()?;
+            Some((f, load_png_rgb(&e.path()).ok()?))
+        })
+        .collect();
+    goldens.sort_by_key(|g| g.0);
+    let last = goldens.last().map_or(0, |g| g.0) + 3;
+    for frame in 1..=last {
         m.run_frame();
-        if frame >= 1496 {
-            let d = diff_frame(m.framebuffer(), &pixels, w, h).expect("taille");
-            println!(
-                "sonde : notre trame {frame} / golden 1500 : {:.4} %",
-                d.ratio() * 100.0
-            );
+        for (g, (w, h, px)) in &goldens {
+            if frame + 3 >= *g && frame <= g + 3 {
+                let d = diff_frame(m.framebuffer(), px, *w, *h).expect("taille");
+                println!(
+                    "sonde : golden {g}, notre trame {frame} : {:.4} %",
+                    d.ratio() * 100.0
+                );
+            }
         }
     }
 }
