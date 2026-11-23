@@ -109,3 +109,19 @@ fn ssf2ud_probe() {
         }
     }
 }
+
+/// Sonde : trames 1-800 où notre image change (pour choisir les golden de diagnostic).
+#[test]
+#[ignore]
+fn ssf2ud_transitions() {
+    let Some(mut m) = machine() else { return };
+    let mut last = 0;
+    for frame in 1..=800u64 {
+        m.run_frame();
+        let crc = m.framebuffer().crc32();
+        if crc != last {
+            println!("transition : trame {frame} crc {crc:08X}");
+            last = crc;
+        }
+    }
+}
