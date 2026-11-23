@@ -656,5 +656,256 @@
     "file": "tasks/T703.md",
     "assignee": "rust-dev",
     "status": "todo"
+  },
+  {
+    "id": "T800",
+    "title": "T800 cps-cart : catalogue CPS2 (romsets générés, système, prise en charge, entrées)",
+    "phase": "P8 CPS2 : ROM et chiffrement",
+    "deps": [],
+    "file": "tasks/T800.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T801",
+    "title": "T801 cps-cart : chiffrement CPS2 (port de cps2crypt.cpp, décodage de la clé)",
+    "phase": "P8 CPS2 : ROM et chiffrement",
+    "deps": [
+      "T800"
+    ],
+    "file": "tasks/T801.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T802",
+    "title": "T802 cps-cart : chargement d'un jeu CPS2 (clé, unshuffle, opcodes, horloge 25 200/59)",
+    "phase": "P8 CPS2 : ROM et chiffrement",
+    "deps": [
+      "T801"
+    ],
+    "file": "tasks/T802.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T803",
+    "title": "T803 cps-bus : EEPROM 93C46 en organisation 16 bits (CPS2)",
+    "phase": "P10 CPS2 : bus et son",
+    "deps": [
+      "T802"
+    ],
+    "file": "tasks/T803.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T810",
+    "title": "T810 cps-gfx : état vidéo CPS2 (RAM objets, banque, registres output, latch, dernier sprite)",
+    "phase": "P9 CPS2 : vidéo",
+    "deps": [
+      "T803"
+    ],
+    "file": "tasks/T810.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T811",
+    "title": "T811 cps-gfx : sprites CPS2 (cps2_render_sprites)",
+    "phase": "P9 CPS2 : vidéo",
+    "deps": [
+      "T810"
+    ],
+    "file": "tasks/T811.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T812",
+    "title": "T812 cps-gfx : composition CPS2 (render_layers, priorités des tilemaps, VBLANK CPS2)",
+    "phase": "P9 CPS2 : vidéo",
+    "deps": [
+      "T811"
+    ],
+    "file": "tasks/T812.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T813",
+    "title": "T813 cps-gfx : compteurs raster branchés sur le CPS-B (Video::raster, hpos)",
+    "phase": "P9 CPS2 : vidéo",
+    "deps": [
+      "T812"
+    ],
+    "file": "tasks/T813.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T820",
+    "title": "T820 cps-bus : carte mémoire CPS2 (1/2) — Cps2Io, accès vidéo CPS2, lectures",
+    "phase": "P10 CPS2 : bus et son",
+    "deps": [
+      "T813"
+    ],
+    "file": "tasks/T820.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T820b",
+    "title": "T820b cps-bus : carte mémoire CPS2 (2/2) — écritures et dead_cps2_map",
+    "phase": "P10 CPS2 : bus et son",
+    "deps": [
+      "T820"
+    ],
+    "file": "tasks/T820b.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T821",
+    "title": "T821 cps-bus : Z80 tenu en reset (port 804040 bit 3, CPS2)",
+    "phase": "P10 CPS2 : bus et son",
+    "deps": [
+      "T820b"
+    ],
+    "file": "tasks/T821.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T830",
+    "title": "T830 cps-core : horloge fractionnaire du 68000 (ADR-007)",
+    "phase": "P11 CPS2 : machine",
+    "deps": [
+      "T821"
+    ],
+    "file": "tasks/T830.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T831",
+    "title": "T831 cps-core : machine CPS2 (1/2) — construction, opcodes déchiffrés, RAM QSound 618000",
+    "phase": "P11 CPS2 : machine",
+    "deps": [
+      "T830"
+    ],
+    "file": "tasks/T831.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T831b",
+    "title": "T831b cps-core : machine CPS2 (2/2) — EEPROM (IN2, 804040) et reset du Z80",
+    "phase": "P11 CPS2 : machine",
+    "deps": [
+      "T831"
+    ],
+    "file": "tasks/T831b.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T832",
+    "title": "T832 cps-core : raster ordonnancé (IRQ4 par ligne, hpos, niveau 6)",
+    "phase": "P11 CPS2 : machine",
+    "deps": [
+      "T831b"
+    ],
+    "file": "tasks/T832.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T833",
+    "title": "T833 cps-core : savestate version 4 (CPS2)",
+    "phase": "P11 CPS2 : machine",
+    "deps": [
+      "T832"
+    ],
+    "file": "tasks/T833.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T834",
+    "title": "T834 cps-core : premier jeu CPS2 — ssf2ud (Phoenix) contre MAME",
+    "phase": "P11 CPS2 : machine",
+    "deps": [
+      "T833"
+    ],
+    "file": "tasks/T834.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T840",
+    "title": "T840 cps-gui : entrées CPS2 (4 joueurs, 6 boutons, qndream)",
+    "phase": "P12 CPS2 : frontal et catalogue",
+    "deps": [
+      "T834"
+    ],
+    "file": "tasks/T840.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T841",
+    "title": "T841 cps-gui : catalogue CPS1 + CPS2 et carte CPS2 dans le frontal",
+    "phase": "P12 CPS2 : frontal et catalogue",
+    "deps": [
+      "T840"
+    ],
+    "file": "tasks/T841.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T842",
+    "title": "T842 Validation CPS2 : jeux chiffrés (ddtod, sfa3, xmvsf) et catalogue par lot",
+    "phase": "P12 CPS2 : frontal et catalogue",
+    "deps": [
+      "T841"
+    ],
+    "file": "tasks/T842.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T850",
+    "title": "T850 cps-gfx : rendu par bandes de lignes (clip vertical dans tilemaps et sprites)",
+    "phase": "P13 CPS2 : précision raster",
+    "deps": [
+      "T842"
+    ],
+    "file": "tasks/T850.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T850b",
+    "title": "T850b cps-gfx : API de rendu partiel (begin_frame, render_lines, finish_frame)",
+    "phase": "P13 CPS2 : précision raster",
+    "deps": [
+      "T850"
+    ],
+    "file": "tasks/T850b.md",
+    "assignee": "rust-dev",
+    "status": "todo"
+  },
+  {
+    "id": "T851",
+    "title": "T851 cps-core : rendu partiel à l'IRQ raster (xmcota contre MAME)",
+    "phase": "P13 CPS2 : précision raster",
+    "deps": [
+      "T850b"
+    ],
+    "file": "tasks/T851.md",
+    "assignee": "rust-dev",
+    "status": "todo"
   }
 ]

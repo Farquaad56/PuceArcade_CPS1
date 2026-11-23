@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 """Génère crates/cps-cart/src/romsets_data.rs depuis ref/mame-cps1/cps1.cpp (MAME, BSD-3) : tous les ROM_START et les lignes GAME.
-Régions conservées : maincpu, gfx, audiocpu, oki, stars (les autres : PLD, qsound, etc. sont ignorées et listées en commentaire).
-Usage : python tools/extract_romsets.py [--check]"""
+Régions conservées : maincpu, gfx, audiocpu, oki, stars, qsound, user1, audiorom_raw (les autres : PLD, etc. sont ignorées et listées en commentaire).
+Avec --cps2 : crates/cps-cart/src/romsets2_data.rs depuis ref/mame-cps2/cps2.cpp (MAME 0.287), régions maincpu, gfx, audiocpu, qsound, key,
+table GAMES2 (docs/spec/05 §Romsets).
+Usage : python tools/extract_romsets.py [--cps2] [--check]"""
 import re, sys, pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SRC = ROOT / "ref/mame-cps1/cps1.cpp"
-OUT = ROOT / "crates/cps-cart/src/romsets_data.rs"
-KEEP = {"maincpu", "gfx", "audiocpu", "oki", "stars", "qsound", "user1", "audiorom_raw"}
+CPS2 = "--cps2" in sys.argv
+SRC = ROOT / ("ref/mame-cps2/cps2.cpp" if CPS2 else "ref/mame-cps1/cps1.cpp")
+OUT = ROOT / ("crates/cps-cart/src/romsets2_data.rs" if CPS2 else "crates/cps-cart/src/romsets_data.rs")
+KEEP = {"maincpu", "gfx", "audiocpu", "qsound", "key"} if CPS2 else {"maincpu", "gfx", "audiocpu", "oki", "stars", "qsound", "user1", "audiorom_raw"}
 LOADS = {"ROM_LOAD": "Load::Byte", "ROM_LOAD16_BYTE": "Load::Byte16", "ROM_LOAD16_WORD": "Load::Word16",
          "ROM_LOAD16_WORD_SWAP": "Load::Word16Swap", "ROM_LOAD64_WORD": "Load::Word64", "ROM_LOAD64_BYTE": "Load::Byte64",
          "ROM_LOAD32_BYTE": "Load::Byte32"}
 NUM = r"(0x[0-9a-fA-F]+|\d+)"
 
 def num(s):
-    s = s.strip().replace("CODE_SIZE", "0x400000")
+    s = s.strip().replace("CODE_SIZE", "0x400000").replace("QSOUND_SIZE", "0x50000")
     return int(eval(s.replace("'", ""), {}, {}))
 
 def parse():
@@ -27,7 +30,7 @@ def parse():
             line = re.sub(r"//.*", "", line).strip()
             if not line:
                 continue
-            r = re.match(r'ROM_REGION\s*\(\s*([^,]+),\s*"(\w+)"\s*,\s*([^)]*)\)', line)
+            r = re.match(r'ROM_REGION(?:16_BE)?\s*\(\s*([^,]+),\s*"(\w+)"\s*,\s*([^)]*)\)', line)
             if r:
                 rn = r.group(2)
                 if rn in KEEP:
@@ -68,30 +71,36 @@ def parse():
 
 def main():
     sets, games = parse()
-    out = ["// Fichier GÉNÉRÉ par tools/extract_romsets.py depuis ref/mame-cps1/cps1.cpp — NE PAS MODIFIER À LA MAIN.",
-           "// license:BSD-3-Clause (données MAME, copyright-holders: Paul Leaman)",
-           "//! Romsets CPS1 (régions maincpu, gfx, audiocpu, oki, stars) et table des jeux. spec: docs/spec/04", "",
-           "use crate::romset::{GameInfo, Load, Op, RegionDef, RomSetDef};", ""]
+    if CPS2:
+        out = ["// Fichier GÉNÉRÉ par tools/extract_romsets.py --cps2 depuis ref/mame-cps2/cps2.cpp — NE PAS MODIFIER À LA MAIN.",
+               "// license:BSD-3-Clause (données MAME, copyright-holders: Paul Leaman, Andreas Naive, Nicola Salmoria, Charles MacDonald)",
+               "//! Romsets CPS2 (régions maincpu, gfx, audiocpu, qsound, key) et table des jeux. spec: docs/spec/05 §Romsets", "",
+               "use crate::romset::{GameInfo, Load, Op, RegionDef, RomSetDef};", ""]
+    else:
+        out = ["// Fichier GÉNÉRÉ par tools/extract_romsets.py depuis ref/mame-cps1/cps1.cpp — NE PAS MODIFIER À LA MAIN.",
+               "// license:BSD-3-Clause (données MAME, copyright-holders: Paul Leaman)",
+               "//! Romsets CPS1 (régions maincpu, gfx, audiocpu, oki, stars) et table des jeux. spec: docs/spec/04", "",
+               "use crate::romset::{GameInfo, Load, Op, RegionDef, RomSetDef};", ""]
     for name, (regions, skipped) in sets.items():
         regs = []
         for r in regions:
             ops = "".join(f"\n            {o}," for o in r["ops"])
             regs.append(f'        RegionDef {{ name: "{r["name"]}", size: {hex(r["size"])}, fill: {hex(r["fill"])}, ops: &[{ops}\n        ] }},')
         out.append(f"/// Régions ignorées : {', '.join(skipped) or '(aucune)'}")
-        out.append(f"pub const RS_{name.upper()}: RomSetDef = RomSetDef {{ name: \"{name}\", regions: &[\n" + "\n".join(regs) + "\n] };")
+        out.append(f"pub const RS{'2' if CPS2 else ''}_{name.upper()}: RomSetDef = RomSetDef {{ name: \"{name}\", regions: &[\n" + "\n".join(regs) + "\n] };")
     out.append("")
-    out.append("/// Lignes GAME de cps1.cpp, dans l'ordre : (nom, parent, config machine, ports d'entrée, init, rotation, constructeur, titre, drapeaux).")
-    out.append("pub static GAMES: &[GameInfo] = &[")
+    out.append(f"/// Lignes GAME de {SRC.name}, dans l'ordre : (nom, parent, config machine, ports d'entrée, init, rotation, constructeur, titre, drapeaux).")
+    out.append(f"pub static GAMES{'2' if CPS2 else ''}: &[GameInfo] = &[")
     for name, parent, machine, inp, init, rot, maker, title, flags in games:
         if name not in sets:
             continue
         title = title.replace('\\"', "'")
         out.append(f'    GameInfo {{ name: "{name}", parent: "{"" if parent == "0" else parent}", machine: "{machine}", input: "{inp}", init: "{init}", '
-                   f'rotation: {rot[3:]}, maker: "{maker}", title: "{title}", not_working: {"true" if "NOT_WORKING" in flags else "false"}, romset: &RS_{name.upper()} }},')
+                   f'rotation: {rot[3:]}, maker: "{maker}", title: "{title}", not_working: {"true" if "NOT_WORKING" in flags else "false"}, romset: &RS{"2" if CPS2 else ""}_{name.upper()} }},')
     out.append("];")
     text = "\n".join(out) + "\n"
     if "--check" in sys.argv:
-        sys.exit(0 if OUT.exists() and OUT.read_text(encoding="utf-8") == text else "romsets_data.rs n'est pas à jour")
+        sys.exit(0 if OUT.exists() and OUT.read_text(encoding="utf-8") == text else f"{OUT.name} n'est pas à jour")
     OUT.write_text(text, encoding="utf-8", newline="\n")
     print(f"{OUT.relative_to(ROOT)} : {len(sets)} romsets, {len(games)} lignes GAME")
 

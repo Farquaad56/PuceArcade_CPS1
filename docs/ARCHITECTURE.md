@@ -4,6 +4,11 @@
 1 tick = 1/5 040 000 000 s (PPCM entier de 10 MHz, 12 MHz, 16 MHz et 315/88 MHz). Voir `docs/spec/00-clock-timing.md`.
 68000 : 504 ticks/horloge (10 MHz) ou 420 (12 MHz, selon le jeu). Z80 et YM2151 : 1408. OKI : 5040. Pixel : 630. Trame : 84 510 720 ticks (59,637 Hz).
 
+## CPS2 (ADR-006, ADR-007)
+Le CPS2 vit dans les mêmes crates, activé par des champs optionnels comme QSound : catalogue `GAMES2` et chiffrement (cps-cart),
+`Video::cps2` et raster (cps-gfx), `Bus68k::cps2` et EEPROM 16 bits (cps-bus), opcodes déchiffrés, horloge 25 200/59 et raster ordonnancé
+(cps-core). Spec : `docs/spec/05-cps2.md`. Cartes P8 à P13 (T800-T851).
+
 ## Workspace
 ```
 PuceArcade_CPS1/
