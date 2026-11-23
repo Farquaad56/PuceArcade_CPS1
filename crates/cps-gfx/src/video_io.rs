@@ -69,6 +69,13 @@ impl Video {
             return self.in3;
         }
 
+        // 4. raster counters for cps2 & ganbare (l.2162-2174)
+        if let Some(r) = &self.raster {
+            if let Some(v) = r.read(word, self.hpos, self.regs_b[0x0e / 2]) {
+                return v;
+            }
+        }
+
         // 5. Default: 0xFFFF (l.2179)
         0xFFFF
     }
@@ -84,6 +91,14 @@ impl Video {
         } else if lds {
             let old = self.regs_b[word];
             self.regs_b[word] = (old & 0xFF00) | (data & 0xFF);
+        }
+
+        // raster counters for cps2 & ganbare (l.2187-2203)
+        let combined = self.regs_b[word];
+        // PORT-NOTE: le `return` de MAME n'a rien à sauter ici (les sorties C-board ne sont pas
+        // émulées après ce point) ; le booléen de Raster::write est donc ignoré.
+        if let Some(r) = self.raster.as_mut() {
+            r.write(word, combined);
         }
     }
 

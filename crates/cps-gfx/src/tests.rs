@@ -183,3 +183,24 @@ fn cps2_render_frame_draws_sprite() {
     let (x, y) = (100 - crate::sprites::CLIP.0, 50 - crate::sprites::CLIP.2);
     assert_eq!(fb.pixels[y * cps_common::video::SCREEN_W + x], 0x00FF_0000);
 }
+
+#[test]
+fn cps2_raster_registers() {
+    let mut v = crate::regs::Video::new_cps2("ssf2ud");
+    v.cps_b_write(0x10 / 2, 0x8010, true, true);
+    let r = v.raster.as_ref().unwrap();
+    assert_eq!((r.reload[0], r.counter[0]), (0x010, 0x010));
+    assert_eq!(v.cps_b_read(0x10 / 2), 0x010);
+
+    v.raster.as_mut().unwrap().counter[2] = 100;
+    v.hpos = 40;
+    v.regs_b[7] = 1;
+    assert_eq!(v.cps_b_read(0x0e / 2), 0xA1);
+}
+
+#[test]
+fn cps1_has_no_raster() {
+    let v = crate::regs::Video::new("ghouls");
+    assert!(v.raster.is_none());
+    assert_eq!(v.cps_b_read(0x10 / 2), 0xFFFF);
+}

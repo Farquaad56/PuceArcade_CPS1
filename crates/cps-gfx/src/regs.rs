@@ -100,6 +100,13 @@ pub struct Video {
     /// État propre au CPS2 (None pour le CPS1). spec: docs/spec/05 §Vidéo
     #[cfg_attr(feature = "serde", serde(default))]
     pub cps2: Option<Box<crate::cps2::Cps2Video>>,
+    /// Compteurs raster du CPS-B (m_raster_irq != nullptr : CPS2). ADR-003 étape (a).
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub raster: Option<crate::raster::Raster>,
+    /// Position horizontale (pixels depuis le début de la ligne) fournie par l'hôte avant un
+    /// accès CPS-B (m_screen->hpos()).
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub hpos: u32,
 }
 
 /// Configuration provisoire d'un état vidéo désérialisé, remplacée par `relink()`.
@@ -126,6 +133,8 @@ impl Video {
             last_sprite: -4,
             debug_layer_mask: 0xFFFF_FFFF,
             cps2: None,
+            raster: None,
+            hpos: 0,
         };
         v.reset();
         v
@@ -135,6 +144,7 @@ impl Video {
     pub fn new_cps2(game: &str) -> Self {
         let mut v = Self::new(game);
         v.cps2 = Some(Box::default());
+        v.raster = Some(crate::raster::Raster::new()); // init_rasters
         v
     }
 
