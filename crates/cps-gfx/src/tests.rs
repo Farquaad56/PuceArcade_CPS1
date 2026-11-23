@@ -134,3 +134,13 @@ fn mapper_sf2_scroll3_400() {
         0x2400
     );
 }
+
+#[test]
+fn new_cps2_uses_cps2_config() {
+    let v = crate::regs::Video::new_cps2("ssf2ud");
+    let c = crate::config::find_config("cps2");
+    assert!(std::ptr::eq(v.cfg, c));
+    assert_eq!(v.cfg.cpsb.layer_control, c.cpsb.layer_control);
+    assert!(v.cps2.is_some());
+    assert!(crate::regs::Video::new("sf2").cps2.is_none());
+}

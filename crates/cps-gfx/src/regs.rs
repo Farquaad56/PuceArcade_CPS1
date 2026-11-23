@@ -97,6 +97,9 @@ pub struct Video {
     pub last_sprite: i32,
     /// Masque de débogage des couches (bit0 sprites, bit1-3 scroll1-3, bit4 étoiles)
     pub debug_layer_mask: u32,
+    /// État propre au CPS2 (None pour le CPS1). spec: docs/spec/05 §Vidéo
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub cps2: Option<Box<crate::cps2::Cps2Video>>,
 }
 
 /// Configuration provisoire d'un état vidéo désérialisé, remplacée par `relink()`.
@@ -122,8 +125,16 @@ impl Video {
             in3: 0,
             last_sprite: -4,
             debug_layer_mask: 0xFFFF_FFFF,
+            cps2: None,
         };
         v.reset();
+        v
+    }
+
+    /// État vidéo d'un jeu CPS2 : configuration « cps2 » (repli de find_config) et état CPS2.
+    pub fn new_cps2(game: &str) -> Self {
+        let mut v = Self::new(game);
+        v.cps2 = Some(Box::default());
         v
     }
 

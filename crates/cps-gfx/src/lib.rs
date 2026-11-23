@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 
 pub mod config;
+pub mod cps2;
 #[rustfmt::skip]
 pub mod config_data;
 pub mod decode;
