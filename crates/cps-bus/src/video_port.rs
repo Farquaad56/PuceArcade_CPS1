@@ -29,6 +29,39 @@ impl VideoPort for Video {
     fn set_inputs(&mut self, in2: u8, in3: u8) {
         Video::set_inputs(self, in2, in3);
     }
+
+    // CPS2 : délégation à Video::cps2 (sans état CPS2 : lecture 0, écriture ignorée)
+    fn cps2_output_read(&self, word: usize) -> u16 {
+        self.cps2.as_ref().map_or(0, |c| c.output_r(word))
+    }
+
+    fn cps2_output_write(&mut self, word: usize, data: u16, uds: bool, lds: bool) {
+        if let Some(c) = self.cps2.as_mut() {
+            c.output_w(word, data, uds, lds);
+        }
+    }
+
+    fn cps2_objram1_write(&mut self, word: usize, data: u16, uds: bool, lds: bool) {
+        if let Some(c) = self.cps2.as_mut() {
+            c.objram1_w(word, data, uds, lds);
+        }
+    }
+
+    fn cps2_objram2_read(&self, word: usize) -> u16 {
+        self.cps2.as_ref().map_or(0, |c| c.objram2_r(word))
+    }
+
+    fn cps2_objram2_write(&mut self, word: usize, data: u16, uds: bool, lds: bool) {
+        if let Some(c) = self.cps2.as_mut() {
+            c.objram2_w(word, data, uds, lds);
+        }
+    }
+
+    fn cps2_objram_bank_write(&mut self, data: u16, lds: bool) {
+        if let Some(c) = self.cps2.as_mut() {
+            c.objram_bank_w(data, lds);
+        }
+    }
 }
 
 /// Bus CPS1 complet avec vidéo réelle.

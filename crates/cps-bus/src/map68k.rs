@@ -19,6 +19,20 @@ pub trait VideoPort {
     fn gfxram_read(&self, word: usize) -> u16;
     fn gfxram_write(&mut self, word: usize, data: u16, uds: bool, lds: bool);
     fn set_inputs(&mut self, in2: u8, in3: u8);
+    /// CPS2 : registres output (400000-40000B). spec: docs/spec/05 §Carte mémoire 68000
+    fn cps2_output_read(&self, _word: usize) -> u16 {
+        0
+    }
+    fn cps2_output_write(&mut self, _word: usize, _data: u16, _uds: bool, _lds: bool) {}
+    /// CPS2 : objram1_w (700000-701FFF).
+    fn cps2_objram1_write(&mut self, _word: usize, _data: u16, _uds: bool, _lds: bool) {}
+    /// CPS2 : objram2 (708000-70FFFF).
+    fn cps2_objram2_read(&self, _word: usize) -> u16 {
+        0
+    }
+    fn cps2_objram2_write(&mut self, _word: usize, _data: u16, _uds: bool, _lds: bool) {}
+    /// CPS2 : banque des objets (8040E0).
+    fn cps2_objram_bank_write(&mut self, _data: u16, _lds: bool) {}
 }
 
 /// Bus 68000 CPS1 : ROM programme, RAM de travail, E/S, vidéo.
@@ -43,6 +57,8 @@ pub struct Bus68k<V: VideoPort> {
     pub coinctrl2: u16,
     /// EEPROM 93C46 (cartes QSound).
     pub eeprom: Option<crate::Eeprom93c46>,
+    /// E/S CPS2 (None pour le CPS1) : la carte mémoire passe alors par cps2_read16.
+    pub cps2: Option<Box<crate::cps2_io::Cps2Io>>,
 }
 
 impl<V: VideoPort> Bus68k<V> {
@@ -62,6 +78,7 @@ impl<V: VideoPort> Bus68k<V> {
             user1: None,
             coinctrl2: 0,
             eeprom: None,
+            cps2: None,
         }
     }
 
@@ -88,6 +105,9 @@ impl<V: VideoPort> Bus68k<V> {
     /// Lecture mot 68000 (adresse & 0xFFFFFF, bit 0 ignoré).
     pub fn read16(&mut self, addr: u32, _uds: bool, _lds: bool) -> u16 {
         let a = (addr & 0xFFFFFF) as usize;
+        if self.cps2.is_some() {
+            return self.cps2_read16(a);
+        }
 
         // spec: docs/spec/01 §68000 — ROM programme 000000-3FFFFF
         if a < 0x400000 {
@@ -252,7 +272,7 @@ impl<V: VideoPort> Bus68k<V> {
         None
     }
 
-    fn read_rom_word(&self, addr: usize) -> u16 {
+    pub(crate) fn read_rom_word(&self, addr: usize) -> u16 {
         if addr + 1 < self.rom.len() {
             ((self.rom[addr] as u16) << 8) | (self.rom[addr + 1] as u16)
         } else {
@@ -261,7 +281,7 @@ impl<V: VideoPort> Bus68k<V> {
         }
     }
 
-    fn read_ram_word(&self, addr: usize) -> u16 {
+    pub(crate) fn read_ram_word(&self, addr: usize) -> u16 {
         ((self.ram[addr] as u16) << 8) | (self.ram[addr + 1] as u16)
     }
 
