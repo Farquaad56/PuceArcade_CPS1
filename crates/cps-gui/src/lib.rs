@@ -6,6 +6,7 @@ pub mod debug;
 pub mod debug_video;
 pub mod driver;
 pub mod inputs;
+pub mod inputs_cps2;
 
 pub use board::Cps1Board;
 pub use driver::Cps1Driver;
