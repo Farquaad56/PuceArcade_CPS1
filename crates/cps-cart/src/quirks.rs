@@ -3,7 +3,7 @@
 //! Particularités de carte des bootlegs CPS1 réglées par la fonction d'init ou la disposition
 //! d'entrées MAME. spec: docs/spec/04 §Bootlegs
 //! source: ref/mame-cps1/cps1.cpp l.274-289 (cps1_hack_dsw_r), l.2138-2151 (INPUT_PORTS sf2hack),
-//!         l.14603-14636 (init_sf2thndr, init_sf2hack, init_sf2rk)
+//!         l.14603-14636 (init_sf2thndr, init_sf2hack, init_sf2rk), l.14879-14893 (init_dinohunt)
 
 use crate::romset::GameInfo;
 
@@ -16,6 +16,8 @@ pub struct Quirks {
     pub in2_high: bool,
     /// init_sf2thndr : registres CPS-B recopiés en 8001C0-8001FF (en plus de 800140).
     pub cpsb_mirror_1c0: bool,
+    /// init_dinohunt (l.14879-14893) : F18000-F19FFF lit 0x00FF (restes du QSound), IN2 en FC0000.
+    pub dinohunt_io: bool,
 }
 
 /// Dispositions d'entrées dérivées de sf2hack (PORT_INCLUDE( sf2hack )).
@@ -26,6 +28,7 @@ pub fn quirks_of(info: &GameInfo) -> Quirks {
         hack_dsw: matches!(info.init, "init_sf2hack" | "init_sf2rk"),
         in2_high: SF2HACK_INPUTS.contains(&info.input),
         cpsb_mirror_1c0: info.init == "init_sf2thndr",
+        dinohunt_io: info.init == "init_dinohunt",
     }
 }
 
@@ -58,6 +61,7 @@ mod tests {
         assert!(q("sf2rk").hack_dsw);
         let thndr = q("sf2thndr");
         assert!(thndr.cpsb_mirror_1c0 && !thndr.hack_dsw);
+        assert!(q("dinohunt").dinohunt_io && !q("wofhfh").dinohunt_io);
     }
 
     #[test]

@@ -112,9 +112,9 @@ mod tests {
         assert!(avail("sf2ua"));
         assert!(g.iter().all(|e| e.supported));
         // CPS2 après le dernier jeu CPS1 ; ssf2.zip couvre ssf2 et son clone ssf2ud
-        assert_eq!(g.len(), 195 + 303);
+        assert_eq!(g.len(), 198 + 303);
         let pos = |n: &str| g.iter().position(|e| e.name == n).unwrap();
-        assert!(pos("ssf2") >= 195 && pos("ssf2ud") >= 195);
+        assert!(pos("ssf2") >= 198 && pos("ssf2ud") >= 198);
         assert!(avail("ssf2") && avail("ssf2ud"));
         let err = d.load("zzz").err().unwrap();
         assert!(err.contains("zzz"), "{err}");
@@ -131,7 +131,7 @@ mod tests {
         );
         assert!(!names.contains(&"pang3"));
         assert!(names.contains(&"1941"));
-        assert_eq!(names.len(), 195);
+        assert_eq!(names.len(), 198);
     }
 
     #[test]

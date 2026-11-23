@@ -40,6 +40,8 @@ pub fn ticks_per_68k(machine: &str) -> Result<u64, CartError> {
     match machine {
         "cps1_10MHz" => Ok(504),
         "cps1_12MHz" => Ok(420),
+        // wofhfh = cps1_12MHz + une EEPROM que la carte mémoire ne relie pas (cps1.cpp l.4018-4024)
+        "wofhfh" => Ok(420),
         // forgottn = cps1_10MHz + uPD4701 (cps1.cpp l.3949-3957)
         "forgottn" => Ok(504),
         // qsound = cps1_12MHz + Z80 8 MHz et DSP QSound (cps1.cpp l.4013-4044)

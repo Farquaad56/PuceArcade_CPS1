@@ -55,6 +55,8 @@ pub struct Bus68k<V: VideoPort> {
     pub hack_dsw: bool,
     /// Entrées sf2hack : IN2 (boutons 4-6) sur l'octet fort, octet faible à 0xFF.
     pub in2_high: bool,
+    /// init_dinohunt : F18000-F19FFF lit 0x00FF, IN2 (joueur 3) en FC0000.
+    pub dinohunt_io: bool,
     /// Carte QSound (qsound_main_map) : ports F1C000-F1C007, lecture F00000. La RAM partagée
     /// et l'EEPROM (F1C006) sont servies par l'hôte, qui a la carte son et l'heure.
     pub qsound: bool,
@@ -84,6 +86,7 @@ impl<V: VideoPort> Bus68k<V> {
             cpsb_mirror: None,
             hack_dsw: false,
             in2_high: false,
+            dinohunt_io: false,
             qsound: false,
             user1: None,
             coinctrl2: 0,
@@ -148,6 +151,15 @@ impl<V: VideoPort> Bus68k<V> {
                 }
                 0xF1C000 | 0xF1C001 => return u16::from(self.inputs.in2), // IN2 : joueur 3
                 0xF1C002 | 0xF1C003 => return u16::from(self.inputs.in3), // IN3 : joueur 4
+                _ => {}
+            }
+        }
+
+        // init_dinohunt (cps1.cpp l.14887-14893)
+        if self.dinohunt_io {
+            match a {
+                0xF18000..=0xF19FFF => return 0x00FF,
+                0xFC0000 | 0xFC0001 => return u16::from(self.inputs.in2),
                 _ => {}
             }
         }

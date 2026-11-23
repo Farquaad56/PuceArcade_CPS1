@@ -71,6 +71,7 @@ impl Machine {
         // bootlegs : particularités de carte (cps-cart quirks.rs)
         bus.hack_dsw = game.quirks.hack_dsw;
         bus.in2_high = game.quirks.in2_high;
+        bus.dinohunt_io = game.quirks.dinohunt_io;
         if game.quirks.cpsb_mirror_1c0 {
             bus.cpsb_mirror = Some(0x8001C0);
         }

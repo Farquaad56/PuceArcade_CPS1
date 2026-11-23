@@ -36,3 +36,14 @@ fn cpsb_mirror() {
     b.write16(0x800140 + 0x10, true, true, 0x5678);
     assert_eq!(b.video.regs_b[8], 0x5678);
 }
+
+#[test]
+fn dinohunt_io() {
+    let mut b = new_cps_bus(vec![0; 0x100], "dinohunt", Dips::default());
+    b.inputs.in2 = 0xFB;
+    assert_eq!(b.read16(0xF18000, true, true), 0);
+    b.dinohunt_io = true;
+    assert_eq!(b.read16(0xF18000, true, true), 0x00FF);
+    assert_eq!(b.read16(0xF19FFE, true, true), 0x00FF);
+    assert_eq!(b.read16(0xFC0000, true, true), 0x00FB);
+}
