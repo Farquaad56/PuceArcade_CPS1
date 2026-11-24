@@ -49,6 +49,12 @@ pub struct Okim6295 {
     /// ROM ADPCM : non sérialisée (load_state la conserve).
     #[cfg_attr(feature = "serde", serde(skip))]
     pub rom: Vec<u8>,
+    /// Débogueur : sortie de chaque voix au dernier échantillon (0 si muette).
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub voice_out: [i32; OKIM6295_VOICES],
+    /// Débogueur : voix exclues de la somme (bit n = voix n ; 0 = son normal).
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub mute: u8,
 }
 
 impl Okim6295 {
@@ -60,6 +66,8 @@ impl Okim6295 {
             command: -1,
             pin7: true,
             rom,
+            voice_out: [0; OKIM6295_VOICES],
+            mute: 0,
         }
     }
 
@@ -163,6 +171,7 @@ impl Okim6295 {
         let mut total = 0;
 
         for voicenum in 0..OKIM6295_VOICES {
+            self.voice_out[voicenum] = 0;
             if !self.voices[voicenum].playing {
                 continue;
             }
@@ -175,7 +184,11 @@ impl Okim6295 {
 
             // Decode ADPCM and scale by volume
             let decoded = self.voices[voicenum].adpcm.clock(nibble);
-            total += decoded as i32 * self.voices[voicenum].volume;
+            let out = decoded as i32 * self.voices[voicenum].volume;
+            self.voice_out[voicenum] = out;
+            if self.mute & (1 << voicenum) == 0 {
+                total += out;
+            }
 
             // Advance sample counter, stop when done
             if self.voices[voicenum].sample + 1 >= self.voices[voicenum].count {

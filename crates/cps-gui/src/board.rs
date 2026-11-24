@@ -26,6 +26,9 @@ pub struct Cps1Board {
     nv_path: Option<std::path::PathBuf>,
     /// Disposition des entrées du jeu (`GameInfo::input`), pour les ports CPS2.
     input: &'static str,
+    /// Débogueur : voies enregistrées (onglet Son ouvert) et voies coupées.
+    pub(crate) voice_scope: bool,
+    pub(crate) voice_mute: u64,
 }
 
 impl Cps1Board {
@@ -136,6 +139,8 @@ impl Cps1Board {
             audio_mono: Vec::new(),
             nv_path: None,
             input,
+            voice_scope: false,
+            voice_mute: 0,
         }
     }
 }
@@ -150,6 +155,7 @@ impl JammaBoard for Cps1Board {
         let dips = self.machine.bus.dips;
         self.machine.reset();
         self.machine.set_dips(dips);
+        crate::debug_audio::apply(&mut self.machine, self.voice_scope, self.voice_mute);
     }
 
     fn run_frame(&mut self) {
@@ -207,7 +213,10 @@ impl JammaBoard for Cps1Board {
     }
 
     fn load_state(&mut self, data: &[u8]) -> Result<(), String> {
-        self.machine.load_state(data)
+        let r = self.machine.load_state(data);
+        // l'état chargé remplace les puces : enregistrement et muets du débogueur réappliqués
+        crate::debug_audio::apply(&mut self.machine, self.voice_scope, self.voice_mute);
+        r
     }
 
     fn debug(&mut self) -> Option<&mut dyn BoardDebug> {

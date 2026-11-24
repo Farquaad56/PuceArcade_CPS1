@@ -25,8 +25,12 @@ pub mod eeprom;
 pub use eeprom::Eeprom93c46;
 pub use sound::QSoundSide;
 pub mod upd4701;
+pub mod voice_scope;
 pub use chips::Chips;
 pub use upd4701::Upd4701;
+pub use voice_scope::VoiceScope;
 
 #[cfg(test)]
 mod quirk_tests;
+#[cfg(test)]
+mod voice_tests;

@@ -111,6 +111,16 @@ impl Ym2151 {
         }
     }
 
+    /// Moteur FM (débogueur : sorties par canal, registres).
+    pub fn fm(&self) -> &FmEngine {
+        &self.fm
+    }
+
+    /// Moteur FM modifiable (débogueur : canaux coupés).
+    pub fn fm_mut(&mut self) -> &mut FmEngine {
+        &mut self.fm
+    }
+
     /// Génère un échantillon de son.
     pub fn generate(&mut self, output: &mut Output<2>, numsamples: u32) {
         for _ in 0..numsamples {

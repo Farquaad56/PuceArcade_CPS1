@@ -102,6 +102,16 @@ impl ClockedYm2151 {
         self.out.clear();
     }
 
+    /// Puce (débogueur).
+    pub fn chip(&self) -> &Ym2151 {
+        &self.chip
+    }
+
+    /// Puce modifiable (débogueur).
+    pub fn chip_mut(&mut self) -> &mut Ym2151 {
+        &mut self.chip
+    }
+
     pub fn time(&self) -> u64 {
         self.intf.time
     }

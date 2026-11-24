@@ -150,6 +150,9 @@ pub struct QSound {
     delay_update: u16,
     state_counter: i32,
     ready_flag: i32,
+    /// Débogueur : voix exclues du mixage et de l'écho (bit n = voix n, 16-18 = ADPCM ; 0 = normal).
+    #[cfg_attr(feature = "serde", serde(skip))]
+    mute: u32,
 }
 
 impl QSound {
@@ -176,6 +179,7 @@ impl QSound {
             delay_update: 0,
             state_counter: 0,
             ready_flag: 0,
+            mute: 0,
         };
         q.set_roms(dsp_rom, sample_rom);
         q.reset();
@@ -206,6 +210,22 @@ impl QSound {
         self.out = [0, 0];
         self.state = STATE_BOOT;
         self.state_counter = 0;
+    }
+
+    /// Débogueur : sortie de chaque voix au dernier échantillon (0-15 PCM, 16-18 ADPCM).
+    pub fn voice_outputs(&self) -> &[i16] {
+        &self.voice_output
+    }
+
+    /// Débogueur : volume, pas de lecture et panoramique d'une voix PCM (0-15).
+    pub fn voice_regs(&self, i: usize) -> (i16, u16, u16) {
+        let v = &self.voice[i % 16];
+        (v.volume, v.rate, self.voice_pan[i % 16])
+    }
+
+    /// Débogueur : voix exclues du mixage et de l'écho (bit n = voix n ; 0 = son normal).
+    pub fn set_mute(&mut self, mask: u32) {
+        self.mute = mask;
     }
 
     /// Dernier échantillon produit (gauche, droite).
@@ -470,10 +490,14 @@ impl QSound {
         };
         self.echo.length = (self.echo.end_pos.wrapping_sub(base) as i16).clamp(0, 1024);
 
-        // update PCM voices
+        // update PCM voices (écho accumulé voix par voix : somme inchangée, voix coupées exclues)
         let mut echo_input = 0i32;
         for i in 0..16 {
-            self.voice_output[i] = self.voice_update(i, &mut echo_input);
+            let mut echo = 0i32;
+            self.voice_output[i] = self.voice_update(i, &mut echo);
+            if self.mute & (1 << i) == 0 {
+                echo_input = echo_input.wrapping_add(echo);
+            }
         }
         // update ADPCM voices (one every third sample)
         let av = (self.state_counter % 3) as usize;
@@ -497,6 +521,9 @@ impl QSound {
                 0
             };
             for i in 0..19 {
+                if self.mute & (1 << i) != 0 {
+                    continue;
+                }
                 let pan_index = self.voice_pan[i].wrapping_add(ch as u16 * PAN_TABLE_CH_OFFSET);
                 let vo = i32::from(self.voice_output[i]);
                 // Apply different volume tables on the dry and wet inputs.

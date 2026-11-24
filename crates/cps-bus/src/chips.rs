@@ -5,6 +5,13 @@ use cps_common::clock::{OKI_DIVISOR_PIN7_HIGH, TICKS_PER_OKI, TICKS_PER_YM};
 use cps_oki::okim6295::Okim6295;
 use cps_ym2151::clocked::ClockedYm2151;
 
+use crate::voice_scope::VoiceScope;
+
+/// Pleine échelle d'un canal FM (sortie 14 bits d'opérateur).
+const YM_SCOPE_FULL: f32 = 8192.0;
+/// Pleine échelle d'une voix OKI (12 bits × volume 32).
+const OKI_SCOPE_FULL: f32 = 65536.0;
+
 /// Combined YM2151 + OKI MSM6295 sound chips with mixing.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -17,6 +24,9 @@ pub struct Chips {
     pub oki_current: i32,
     /// Mixed output samples accumulated since last take_samples().
     pub out: Vec<f32>,
+    /// Débogueur : voies du YM2151 (8 canaux) et de l'OKI (4 voix), si l'oscilloscope est ouvert.
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub scopes: Option<Box<(VoiceScope, VoiceScope)>>,
 }
 
 impl Chips {
@@ -32,7 +42,24 @@ impl Chips {
             oki_next,
             oki_current: 0,
             out: Vec::new(),
+            scopes: None,
         }
+    }
+
+    /// Débogueur : active ou coupe l'enregistrement des voies.
+    pub fn set_scope(&mut self, on: bool) {
+        self.scopes = on.then(|| {
+            Box::new((
+                VoiceScope::new(8, YM_SCOPE_FULL),
+                VoiceScope::new(4, OKI_SCOPE_FULL),
+            ))
+        });
+    }
+
+    /// Débogueur : voies coupées, bits 0-7 = canaux FM, bits 8-11 = voix OKI (0 = son normal).
+    pub fn set_mute(&mut self, mask: u64) {
+        self.ym.chip_mut().fm_mut().set_mute((mask & 0xFF) as u32);
+        self.oki.mute = ((mask >> 8) & 0xF) as u8;
     }
 
     /// Take all mixed samples generated since the last call.
@@ -80,12 +107,21 @@ impl crate::sound::SoundChips for Chips {
             if to <= ty {
                 // OKI sample due first (or simultaneous).
                 self.oki_current = self.oki.generate();
+                if let Some(sc) = self.scopes.as_mut() {
+                    sc.1.push(&self.oki.voice_out);
+                }
                 self.oki_next += self.oki.divisor() * TICKS_PER_OKI;
             } else {
                 // YM sample due first.
                 let ym_clocks = ty / TICKS_PER_YM;
                 self.ym.advance_to(ym_clocks);
                 let samples = self.ym.take_samples();
+                if let Some(sc) = self.scopes.as_mut() {
+                    let ch = *self.ym.chip().fm().channel_out();
+                    for _ in 0..samples.len() {
+                        sc.0.push(&ch);
+                    }
+                }
                 for s in samples {
                     let mixed = (s[0] + s[1]) as f32 / 32768.0 * 0.35
                         + self.oki_current as f32 / 65536.0 * 0.30;

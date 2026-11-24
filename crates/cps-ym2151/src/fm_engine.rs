@@ -47,6 +47,12 @@ pub struct FmEngine {
     regs: OpmRegisters,
     channel: [FmChannel; CHANNELS],
     operator: [FmOperator; OPERATORS],
+    /// Débogueur : sortie de chaque canal au dernier échantillon (gauche, sinon droite).
+    #[cfg_attr(feature = "serde", serde(skip))]
+    channel_out: [i32; CHANNELS],
+    /// Débogueur : canaux exclus de la somme (bit n = canal n ; 0 = son normal).
+    #[cfg_attr(feature = "serde", serde(skip))]
+    mute: u32,
 }
 
 impl Default for FmEngine {
@@ -87,6 +93,8 @@ impl FmEngine {
             operator: std::array::from_fn(|opnum| {
                 FmOperator::new(OpmRegisters::operator_offset(opnum as u32))
             }),
+            channel_out: [0; CHANNELS],
+            mute: 0,
         };
 
         // affectation initiale des opérateurs
@@ -181,12 +189,43 @@ impl FmEngine {
         chanmask &= self.active_channels;
 
         // PORT-NOTE : la branche `rhythm_enable` (OPL) est omise : toujours 0 sur OPM.
-        // somme sur tous les canaux voulus
+        // PORT-NOTE : chaque canal est calculé dans sa propre sortie puis ajouté (la somme
+        // entière est inchangée), pour garder sa sortie et pouvoir l'exclure (débogueur)
         for chnum in 0..CHANNELS {
+            let mut ch = Output::<2> { data: [0, 0] };
             if bitfield(chanmask, chnum as i32, 1) != 0 {
-                self.channel[chnum].output_4op(output, rshift, clipmax, &self.operator, &self.regs);
+                self.channel[chnum].output_4op(
+                    &mut ch,
+                    rshift,
+                    clipmax,
+                    &self.operator,
+                    &self.regs,
+                );
+                if self.mute & (1 << chnum) == 0 {
+                    output.add(&ch);
+                }
             }
+            self.channel_out[chnum] = if ch.data[0] != 0 {
+                ch.data[0]
+            } else {
+                ch.data[1]
+            };
         }
+    }
+
+    /// Débogueur : sortie de chaque canal au dernier échantillon.
+    pub fn channel_out(&self) -> &[i32; CHANNELS] {
+        &self.channel_out
+    }
+
+    /// Débogueur : canaux en train de jouer (enveloppe non éteinte, bit n = canal n).
+    pub fn active_channels(&self) -> u32 {
+        self.active_channels
+    }
+
+    /// Débogueur : canaux exclus de la somme (bit n = canal n ; 0 = son normal).
+    pub fn set_mute(&mut self, mask: u32) {
+        self.mute = mask;
     }
 
     /// Gère les écritures dans les registres OPM.

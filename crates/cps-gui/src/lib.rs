@@ -3,6 +3,7 @@
 
 pub mod board;
 pub mod debug;
+pub mod debug_audio;
 pub mod debug_video;
 pub mod driver;
 pub mod inputs;

@@ -21,6 +21,9 @@ pub struct QSoundSide {
     pub next_sample: Tick,
     /// Échantillons stéréo produits depuis le dernier `take_audio`.
     pub out: Vec<[f32; 2]>,
+    /// Débogueur : voies du DSP (16 PCM + 3 ADPCM), si l'oscilloscope est ouvert.
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub scope: Option<Box<crate::voice_scope::VoiceScope>>,
 }
 
 impl QSoundSide {
@@ -33,6 +36,7 @@ impl QSoundSide {
             next_irq: TICKS_PER_QSOUND_IRQ,
             next_sample: 0,
             out: Vec::new(),
+            scope: None,
         }
     }
 
@@ -45,6 +49,11 @@ impl QSoundSide {
         self.out.clear();
     }
 
+    /// Débogueur : active ou coupe l'enregistrement des voies du DSP.
+    pub fn set_scope(&mut self, on: bool) {
+        self.scope = on.then(|| Box::new(crate::voice_scope::VoiceScope::new(19, 32768.0)));
+    }
+
     /// IRQ périodique et échantillons du DSP jusqu'à `t` (exclu), avant tout accès du Z80 à
     /// l'instant `t` (qsound_w / qsound_r font stream->update() d'abord).
     pub fn advance(&mut self, t: Tick) {
@@ -54,6 +63,9 @@ impl QSoundSide {
         }
         while self.next_sample < t {
             self.dsp.update_sample();
+            if let Some(sc) = self.scope.as_mut() {
+                sc.push(self.dsp.voice_outputs());
+            }
             let [l, r] = self.dsp.output();
             self.out
                 .push([f32::from(l) / 32768.0, f32::from(r) / 32768.0]);

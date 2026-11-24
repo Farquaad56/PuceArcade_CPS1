@@ -1,7 +1,7 @@
 //! `BoardDebug` de la carte CPS1 : processeurs, mémoire, pas à pas (T503b) ;
 //! registres, images et couches dans `debug_video` (T504).
 
-use puce_jamma::debug::{BoardDebug, CpuView, DebugImage};
+use puce_jamma::debug::{AudioVoice, BoardDebug, CpuView, DebugImage};
 
 use crate::board::Cps1Board;
 use crate::debug_video;
@@ -103,6 +103,20 @@ impl BoardDebug for Cps1Board {
     fn set_layer_mask(&mut self, mask: u32) {
         self.machine.bus.video.debug_layer_mask = mask;
     }
+
+    fn voices(&self) -> Vec<AudioVoice> {
+        crate::debug_audio::voices(&self.machine)
+    }
+
+    fn set_voice_scope(&mut self, on: bool) {
+        self.voice_scope = on;
+        crate::debug_audio::apply(&mut self.machine, on, self.voice_mute);
+    }
+
+    fn set_voice_mute(&mut self, mask: u64) {
+        self.voice_mute = mask;
+        crate::debug_audio::apply(&mut self.machine, self.voice_scope, mask);
+    }
 }
 
 #[cfg(test)]
@@ -139,5 +153,33 @@ mod tests {
         assert_eq!(pc, 0x400, "{pc:X}");
         b.step_instruction(1);
         b.debug().unwrap();
+    }
+
+    #[test]
+    fn debug_voices_cps1() {
+        let mut b = synthetic_board();
+        assert!(b.voices().is_empty(), "rien sans enregistrement");
+        b.set_voice_scope(true);
+        b.run_frame();
+        let v = b.voices();
+        assert_eq!(v.len(), 12);
+        assert_eq!((v[0].name.as_str(), v[0].chip.as_str()), ("FM 1", "YM2151"));
+        assert_eq!(
+            (v[8].name.as_str(), v[8].chip.as_str()),
+            ("ADPCM 1", "OKI MSM6295")
+        );
+        assert_eq!(v[0].sample_rate, 55_930);
+        assert_eq!(v[0].samples.len(), cps_bus::voice_scope::SCOPE_LEN);
+        // muets conservés après un chargement d'état
+        b.set_voice_mute(0b101);
+        let st = b.save_state();
+        b.load_state(&st).unwrap();
+        assert!(b.machine.sound.chips.scopes.is_some());
+        assert_eq!(b.machine.sound.chips.oki.mute, 0);
+        b.set_voice_mute(1 << 9);
+        b.reset();
+        assert_eq!(b.machine.sound.chips.oki.mute, 0b10);
+        b.set_voice_scope(false);
+        assert!(b.voices().is_empty());
     }
 }
