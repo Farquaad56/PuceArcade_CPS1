@@ -12,13 +12,14 @@ use puce_jamma::inputs::JammaInputs;
 use std::fmt::Write as _;
 use std::path::Path;
 
-/// Pièce à 600, départ à 700, puis bouton 1 toutes les 8 trames.
-fn inputs(t: u64) -> JammaInputs {
+/// Pièce à `c`, départ à `c + 80` (8 trames chacun), puis bouton 1 toutes les 8 trames (beaucoup de jeux CPS1
+/// sont muets pendant la démonstration).
+fn inputs(t: u64, c: u64) -> JammaInputs {
     let mut j = JammaInputs::default();
-    j.coins[0] = (600..606).contains(&t);
-    j.players[0].start = (700..706).contains(&t);
-    j.players[0].buttons[0] = t > 800 && t % 8 < 2;
-    j.players[0].right = t > 800 && (t / 60).is_multiple_of(2);
+    j.coins[0] = (c..c + 8).contains(&t);
+    j.players[0].start = (c + 80..c + 88).contains(&t);
+    j.players[0].buttons[0] = t > c + 200 && t % 8 < 2;
+    j.players[0].right = t > c + 200 && (t / 60).is_multiple_of(2);
     j
 }
 
@@ -27,10 +28,10 @@ fn run(b: &mut dyn JammaBoard, frames: u64, scope: bool) -> Vec<f32> {
     b.debug().unwrap().set_voice_scope(scope);
     let (mut all, mut out) = (Vec::new(), Vec::new());
     for t in 1..=frames {
-        b.set_inputs(&inputs(t));
+        b.set_inputs(&inputs(t, frames - 560));
         b.run_frame();
         b.take_audio(&mut out);
-        all.extend_from_slice(&out);
+        all.append(&mut out);
     }
     all
 }
@@ -39,16 +40,18 @@ fn run(b: &mut dyn JammaBoard, frames: u64, scope: bool) -> Vec<f32> {
 #[ignore] // ROM requises
 fn voices_dump() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let Ok(cfg) = Config::load(&root.join("cps1.toml")) else {
+    let Ok(mut cfg) = Config::load(&root.join("cps1.toml")) else {
         return;
     };
     let dir = root.join("target/voices");
     std::fs::create_dir_all(&dir).unwrap();
+    // DIP et EEPROM par défaut : pas ceux du joueur
+    cfg.saves_dir = dir.join("saves");
     let d = Cps1Driver { cfg };
     for (game, frames) in [
-        ("ghouls", 1200),
-        ("sf2", 1500),
-        ("dino", 1200),
+        ("ghouls", 1960),
+        ("sf2", 2000),
+        ("dino", 1300),
         ("xmcota", 1500),
     ] {
         let Ok(mut a) = d.load(game) else {
@@ -58,6 +61,7 @@ fn voices_dump() {
         let mut b = d.load(game).unwrap();
         let sa = run(a.as_mut(), frames, false);
         let sb = run(b.as_mut(), frames, true);
+        assert!(sa.iter().any(|x| *x != 0.0), "{game} : silencieux");
         assert_eq!(sa, sb, "{game} : l'enregistrement change le son");
         let v = b.debug().unwrap().voices();
         assert!(!v.is_empty(), "{game} : aucune voie");
