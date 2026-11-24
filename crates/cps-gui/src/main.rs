@@ -1,4 +1,4 @@
-//! cps-gui — PuceArcade CPS1 sur le frontal JAMMA (T502).
+//! cps-gui — PuceArcade CPS1/CPS2 sur le frontal JAMMA (T502).
 #![forbid(unsafe_code)]
 
 use std::path::Path;
@@ -6,7 +6,11 @@ use std::process::ExitCode;
 
 use cps_cart::Config;
 use cps_gui::Cps1Driver;
+use puce_jamma_gui::about::About;
 use puce_jamma_gui::AppOptions;
+
+/// Nom affiché dans la fenêtre et dans « À propos ».
+const NAME: &str = "PuceArcade CPS1/CPS2";
 
 fn main() -> ExitCode {
     let cfg = match Config::load(Path::new(Config::DEFAULT_PATH)) {
@@ -18,9 +22,16 @@ fn main() -> ExitCode {
         }
     };
     let opts = AppOptions {
-        window_title: "PuceArcade CPS1".into(),
+        window_title: NAME.into(),
         config_dir: ".".into(),
         bezels_dir: Some("bezels".into()),
+        about: Some(About {
+            name: NAME.into(),
+            version: env!("CARGO_PKG_VERSION").into(),
+            text: "Projet d'émulateur en Rust Par Le Garrec Sebastien".into(),
+            license_name: "PuceArcade — usage non commercial, tous droits réservés".into(),
+            license_text: include_str!("../../../LICENSE").into(),
+        }),
     };
     match puce_jamma_gui::run(Box::new(Cps1Driver { cfg }), opts) {
         Ok(()) => ExitCode::SUCCESS,

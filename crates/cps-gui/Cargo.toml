@@ -2,7 +2,7 @@
 name = "cps-gui"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+license-file.workspace = true
 
 [lib]
 path = "src/lib.rs"

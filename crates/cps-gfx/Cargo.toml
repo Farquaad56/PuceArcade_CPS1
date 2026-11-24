@@ -2,7 +2,7 @@
 name = "cps-gfx"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+license-file.workspace = true
 
 [dependencies]
 cps-common = { path = "../cps-common" }

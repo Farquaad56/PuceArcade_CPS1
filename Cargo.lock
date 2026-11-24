@@ -2966,13 +2966,13 @@ checksum = "3d595e54a326bc53c1c197b32d295e14b169e3cfeaa8dc82b529f947fba6bcf5"
 
 [[package]]
 name = "puce-jamma"
-version = "0.6.1"
-source = "git+https://github.com/Farquaad56/PuceArcade_JammaGui_Crates?rev=6e8fd5615315de7c64ed7ae66bebe04ff4e991be#6e8fd5615315de7c64ed7ae66bebe04ff4e991be"
+version = "0.9.0"
+source = "git+https://github.com/Farquaad56/PuceArcade_JammaGui_Crates?rev=89308786a80471842d6a98039592794c0350a0c6#89308786a80471842d6a98039592794c0350a0c6"
 
 [[package]]
 name = "puce-jamma-gui"
-version = "0.6.1"
-source = "git+https://github.com/Farquaad56/PuceArcade_JammaGui_Crates?rev=6e8fd5615315de7c64ed7ae66bebe04ff4e991be#6e8fd5615315de7c64ed7ae66bebe04ff4e991be"
+version = "0.9.0"
+source = "git+https://github.com/Farquaad56/PuceArcade_JammaGui_Crates?rev=89308786a80471842d6a98039592794c0350a0c6#89308786a80471842d6a98039592794c0350a0c6"
 dependencies = [
  "cpal",
  "crossbeam-channel",

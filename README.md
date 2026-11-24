@@ -1,6 +1,6 @@
-# PuceArcade CPS1
+# PuceArcade CPS1/CPS2
 
-Émulateur **Capcom CPS1** cycle-exact en Rust (GUI egui), construit carte par carte par un agent local (Hermes Kanban, profil `rust-dev`).
+Émulateur **Capcom CPS1 et CPS2** cycle-exact en Rust (GUI egui), construit carte par carte par un agent local (Hermes Kanban, profil `rust-dev`).
 Priorité : **Ghouls'n Ghosts** (`ghouls`), puis **Street Fighter II** (`sf2`, `sf2ce`, `sf2hf`), puis les autres jeux CPS1 non-QSound.
 
 - CPU : crates de l'auteur, épinglées — [puce-m68k](https://github.com/Farquaad56/CPU-Motorola_68K_Crates_Rust) (68000) et [puce-z80](https://github.com/Farquaad56/CPU-Zilog-Z80_Crates_Rust) (Z80).
@@ -36,3 +36,11 @@ Barre d'état : « son 55930 Hz mono » pour les jeux CPS1 (YM2151 + OKI), « so
 (groupe Son, ligne « carte son »).
 
 Aucune ROM n'est fournie ni versionnée.
+
+## Licence
+
+Projet d'émulateur en Rust par **Le Garrec Sebastien**. Licence **PuceArcade — usage non commercial, tous droits
+réservés** (fichier [`LICENSE`](LICENSE)) : usage personnel, éducatif et de recherche gratuit, copies non modifiées
+redistribuables gratuitement ; tout usage commercial, toute version modifiée distribuée et toute intégration dans un
+autre produit demandent l'accord écrit de l'auteur. Les parties issues de tiers (code porté de MAME et ymfm sous BSD-3-Clause, dossier `ref/`) restent sous leur propre
+licence. Les versions publiées avant le 24 novembre 2026 restaient sous licence MIT.

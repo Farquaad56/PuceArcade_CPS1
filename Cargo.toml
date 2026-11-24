@@ -18,13 +18,13 @@ members = [
 puce-m68k = { git = "https://github.com/Farquaad56/CPU-Motorola_68K_Crates_Rust", package = "puce-m68k", rev = "823d9a5ed4f1e5bfd69dc5ee2dbcf6d6154f4bd9" }
 puce-z80  = { git = "https://github.com/Farquaad56/CPU-Zilog-Z80_Crates_Rust", package = "puce-z80", rev = "77cf591d28e69a690b2d3dc31edf3b0633e0eb83", features = ["serde"] }
 # Frontal JAMMA (PuceArcade_JammaGui_Crates v0.2.0, ADR-002)
-puce-jamma     = { git = "https://github.com/Farquaad56/PuceArcade_JammaGui_Crates", package = "puce-jamma", rev = "6e8fd5615315de7c64ed7ae66bebe04ff4e991be" }
-puce-jamma-gui = { git = "https://github.com/Farquaad56/PuceArcade_JammaGui_Crates", package = "puce-jamma-gui", rev = "6e8fd5615315de7c64ed7ae66bebe04ff4e991be" }
+puce-jamma     = { git = "https://github.com/Farquaad56/PuceArcade_JammaGui_Crates", package = "puce-jamma", rev = "89308786a80471842d6a98039592794c0350a0c6" }
+puce-jamma-gui = { git = "https://github.com/Farquaad56/PuceArcade_JammaGui_Crates", package = "puce-jamma-gui", rev = "89308786a80471842d6a98039592794c0350a0c6" }
 
 [workspace.package]
 edition = "2021"
 version = "0.1.0"
-license = "MIT"
+license-file = "LICENSE"
 
 [profile.release]
 opt-level = 3
